@@ -21,7 +21,6 @@ to create-citizens
    foreach gis:feature-list-of tuscany [ this-municipality ->
     gis:create-turtles-inside-polygon this-municipality turtles num_citizens [
       set shape "person"
-      set size 0.7
       set color ifelse-value random 100 < 50 [pink][blue]
     ]
   ]
@@ -30,7 +29,7 @@ end
 to create-consultorio
    foreach gis:feature-list-of tuscany [ this-municipality ->
     gis:create-turtles-inside-polygon this-municipality turtles num_consultorio [
-      set shape "circle" set size 0.5
+      set shape "circle" set size 0.3
     ]
   ]
 end
@@ -105,7 +104,7 @@ num_citizens
 num_citizens
 0
 100
-2.0
+4.0
 1
 1
 NIL
