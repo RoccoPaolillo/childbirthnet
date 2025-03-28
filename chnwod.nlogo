@@ -4,7 +4,6 @@ globals [tuscany]
 to setup
   clear-all
   ask patches [set pcolor white]
-;  set df csv:from-file "data/output_verificati/pop_lazio_pivot.csv"
   gis:load-coordinate-system "data/output/comuni_consultori_2019.prj"
   set tuscany gis:load-dataset "data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
@@ -16,6 +15,23 @@ to displaymap
   clear-drawing
   gis:set-drawing-color black
   gis:draw tuscany 1
+end
+
+to create-citizens
+   foreach gis:feature-list-of tuscany [ this-municipality ->
+    gis:create-turtles-inside-polygon this-municipality turtles num_citizens [
+      set shape "person"
+      set color ifelse-value random 100 < 50 [pink][blue]
+    ]
+  ]
+end
+
+to create-consultorio
+   foreach gis:feature-list-of tuscany [ this-municipality ->
+    gis:create-turtles-inside-polygon this-municipality turtles num_consultorio [
+      set shape "circle" set size 0.3
+    ]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -62,10 +78,108 @@ NIL
 NIL
 1
 
+BUTTON
+804
+26
+912
+59
+create-citizens
+create-citizens
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+928
+31
+1100
+64
+num_citizens
+num_citizens
+0
+100
+4.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+806
+79
+916
+112
+create-consultorio
+create-consultorio
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+927
+83
+1099
+116
+num_consultorio
+num_consultorio
+0
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+1129
+56
+1267
+89
+show VectorFeature
+show gis:feature-list-of tuscany
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+809
+155
+1090
+188
+NIL
+foreach gis:feature-list-of tuscany [k -> print k]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+Upload shapefile projection and boundaries Tuscany
 
 ## HOW IT WORKS
 
