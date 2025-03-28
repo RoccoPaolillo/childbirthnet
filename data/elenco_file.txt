@@ -1,0 +1,5 @@
+accesso_parti_ospedali -> numero di parti per ospedale e comune di residenza
+elenco_consultori_2019 -> elenco consultori familiari 
+matrice_distanze_ospedali -> matrice delle distanze fra i comuni e gli ospedali (distanza comune-comune)
+matrice_distanze_consultori -> matrice delle distanze fra i comuni e i consultori (distanza comune-comune)
+ricoveri_parti_2023 -> numero di parti totali per comune di residenza
