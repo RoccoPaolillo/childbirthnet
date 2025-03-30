@@ -1,9 +1,8 @@
 extensions [gis table csv]
 breed [hospital hospitals]
 breed [women womens]
-breed [counselcenter counselcenters]
-globals [tuscany ]
-counselcenter-own [ID PRO_COM]
+globals [tuscany PRO_COM COMUNE]
+hospital-own [ affluence]
 
 
 to setup
@@ -14,7 +13,6 @@ to setup
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
 ;  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
-  create-womens
   reset-ticks
 end
 
@@ -37,26 +35,7 @@ foreach but-first childbirths [ x ->
     if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
       set shape "circle" set size 0.5
-;      set PRO_COM gis:property-value this-municipality "PRO_COM"
-    ]
-  ]
-  ]
-end
-
-to create-counselcenters
-let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"
-let my-table table:make
-
- foreach but-first consul2019 [ x ->
-  table:put my-table item 0 x  item 1 x
- ]
-
-   foreach gis:feature-list-of tuscany [ this-municipality ->
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
-    gis:create-turtles-inside-polygon this-municipality counselcenter 1 [
-      set shape "square" set size 0.5
-     set PRO_COM gis:property-value this-municipality "PRO_COM"
-        set whtable:get my-table gis:property-value this-municipality "PRO_COM"
+      set PRO_COM gis:property-value this-municipality "PRO_COM"
     ]
   ]
   ]
@@ -90,10 +69,10 @@ ticks
 30.0
 
 BUTTON
-27
-51
-90
-84
+39
+28
+102
+61
 setup
 setup
 NIL
@@ -107,10 +86,74 @@ NIL
 1
 
 BUTTON
-751
+803
+26
+919
+59
+create-hospitals
+create-hospitals
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+924
 21
-889
+1096
 54
+num_hospital
+num_hospital
+0
+100
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+806
+79
+916
+112
+create-consultorio
+create-consultorio
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+927
+83
+1099
+116
+num_consultorio
+num_consultorio
+0
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+1129
+56
+1267
+89
 show VectorFeature
 show gis:feature-list-of tuscany
 NIL
@@ -124,12 +167,12 @@ NIL
 1
 
 BUTTON
-26
-89
-121
-122
-hide_agents
-ask women [ hide-turtle]
+809
+155
+1090
+188
+NIL
+foreach gis:feature-list-of tuscany [k -> print k]
 NIL
 1
 T
@@ -141,12 +184,12 @@ NIL
 1
 
 BUTTON
-979
-45
-1048
-78
-consult
-create-counselcenters
+819
+208
+1299
+241
+NIL
+foreach gis:feature-list-of tuscany [k ->\nprint gis:property-value k \"COMUNE\"]
 NIL
 1
 T
@@ -158,12 +201,80 @@ NIL
 1
 
 BUTTON
-949
-149
-1016
-182
-TESTT
-let consul2019 csv:from-file \"data/elenco_consultori_2019_used.csv\"\nlet my-table table:make\n\n foreach but-first consul2019 [ x ->\n  table:put my-table item 0 x  item 1 x\n ]\n\nprint table:get my-table 49009
+812
+260
+1139
+293
+NIL
+gis:fill gis:find-one-feature tuscany \"PRO_COM\" 48018 5
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+811
+295
+1407
+328
+NIL
+ask turtle 93 [set comune gis:property-value gis:find-one-feature tuscany \"PRO_COM\" pro_com \"COMUNE\"]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+803
+376
+866
+409
+test
+let dict table:make\ntable:put dict \"a\" 5\ntable:put dict \"a\" 3\ntable:put dict \"b\" 9\ntable:put dict \"a\" 53\nprint table:get dict \"a\"\nprint table:get dict \"b\"
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+875
+376
+980
+409
+table_ricovery
+let rows csv:from-file \"data/ricoveri_parti_2023.csv\"\n;foreach but-first rows [k -> print item 1 k]\n;print but-first rows\n\n\nlet my-table table:make\n\n;; assuming the first row has headers, and the first column is the key\nforeach but-first rows [ x ->\n;  let key item 0 x\n;  let value item 1 x  ;; or pick specific columns\n  table:put my-table item 0 x  item 1 x\n;   value \n]\n\nprint my-table \n;print table:get my-table 45004
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+995
+373
+1101
+406
+print PROCOM
+let rows csv:from-file \"data/ricoveri_parti_2023.csv\"\nlet my-table table:make\n\nforeach but-first rows [ x ->\n  table:put my-table item 0 x  item 1 x\n]\n\n\nforeach gis:feature-list-of tuscany [ this-municipality ->\nprint table:get my-table gis:property-value this-municipality \"PRO_COM\"\n]\n
 NIL
 1
 T

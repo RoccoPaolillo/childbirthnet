@@ -16,3 +16,7 @@ cons2019[cons2019$Codice.struttura == "02002D" & cons2019$Comune == "LAMPORECCHI
 cons2019[cons2019$Codice.struttura == "21012D" & cons2019$Comune == "SCANDICCI", ]$Codice.struttura <- "21012DSC"
 cons2019[cons2019$Codice.struttura == "22212D" & cons2019$Comune == "CASTELFRANCO DI SOTTO", ]$Codice.struttura <- "22212DCS"
 cons2019[cons2019$Codice.struttura == "31012D" & cons2019$Comune == "REGGELLO", ]$Codice.struttura <- "31012DRE"
+
+cons2019_used <- cons2019 %>% select(Codice.Comune,Codice.struttura)
+
+write.csv(cons2019_used,"elenco_consultori_2019_used.csv",row.names = F)

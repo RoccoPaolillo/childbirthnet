@@ -1,8 +1,9 @@
 extensions [gis table csv]
 breed [hospital hospitals]
 breed [women womens]
-globals [tuscany PRO_COM COMUNE]
-; womens-own [PRO_COM]
+breed [counselcenter counselcenters]
+globals [tuscany ]
+counselcenter-own [ID PRO_COM]
 
 
 to setup
@@ -43,18 +44,19 @@ foreach but-first childbirths [ x ->
 end
 
 to create-counselcenters
-let consul2019 csv:from-file "data/elenco_consultori_2019_2.csv"
+let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"
 let my-table table:make
 
-foreach but-first consul2019 [ x ->
+ foreach but-first consul2019 [ x ->
   table:put my-table item 0 x  item 1 x
-]
+ ]
 
    foreach gis:feature-list-of tuscany [ this-municipality ->
-    if member? gis:property-value this-municipality "Codice Comune" table:keys my-table [
-    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
-      set shape "circle" set size 0.5
-;      set PRO_COM gis:property-value this-municipality "PRO_COM"
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
+    gis:create-turtles-inside-polygon this-municipality counselcenter 1 [
+      set shape "square" set size 0.5
+     set PRO_COM gis:property-value this-municipality "PRO_COM"
+        set ID table:get my-table gis:property-value this-municipality "PRO_COM"
     ]
   ]
   ]
@@ -139,12 +141,29 @@ NIL
 1
 
 BUTTON
-978
-44
-1047
-77
+979
+45
+1048
+78
 consult
-let consult csv:from-file \"data/elenco_consultori_2019_used.csv\"\nprint consult
+create-counselcenters
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+949
+149
+1016
+182
+TESTT
+let consul2019 csv:from-file \"data/elenco_consultori_2019_used.csv\"\nlet my-table table:make\n\n foreach but-first consul2019 [ x ->\n  table:put my-table item 0 x  item 1 x\n ]\n\nprint table:get my-table 49009
 NIL
 1
 T
