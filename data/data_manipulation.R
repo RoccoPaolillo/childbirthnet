@@ -4,7 +4,7 @@ library(readxl)
 setwd("C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/")
 
 ricoveriparti2023 <- read.csv("ricoveri_parti_2023.csv",sep=",")
-osp <- read_excel("accessi_parto_ospedali.xlsx")
+
 # consultori
 cons2019 <- read.csv("elenco_consultori_2019.csv",sep=";")
 cons2019 <- cons2019 %>% mutate(Comune = trimws(Comune))  %>%
@@ -20,3 +20,24 @@ cons2019[cons2019$Codice.struttura == "31012D" & cons2019$Comune == "REGGELLO", 
 cons2019_used <- cons2019 %>% select(Codice.Comune,Codice.struttura)
 
 write.csv(cons2019_used,"elenco_consultori_2019_used.csv",row.names = F)
+
+# 
+osp <- read_excel("accessi_parto_ospedali.xlsx")
+osp <- osp[,-6]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

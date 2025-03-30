@@ -1,9 +1,12 @@
 extensions [gis table csv]
+turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany ]
-counselcenter-own [ID PRO_COM]
+counselcenter-own [ID ]
+hospital-own [ID births]
+
 
 
 to setup
@@ -14,7 +17,7 @@ to setup
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
 ;  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
-  create-womens
+;  create-womens
   reset-ticks
 end
 
@@ -36,8 +39,10 @@ foreach but-first childbirths [ x ->
    foreach gis:feature-list-of tuscany [ this-municipality ->
     if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
-      set shape "circle" set size 0.5
-;      set PRO_COM gis:property-value this-municipality "PRO_COM"
+     set shape "circle"
+     set color gis:property-value this-municipality "PRO_COM"
+     set size 0.2
+     set PRO_COM gis:property-value this-municipality "PRO_COM"
     ]
   ]
   ]
@@ -45,20 +50,15 @@ end
 
 to create-counselcenters
 let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"
-let my-table table:make
-
- foreach but-first consul2019 [ x ->
-  table:put my-table item 0 x  item 1 x
- ]
-
-   foreach gis:feature-list-of tuscany [ this-municipality ->
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
-    gis:create-turtles-inside-polygon this-municipality counselcenter 1 [
-      set shape "square" set size 0.5
-     set PRO_COM gis:property-value this-municipality "PRO_COM"
-        set ID table:get my-table gis:property-value this-municipality "PRO_COM"
-    ]
-  ]
+  foreach but-first consul2019 [ x ->
+   create-counselcenter 1 [set shape "square"
+      set id item 1 x
+      set color item 0 x
+      set pro_com item 0 x
+    let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
+    set xcor item 0 loc
+    set ycor item 1 loc
+]
   ]
 end
 @#$#@#$#@
@@ -124,12 +124,12 @@ NIL
 1
 
 BUTTON
-26
-89
-121
-122
-hide_agents
-ask women [ hide-turtle]
+1041
+57
+1175
+90
+hide women
+ask women [hide-turtle]
 NIL
 1
 T
@@ -141,11 +141,11 @@ NIL
 1
 
 BUTTON
-979
-45
-1048
-78
-consult
+904
+21
+1036
+54
+NIL
 create-counselcenters
 NIL
 1
@@ -158,12 +158,119 @@ NIL
 1
 
 BUTTON
-949
-149
-1016
-182
-TESTT
-let consul2019 csv:from-file \"data/elenco_consultori_2019_used.csv\"\nlet my-table table:make\n\n foreach but-first consul2019 [ x ->\n  table:put my-table item 0 x  item 1 x\n ]\n\nprint table:get my-table 49009
+1041
+21
+1174
+54
+NIL
+create-womens
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+904
+57
+1037
+90
+hide counselcenter
+ask counselcenter [ hide-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1214
+20
+1321
+53
+color_area
+gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+1215
+56
+1319
+116
+area_municipality
+51037.0
+1
+0
+Number
+
+INPUTBOX
+1329
+55
+1484
+115
+MUNICIPALITY_name
+Arezzo
+1
+0
+String (reporter)
+
+BUTTON
+1329
+17
+1427
+50
+codCOMUNE
+print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+905
+94
+1038
+127
+show counselcenter
+ask counselcenter [ show-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1042
+94
+1175
+127
+show women
+ask women [show-turtle]
 NIL
 1
 T
@@ -509,6 +616,17 @@ false
 Polygon -16777216 true false 253 133 245 131 245 133
 Polygon -7500403 true true 2 194 13 197 30 191 38 193 38 205 20 226 20 257 27 265 38 266 40 260 31 253 31 230 60 206 68 198 75 209 66 228 65 243 82 261 84 268 100 267 103 261 77 239 79 231 100 207 98 196 119 201 143 202 160 195 166 210 172 213 173 238 167 251 160 248 154 265 169 264 178 247 186 240 198 260 200 271 217 271 219 262 207 258 195 230 192 198 210 184 227 164 242 144 259 145 284 151 277 141 293 140 299 134 297 127 273 119 270 105
 Polygon -7500403 true true -1 195 14 180 36 166 40 153 53 140 82 131 134 133 159 126 188 115 227 108 236 102 238 98 268 86 269 92 281 87 269 103 269 113
+
+women
+false
+0
+Circle -7500403 true true 110 5 80
+Polygon -7500403 true true 105 90 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285 180 195 195 90
+Rectangle -7500403 true true 127 79 172 94
+Polygon -7500403 true true 195 90 240 150 225 180 165 105
+Polygon -7500403 true true 105 90 60 150 75 180 135 105
+Polygon -7500403 true true 135 180 180 195 225 255 60 255
+Polygon -7500403 true true 120 15 90 75 210 75 180 15 180 45
 
 x
 false
