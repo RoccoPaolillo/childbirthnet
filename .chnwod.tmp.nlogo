@@ -144,7 +144,7 @@ BUTTON
 1047
 77
 consult
-let consult csv:from-file \"data/elenco_consultori_2019_used.csv\"\nprint consult
+let consult csv:from-file \"data/elenco_consultori_2019_2.csv\"\nprint consult
 NIL
 1
 T
