@@ -24,7 +24,7 @@ write.csv(cons2019_used,"elenco_consultori_2019_used.csv",row.names = F)
 # 
 osp <- read_excel("accessi_parto_ospedali.xlsx")
 osp <- osp[,-6]
-
+write.csv(osp,"accessi_parto_ospedali_used.csv",row.names = F)
 
 
 

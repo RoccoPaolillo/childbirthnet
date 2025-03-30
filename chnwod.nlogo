@@ -61,6 +61,35 @@ let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"
 ]
   ]
 end
+
+
+to create-hospitals
+let hospitals2023 csv:from-file "data/accessi_parto_ospedali_used.csv"
+let listhospitals []
+;let filtered []
+
+foreach but-first hospitals2023 [ row ->
+  let key item 2 row
+  if not member? key listhospitals [
+    set listhospitals lput key listhospitals
+;    set filtered lput row filtered
+  ]
+]
+
+  foreach listhospitals [x ->
+    create-hospital 1 [
+      set id x
+ ;     set color item 4 x
+ ;     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 x
+    set xcor random-xcor
+    set ycor random-ycor
+    set shape "triangle"
+      let list_births filter [ [s] -> item 2 s = x ] but-first hospitals2023
+      set births reduce + map [ [s] -> item 5 s ] list_births
+
+    ]
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -271,6 +300,23 @@ BUTTON
 127
 show women
 ask women [show-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+804
+166
+891
+199
+hospitallist
+let data [[\"s\" 12 \"b\"] [\"dd\" 1 \"ee\"] [\"dl\" 2 \"b\"]]\nlet filtered filter [ [s] -> item 2 s = \"b\" ] data\n\nprint filtered
 NIL
 1
 T
