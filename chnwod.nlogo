@@ -79,13 +79,18 @@ foreach but-first hospitals2023 [ row ->
   foreach listhospitals [x ->
     create-hospital 1 [
       set id x
+
  ;     set color item 4 x
  ;     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 x
-    set xcor random-xcor
-    set ycor random-ycor
+
     set shape "triangle"
       let list_births filter [ [s] -> item 2 s = x ] but-first hospitals2023
       set births reduce + map [ [s] -> item 5 s ] list_births
+      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"
+      set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"
+      let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births
+      set xcor item 0 loc
+    set ycor item 1 loc
 
     ]
   ]
@@ -136,11 +141,11 @@ NIL
 1
 
 BUTTON
-751
-21
-889
-54
-show VectorFeature
+1234
+163
+1370
+196
+show VectorDataset
 show gis:feature-list-of tuscany
 NIL
 1
@@ -153,10 +158,10 @@ NIL
 1
 
 BUTTON
-1041
-57
-1175
-90
+877
+64
+1011
+97
 hide women
 ask women [hide-turtle]
 NIL
@@ -170,10 +175,10 @@ NIL
 1
 
 BUTTON
-904
-21
-1036
-54
+740
+28
+872
+61
 NIL
 create-counselcenters
 NIL
@@ -187,10 +192,10 @@ NIL
 1
 
 BUTTON
-1041
-21
-1174
-54
+877
+28
+1010
+61
 NIL
 create-womens
 NIL
@@ -204,10 +209,10 @@ NIL
 1
 
 BUTTON
-904
-57
-1037
-90
+740
+64
+873
+97
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -243,7 +248,7 @@ INPUTBOX
 1319
 116
 area_municipality
-51037.0
+48017.0
 1
 0
 Number
@@ -254,7 +259,7 @@ INPUTBOX
 1484
 115
 MUNICIPALITY_name
-Arezzo
+NIL
 1
 0
 String (reporter)
@@ -277,10 +282,10 @@ NIL
 1
 
 BUTTON
-905
-94
-1038
-127
+741
+101
+874
+134
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -294,10 +299,10 @@ NIL
 1
 
 BUTTON
-1042
-94
-1175
-127
+878
+101
+1011
+134
 show women
 ask women [show-turtle]
 NIL
@@ -311,12 +316,63 @@ NIL
 1
 
 BUTTON
-804
-166
-891
-199
-hospitallist
-let data [[\"s\" 12 \"b\"] [\"dd\" 1 \"ee\"] [\"dl\" 2 \"b\"]]\nlet filtered filter [ [s] -> item 2 s = \"b\" ] data\n\nprint filtered
+1018
+28
+1134
+61
+NIL
+create-hospitals
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1233
+128
+1371
+161
+show VectorFeature
+print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1018
+64
+1133
+97
+hide hospitals
+ask hospital [hide-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1017
+102
+1134
+135
+show hospital
+ask hospital [show-turtle]
 NIL
 1
 T
