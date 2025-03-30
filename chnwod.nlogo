@@ -1,4 +1,4 @@
-extensions [gis csv]
+extensions [gis table csv]
 globals [tuscany ]
 turtles-own [PRO_COM COMUNE]
 

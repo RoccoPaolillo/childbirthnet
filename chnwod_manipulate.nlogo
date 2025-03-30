@@ -1,6 +1,9 @@
 extensions [gis table csv]
-globals [tuscany ricoveri_parti]
-turtles-own [PRO_COM COMUNE]
+breed [hospital hospitals]
+breed [women womens]
+globals [tuscany PRO_COM COMUNE]
+hospital-own [ affluence]
+
 
 to setup
   clear-all
@@ -9,7 +12,7 @@ to setup
   set tuscany gis:load-dataset "data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
+;  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
   reset-ticks
 end
 
@@ -19,22 +22,22 @@ to displaymap
   gis:draw tuscany 1
 end
 
-to create-citizens
-   foreach gis:feature-list-of tuscany [ this-municipality ->
-    gis:create-turtles-inside-polygon this-municipality turtles num_citizens [
-      set shape "person"
-      set size 0.7
-      set color ifelse-value random 100 < 50 [pink][blue]
-    ]
-  ]
-end
 
-to create-consultorio
+to create-womens
+let childbirths csv:from-file "data/ricoveri_parti_2023.csv"
+let my-table table:make
+
+foreach but-first childbirths [ x ->
+  table:put my-table item 0 x  item 1 x
+]
+
    foreach gis:feature-list-of tuscany [ this-municipality ->
-    gis:create-turtles-inside-polygon this-municipality turtles num_consultorio [
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
+    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
       set shape "circle" set size 0.5
       set PRO_COM gis:property-value this-municipality "PRO_COM"
     ]
+  ]
   ]
 end
 @#$#@#$#@
@@ -83,12 +86,12 @@ NIL
 1
 
 BUTTON
-804
+803
 26
-912
+919
 59
-create-citizens
-create-citizens
+create-hospitals
+create-hospitals
 NIL
 1
 T
@@ -100,12 +103,12 @@ NIL
 1
 
 SLIDER
-928
-31
-1100
-64
-num_citizens
-num_citizens
+924
+21
+1096
+54
+num_hospital
+num_hospital
 0
 100
 2.0
@@ -238,6 +241,40 @@ BUTTON
 409
 test
 let dict table:make\ntable:put dict \"a\" 5\ntable:put dict \"a\" 3\ntable:put dict \"b\" 9\ntable:put dict \"a\" 53\nprint table:get dict \"a\"\nprint table:get dict \"b\"
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+875
+376
+980
+409
+table_ricovery
+let rows csv:from-file \"data/ricoveri_parti_2023.csv\"\n;foreach but-first rows [k -> print item 1 k]\n;print but-first rows\n\n\nlet my-table table:make\n\n;; assuming the first row has headers, and the first column is the key\nforeach but-first rows [ x ->\n;  let key item 0 x\n;  let value item 1 x  ;; or pick specific columns\n  table:put my-table item 0 x  item 1 x\n;   value \n]\n\nprint my-table \n;print table:get my-table 45004
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+995
+373
+1101
+406
+print PROCOM
+let rows csv:from-file \"data/ricoveri_parti_2023.csv\"\nlet my-table table:make\n\nforeach but-first rows [ x ->\n  table:put my-table item 0 x  item 1 x\n]\n\n\nforeach gis:feature-list-of tuscany [ this-municipality ->\nprint table:get my-table gis:property-value this-municipality \"PRO_COM\"\n]\n
 NIL
 1
 T
