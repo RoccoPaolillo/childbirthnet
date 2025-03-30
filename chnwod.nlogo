@@ -1,6 +1,9 @@
 extensions [gis table csv]
-globals [tuscany ]
-turtles-own [PRO_COM COMUNE]
+breed [hospital hospitals]
+breed [women womens]
+globals [tuscany PRO_COM COMUNE]
+; womens-own [PRO_COM]
+
 
 to setup
   clear-all
@@ -9,6 +12,8 @@ to setup
   set tuscany gis:load-dataset "data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
+;  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
+  create-womens
   reset-ticks
 end
 
@@ -18,22 +23,22 @@ to displaymap
   gis:draw tuscany 1
 end
 
-to create-citizens
+
+to create-womens
+let childbirths csv:from-file "data/ricoveri_parti_2023.csv"
+let my-table table:make
+
+foreach but-first childbirths [ x ->
+  table:put my-table item 0 x  item 1 x
+]
+
    foreach gis:feature-list-of tuscany [ this-municipality ->
-    gis:create-turtles-inside-polygon this-municipality turtles num_citizens [
-      set shape "person"
-      set size 0.7
-      set color ifelse-value random 100 < 50 [pink][blue]
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
+    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
+      set shape "circle" set size 0.5
+;      set PRO_COM gis:property-value this-municipality "PRO_COM"
     ]
   ]
-end
-
-to create-consultorio
-   foreach gis:feature-list-of tuscany [ this-municipality ->
-    gis:create-turtles-inside-polygon this-municipality turtles num_consultorio [
-      set shape "circle" set size 0.5
-      set PRO_COM gis:property-value this-municipality "PRO_COM"
-    ]
   ]
 end
 @#$#@#$#@
@@ -65,10 +70,10 @@ ticks
 30.0
 
 BUTTON
-39
-28
-102
-61
+27
+51
+90
+84
 setup
 setup
 NIL
@@ -82,74 +87,10 @@ NIL
 1
 
 BUTTON
-804
-26
-912
-59
-create-citizens
-create-citizens
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
-928
-31
-1100
-64
-num_citizens
-num_citizens
-0
-100
-2.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-806
-79
-916
-112
-create-consultorio
-create-consultorio
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
-927
-83
-1099
-116
-num_consultorio
-num_consultorio
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-1129
-56
-1267
-89
+751
+21
+889
+54
 show VectorFeature
 show gis:feature-list-of tuscany
 NIL
@@ -163,63 +104,12 @@ NIL
 1
 
 BUTTON
-809
-155
-1090
-188
-NIL
-foreach gis:feature-list-of tuscany [k -> print k]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-819
-208
-1299
-241
-NIL
-foreach gis:feature-list-of tuscany [k ->\nprint gis:property-value k \"COMUNE\"]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-812
-260
-1139
-293
-NIL
-gis:fill gis:find-one-feature tuscany \"PRO_COM\" 48018 5
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-811
-295
-1407
-328
-NIL
-ask turtle 93 [set comune gis:property-value gis:find-one-feature tuscany \"PRO_COM\" pro_com \"COMUNE\"]
+26
+89
+121
+122
+hide_agents
+ask women [ hide-turtle]
 NIL
 1
 T
