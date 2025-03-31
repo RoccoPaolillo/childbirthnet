@@ -26,6 +26,7 @@ osp <- read_excel("accessi_parto_ospedali.xlsx")
 osp <- osp[,-6]
 write.csv(osp,"accessi_parto_ospedali_used.csv",row.names = F)
 
+osp <- osp %>% group_by(presidio) %>% mutate(totparti = sum(parti))
 
 
 

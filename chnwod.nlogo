@@ -4,7 +4,7 @@ breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany ]
-counselcenter-own [ID ]
+counselcenter-own [ID]
 hospital-own [ID births]
 
 
@@ -16,8 +16,14 @@ to setup
   set tuscany gis:load-dataset "data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-;  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
-;  create-womens
+  create-womens
+  create-counselcenters
+  create-hospitals
+  output-print (word "women: " count women "; counselcenters: " count counselcenter "; hospitals: " count hospital)
+  output-print (word "  " )
+  output-print (word "births per hospital ")
+  output-print (word "  " )
+  ask hospital [output-print (word id " = " births)]
   reset-ticks
 end
 
@@ -35,10 +41,9 @@ let my-table table:make
 foreach but-first childbirths [ x ->
   table:put my-table item 0 x  item 1 x
 ]
-
-   foreach gis:feature-list-of tuscany [ this-municipality ->
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
-    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
+  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of births
+    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
      set shape "circle"
      set color gis:property-value this-municipality "PRO_COM"
      set size 0.2
@@ -48,10 +53,10 @@ foreach but-first childbirths [ x ->
   ]
 end
 
-to create-counselcenters
-let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"
-  foreach but-first consul2019 [ x ->
-   create-counselcenter 1 [set shape "square"
+to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
+let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
+  foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
+   create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
       set color item 0 x
       set pro_com item 0 x
@@ -66,31 +71,24 @@ end
 to create-hospitals
 let hospitals2023 csv:from-file "data/accessi_parto_ospedali_used.csv"
 let listhospitals []
-;let filtered []
-
-foreach but-first hospitals2023 [ row ->
-  let key item 2 row
+foreach but-first hospitals2023 [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
+  let key item 2 row                                               ; so I make first a list of the hospitals we have (24)
   if not member? key listhospitals [
     set listhospitals lput key listhospitals
-;    set filtered lput row filtered
   ]
 ]
 
-  foreach listhospitals [x ->
+  foreach listhospitals [x ->                                      ; for each hospital, one agent hospital is created
     create-hospital 1 [
       set id x
-
- ;     set color item 4 x
- ;     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 x
-
     set shape "triangle"
-      let list_births filter [ [s] -> item 2 s = x ] but-first hospitals2023
-      set births reduce + map [ [s] -> item 5 s ] list_births
-      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"
-      set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"
+      let list_births filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
+      set births reduce + map [ [s] -> item 5 s ] list_births                             ; the total births per hospital across movements are computed
+      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"        ; the color and relocation are computed
+      set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births
       set xcor item 0 loc
-    set ycor item 1 loc
+     set ycor item 1 loc
 
     ]
   ]
@@ -141,10 +139,10 @@ NIL
 1
 
 BUTTON
-1234
-163
-1370
-196
+1262
+14
+1490
+47
 show VectorDataset
 show gis:feature-list-of tuscany
 NIL
@@ -158,10 +156,10 @@ NIL
 1
 
 BUTTON
-877
-64
-1011
-97
+902
+44
+1036
+77
 hide women
 ask women [hide-turtle]
 NIL
@@ -175,44 +173,10 @@ NIL
 1
 
 BUTTON
-740
-28
-872
-61
-NIL
-create-counselcenters
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-877
-28
-1010
-61
-NIL
-create-womens
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-740
-64
-873
-97
+762
+44
+895
+77
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -226,11 +190,11 @@ NIL
 1
 
 BUTTON
-1214
-20
-1321
-53
-color_area
+1384
+122
+1490
+155
+color_municipality
 gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
 NIL
 1
@@ -243,10 +207,10 @@ NIL
 1
 
 INPUTBOX
-1215
-56
-1319
-116
+1263
+121
+1377
+199
 area_municipality
 48017.0
 1
@@ -254,21 +218,21 @@ area_municipality
 Number
 
 INPUTBOX
-1329
-55
-1484
-115
+1262
+53
+1377
+113
 MUNICIPALITY_name
-NIL
+Firenze
 1
 0
 String (reporter)
 
 BUTTON
-1329
-17
-1427
-50
+1384
+70
+1489
+103
 codCOMUNE
 print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
 NIL
@@ -282,10 +246,10 @@ NIL
 1
 
 BUTTON
-741
-101
-874
-134
+763
+81
+896
+114
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -299,10 +263,10 @@ NIL
 1
 
 BUTTON
-878
-101
-1011
-134
+903
+81
+1036
+114
 show women
 ask women [show-turtle]
 NIL
@@ -316,27 +280,10 @@ NIL
 1
 
 BUTTON
-1018
-28
-1134
-61
-NIL
-create-hospitals
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-1233
-128
-1371
-161
+1385
+158
+1490
+191
 show VectorFeature
 print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
 NIL
@@ -350,10 +297,10 @@ NIL
 1
 
 BUTTON
-1018
-64
-1133
-97
+1043
+44
+1158
+77
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -367,10 +314,10 @@ NIL
 1
 
 BUTTON
-1017
-102
-1134
-135
+1042
+82
+1159
+115
 show hospital
 ask hospital [show-turtle]
 NIL
@@ -383,30 +330,55 @@ NIL
 NIL
 1
 
+TEXTBOX
+926
+15
+1007
+33
+the three actors
+10
+0.0
+1
+
+OUTPUT
+1058
+199
+1485
+603
+10
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-Upload shapefile projection and boundaries Tuscany
+Initialization for model of childbirth hospital choice
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Extensions used: GIS, TABLE, CSV, see in the commented code for detail.
+In NetLogo GIS: VectorDataset is the whole sample passed by shp file; VectorFeature is the vector of individual municipality with information associated
+Municipalities represent the boundaries drawn with GIS. The three actors are women (women who gave birth from ricoveri_parti_2023), counselcenter (consultori, from elenco_consultori_2019_used.csv), and hospital (from accessi_parto_ospedali_used.csv)
+Each actor has the variable pro_com, which indicates their municipality, which allows to link between them and municipality from GIS and planned to be used for distance utility.
+Hospitals also hold "births" variable, equal to the number of women who gave bith (or at least delivered) (from accessi_parto_ospedalieri_used.csv", "parti_residenti"). These are the outcomes we want to reproduce for validation, with movement from "accessi_parto_ospedali_used.csv")
+Shape of actors differ (circle: women, counselcenters: square, hospitals: triangle)
+Color of actors is similar by municipality (integer municipality)
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+SETUP: projects GIS and initialize all actors. They are mapped on the GIS. 
+Buttons are available to hide them or not from the simulation (they will exhist)
+Output is reported with total number of women, counselcenter and hospital; for hospital the total of births registered
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+On the right side, the output and inputs to extract either the pro_com by municipality, or color the area if needed, and buttons to hide the actors
 
 ## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+NEXT: the matrix of distances
 
 ## EXTENDING THE MODEL
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
 
 ## NETLOGO FEATURES
 
