@@ -1,18 +1,31 @@
 extensions [gis table csv]
+turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
-globals [tuscany PRO_COM COMUNE]
-hospital-own [ affluence]
+breed [counselcenter counselcenters]
+globals [tuscany distcounsels disthospitals]
+counselcenter-own [ID]
+hospital-own [ID hospitalizations]
+
 
 
 to setup
   clear-all
   ask patches [set pcolor white]
-  gis:load-coordinate-system "data/output/comuni_consultori_2019.prj"
-  set tuscany gis:load-dataset "data/output/comuni_consultori_2019.shp"
+  gis:load-coordinate-system "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
+  set tuscany gis:load-dataset "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-;  set ricoveri_parti csv:from-file "data/ricoveri_parti_2023.csv"
+  create-womens
+  create-counselcenters
+  create-hospitals
+  output-print (word "women: " count women "; counselcenters: " count counselcenter "; hospitals: " count hospital)
+  output-print (word "  " )
+  output-print (word "hospitalizations per hospital ")
+  output-print (word "  " )
+  ask hospital [output-print (word id " = " hospitalizations)]
+  set distcounsels csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  set disthospitals csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_ospedali.csv"
   reset-ticks
 end
 
@@ -24,20 +37,62 @@ end
 
 
 to create-womens
-let childbirths csv:from-file "data/ricoveri_parti_2023.csv"
+let hosptlist csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
 let my-table table:make
 
-foreach but-first childbirths [ x ->
+foreach but-first hosptlist [ x ->
   table:put my-table item 0 x  item 1 x
 ]
-
-   foreach gis:feature-list-of tuscany [ this-municipality ->
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [
-    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [
-      set shape "circle" set size 0.5
-      set PRO_COM gis:property-value this-municipality "PRO_COM"
+  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
+    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
+     set shape "circle"
+     set color gis:property-value this-municipality "PRO_COM"
+     set size 0.2
+     set PRO_COM gis:property-value this-municipality "PRO_COM"
     ]
   ]
+  ]
+end
+
+to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
+let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
+  foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
+   create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
+      set id item 1 x
+      set color item 0 x
+      set pro_com item 0 x
+    let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
+    set xcor item 0 loc
+    set ycor item 1 loc
+]
+  ]
+end
+
+
+to create-hospitals
+let hospitals2023 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
+let listhospitals []
+foreach but-first hospitals2023 [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
+  let key item 2 row                                               ; so I make first a list of the hospitals we have (24)
+  if not member? key listhospitals [
+    set listhospitals lput key listhospitals
+  ]
+]
+
+  foreach listhospitals [x ->                                      ; for each hospital, one agent hospital is created
+    create-hospital 1 [
+      set id x
+    set shape "triangle"
+      let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
+      set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
+      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
+      set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
+      let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
+      set xcor item 0 loc
+     set ycor item 1 loc
+
+    ]
   ]
 end
 @#$#@#$#@
@@ -69,10 +124,10 @@ ticks
 30.0
 
 BUTTON
-39
-28
-102
-61
+27
+51
+90
+84
 setup
 setup
 NIL
@@ -86,75 +141,11 @@ NIL
 1
 
 BUTTON
-803
-26
-919
-59
-create-hospitals
-create-hospitals
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
-924
-21
-1096
-54
-num_hospital
-num_hospital
-0
-100
-2.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-806
-79
-916
-112
-create-consultorio
-create-consultorio
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
-927
-83
-1099
-116
-num_consultorio
-num_consultorio
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-1129
-56
-1267
-89
-show VectorFeature
+1262
+14
+1490
+47
+show VectorDataset
 show gis:feature-list-of tuscany
 NIL
 1
@@ -167,12 +158,85 @@ NIL
 1
 
 BUTTON
-809
+902
+44
+1036
+77
+hide women
+ask women [hide-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+762
+44
+895
+77
+hide counselcenter
+ask counselcenter [ hide-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1384
+122
+1490
 155
-1090
-188
+color_municipality
+gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
 NIL
-foreach gis:feature-list-of tuscany [k -> print k]
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+1261
+120
+1375
+190
+area_municipality
+53011.0
+1
+0
+Number
+
+INPUTBOX
+1262
+53
+1377
+113
+MUNICIPALITY_name
+NIL
+1
+0
+String (reporter)
+
+BUTTON
+1384
+70
+1489
+103
+codCOMUNE
+print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
 NIL
 1
 T
@@ -184,29 +248,12 @@ NIL
 1
 
 BUTTON
-819
-208
-1299
-241
-NIL
-foreach gis:feature-list-of tuscany [k ->\nprint gis:property-value k \"COMUNE\"]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-812
-260
-1139
-293
-NIL
-gis:fill gis:find-one-feature tuscany \"PRO_COM\" 48018 5
+763
+81
+896
+114
+show counselcenter
+ask counselcenter [ show-turtle]
 NIL
 1
 T
@@ -218,29 +265,12 @@ NIL
 1
 
 BUTTON
-811
-295
-1407
-328
-NIL
-ask turtle 93 [set comune gis:property-value gis:find-one-feature tuscany \"PRO_COM\" pro_com \"COMUNE\"]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-803
-376
-866
-409
-test
-let dict table:make\ntable:put dict \"a\" 5\ntable:put dict \"a\" 3\ntable:put dict \"b\" 9\ntable:put dict \"a\" 53\nprint table:get dict \"a\"\nprint table:get dict \"b\"
+903
+81
+1036
+114
+show women
+ask women [show-turtle]
 NIL
 1
 T
@@ -252,12 +282,12 @@ NIL
 1
 
 BUTTON
-875
-376
-980
-409
-table_ricovery
-let rows csv:from-file \"data/ricoveri_parti_2023.csv\"\n;foreach but-first rows [k -> print item 1 k]\n;print but-first rows\n\n\nlet my-table table:make\n\n;; assuming the first row has headers, and the first column is the key\nforeach but-first rows [ x ->\n;  let key item 0 x\n;  let value item 1 x  ;; or pick specific columns\n  table:put my-table item 0 x  item 1 x\n;   value \n]\n\nprint my-table \n;print table:get my-table 45004
+1385
+157
+1490
+190
+show VectorFeature
+print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
 NIL
 1
 T
@@ -269,12 +299,12 @@ NIL
 1
 
 BUTTON
-995
-373
-1101
-406
-print PROCOM
-let rows csv:from-file \"data/ricoveri_parti_2023.csv\"\nlet my-table table:make\n\nforeach but-first rows [ x ->\n  table:put my-table item 0 x  item 1 x\n]\n\n\nforeach gis:feature-list-of tuscany [ this-municipality ->\nprint table:get my-table gis:property-value this-municipality \"PRO_COM\"\n]\n
+1043
+44
+1158
+77
+hide hospitals
+ask hospital [hide-turtle]
 NIL
 1
 T
@@ -283,32 +313,202 @@ NIL
 NIL
 NIL
 NIL
+1
+
+BUTTON
+1042
+82
+1159
+115
+show hospital
+ask hospital [show-turtle]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+926
+15
+1007
+33
+the three actors
+10
+0.0
+1
+
+OUTPUT
+1058
+199
+1485
+603
+10
+
+BUTTON
+764
+351
+853
+384
+distance_counsel
+ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distcounsels\nprint (word \"distance women counselcenter: \" item counselspos item 0 filter [x -> first x = [pro_com] of self] distcounsels)\n\n ]\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+760
+186
+853
+246
+womens_who
+329.0
+1
+0
+Number
+
+INPUTBOX
+762
+253
+854
+314
+counsels_who
+20264.0
+1
+0
+Number
+
+BUTTON
+858
+200
+950
+233
+womens_pro_com
+show  (word \"municipality woman \" [pro_com] of womens womens_who)
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+763
+315
+853
+348
+consel_pro_com
+show   (word \"municipality counselcenter \" [pro_com] of counselcenters counsels_who)
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+858
+351
+950
+384
+distance_hospital
+ask womens womens_who [\n\nlet hospitalpos position [pro_com] of hospitals hospital_who item 0 disthospitals\nprint  (word \"distance women hospital: \" item hospitalpos item 0 filter [x -> first x = [pro_com] of self] disthospitals)\n\n ]\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+857
+254
+950
+314
+hospital_who
+20385.0
+1
+0
+Number
+
+BUTTON
+858
+316
+949
+349
+hospital_pro_com
+show   (word \"municipality hospital \" [pro_com] of hospitals hospital_who)
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+761
+161
+952
+179
+Report distances
+15
+0.0
 1
 
 @#$#@#$#@
 ## WHAT IS IT?
 
-Upload shapefile projection and boundaries Tuscany
+Initialization for model of childbirth hospital choice
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Extensions used: GIS, TABLE, CSV, see in the commented code for detail.
+In NetLogo GIS: VectorDataset is the whole sample passed by shp file; VectorFeature is the vector of individual municipality with information associated
+Municipalities represent the boundaries drawn with GIS. The three actors are women (women who gave birth from ricoveri_parti_2023), counselcenter (consultori, from elenco_consultori_2019_used.csv), and hospital (from accessi_parto_ospedali_used.csv)
+Each actor has the variable pro_com, which indicates their municipality, which allows to link between them and municipality from GIS and planned to be used for distance utility.
+Hospitals also hold "hospitalizations" variable, equal to the number of women who gave bith (or at least delivered) (from accessi_parto_ospedalieri_used.csv", "parti_residenti"). These are the outcomes we want to reproduce for validation, with movement from "accessi_parto_ospedali_used.csv")
+Shape of actors differ (circle: women, counselcenters: square, hospitals: triangle)
+Color of actors is similar by municipality (integer municipality)
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+SETUP: projects GIS and initialize all actors. They are mapped on the GIS. 
+Buttons are available to hide them or not from the simulation (they will exhist)
+Output is reported with total number of women, counselcenter and hospital; for hospital the total of births registered
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+On the right side, the output and inputs to extract either the pro_com by municipality, or color the area if needed, and buttons to hide the actors
 
 ## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+NEXT: the matrix of distances
 
 ## EXTENDING THE MODEL
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
 
 ## NETLOGO FEATURES
 
@@ -620,6 +820,17 @@ false
 Polygon -16777216 true false 253 133 245 131 245 133
 Polygon -7500403 true true 2 194 13 197 30 191 38 193 38 205 20 226 20 257 27 265 38 266 40 260 31 253 31 230 60 206 68 198 75 209 66 228 65 243 82 261 84 268 100 267 103 261 77 239 79 231 100 207 98 196 119 201 143 202 160 195 166 210 172 213 173 238 167 251 160 248 154 265 169 264 178 247 186 240 198 260 200 271 217 271 219 262 207 258 195 230 192 198 210 184 227 164 242 144 259 145 284 151 277 141 293 140 299 134 297 127 273 119 270 105
 Polygon -7500403 true true -1 195 14 180 36 166 40 153 53 140 82 131 134 133 159 126 188 115 227 108 236 102 238 98 268 86 269 92 281 87 269 103 269 113
+
+women
+false
+0
+Circle -7500403 true true 110 5 80
+Polygon -7500403 true true 105 90 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285 180 195 195 90
+Rectangle -7500403 true true 127 79 172 94
+Polygon -7500403 true true 195 90 240 150 225 180 165 105
+Polygon -7500403 true true 105 90 60 150 75 180 135 105
+Polygon -7500403 true true 135 180 180 195 225 255 60 255
+Polygon -7500403 true true 120 15 90 75 210 75 180 15 180 45
 
 x
 false

@@ -19,21 +19,26 @@ cons2019[cons2019$Codice.struttura == "31012D" & cons2019$Comune == "REGGELLO", 
 
 cons2019_used <- cons2019 %>% select(Codice.Comune,Codice.struttura)
 
-write.csv(cons2019_used,"elenco_consultori_2019_used.csv",row.names = F)
+# write.csv(cons2019_used,"elenco_consultori_2019_used.csv",row.names = F)
 
 # 
 osp <- read_excel("accessi_parto_ospedali.xlsx")
 osp <- osp[,-6]
-write.csv(osp,"accessi_parto_ospedali_used.csv",row.names = F)
+# write.csv(osp,"accessi_parto_ospedali_used.csv",row.names = F)
 
 osp <- osp %>% group_by(presidio) %>% mutate(totparti = sum(parti))
 
+# matrice distanze
 
+distcounsel <- read.csv("matrice_distanze_consultori.csv",sep="," , check.names = FALSE) 
+names(distcounsel)[1] <- "womencom"
+# to test: first element is municipality woman, second is municipality counselcenter
+distcounsel[distcounsel$womencom == "51041","49007"]
 
-
-
-
-
+disthospital <- read.csv("matrice_distanze_ospedali.csv",sep="," , check.names = FALSE) 
+names(disthospital)[1] <- "womencom"
+# to test: first element is municipality woman, second is municipality hospital
+disthospital[disthospital$womencom == "51041","49014"]
 
 
 
