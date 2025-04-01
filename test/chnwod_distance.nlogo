@@ -12,8 +12,8 @@ hospital-own [ID hospitalizations]
 to setup
   clear-all
   ask patches [set pcolor white]
-  gis:load-coordinate-system "data/output/comuni_consultori_2019.prj"
-  set tuscany gis:load-dataset "data/output/comuni_consultori_2019.shp"
+  gis:load-coordinate-system "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
+  set tuscany gis:load-dataset "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
   create-womens
@@ -24,7 +24,7 @@ to setup
   output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
-  set distcounsels csv:from-file "data/matrice_distanze_consultori.csv"
+  set distcounsels csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   reset-ticks
 end
 
@@ -36,7 +36,7 @@ end
 
 
 to create-womens
-let hosptlist csv:from-file "data/ricoveri_parti_2023.csv"
+let hosptlist csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
 let my-table table:make
 
 foreach but-first hosptlist [ x ->
@@ -55,7 +55,7 @@ foreach but-first hosptlist [ x ->
 end
 
 to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
-let consul2019 csv:from-file "data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
+let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
@@ -70,7 +70,7 @@ end
 
 
 to create-hospitals
-let hospitals2023 csv:from-file "data/accessi_parto_ospedali_used.csv"
+let hospitals2023 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
 let listhospitals []
 foreach but-first hospitals2023 [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
   let key item 2 row                                               ; so I make first a list of the hospitals we have (24)
