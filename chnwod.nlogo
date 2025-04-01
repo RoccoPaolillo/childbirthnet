@@ -3,7 +3,7 @@ turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
-globals [tuscany ]
+globals [tuscany distcounsels]
 counselcenter-own [ID]
 hospital-own [ID hospitalizations]
 
@@ -24,6 +24,7 @@ to setup
   output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
+  set distcounsels csv:from-file "data/matrice_distanze_consultori.csv"
   reset-ticks
 end
 
@@ -207,12 +208,12 @@ NIL
 1
 
 INPUTBOX
-1263
-121
-1377
-199
+1261
+120
+1375
+190
 area_municipality
-48017.0
+45002.0
 1
 0
 Number
@@ -281,9 +282,9 @@ NIL
 
 BUTTON
 1385
-158
+157
 1490
-191
+190
 show VectorFeature
 print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
 NIL
@@ -346,6 +347,45 @@ OUTPUT
 1485
 603
 10
+
+BUTTON
+813
+271
+913
+304
+testdistances
+ask womens 2233 [\n\nlet counselspos position [pro_com] of counselcenters 20316 item 0 distcounsels\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distcounsels\n\n ]\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+779
+139
+934
+199
+womens_who
+0.0
+1
+0
+Number
+
+INPUTBOX
+780
+203
+935
+263
+counsels_who
+0.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
