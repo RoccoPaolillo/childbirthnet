@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany ]
 counselcenter-own [ID]
-hospital-own [ID births]
+hospital-own [ID hospitalizations]
 
 
 
@@ -21,9 +21,9 @@ to setup
   create-hospitals
   output-print (word "women: " count women "; counselcenters: " count counselcenter "; hospitals: " count hospital)
   output-print (word "  " )
-  output-print (word "births per hospital ")
+  output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
-  ask hospital [output-print (word id " = " births)]
+  ask hospital [output-print (word id " = " hospitalizations)]
   reset-ticks
 end
 
@@ -35,14 +35,14 @@ end
 
 
 to create-womens
-let childbirths csv:from-file "data/ricoveri_parti_2023.csv"
+let hosptlist csv:from-file "data/ricoveri_parti_2023.csv"
 let my-table table:make
 
-foreach but-first childbirths [ x ->
+foreach but-first hosptlist [ x ->
   table:put my-table item 0 x  item 1 x
 ]
   foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of births
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
      set shape "circle"
      set color gis:property-value this-municipality "PRO_COM"
@@ -82,11 +82,11 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     create-hospital 1 [
       set id x
     set shape "triangle"
-      let list_births filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
-      set births reduce + map [ [s] -> item 5 s ] list_births                             ; the total births per hospital across movements are computed
-      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"        ; the color and relocation are computed
-      set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
-      let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_births
+      let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
+      set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
+      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
+      set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
+      let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
      set ycor item 1 loc
 
