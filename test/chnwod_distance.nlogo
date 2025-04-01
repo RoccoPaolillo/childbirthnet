@@ -3,7 +3,7 @@ turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
-globals [tuscany distcounsels]
+globals [tuscany distcounsels disthospitals]
 counselcenter-own [ID]
 hospital-own [ID hospitalizations]
 
@@ -25,6 +25,7 @@ to setup
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
   set distcounsels csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  set disthospitals csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_ospedali.csv"
   reset-ticks
 end
 
@@ -213,7 +214,7 @@ INPUTBOX
 1375
 190
 area_municipality
-45002.0
+53011.0
 1
 0
 Number
@@ -224,7 +225,7 @@ INPUTBOX
 1377
 113
 MUNICIPALITY_name
-Firenze
+NIL
 1
 0
 String (reporter)
@@ -349,12 +350,12 @@ OUTPUT
 10
 
 BUTTON
-813
-271
-913
-304
-testdistances
-ask womens 2233 [\n\nlet counselspos position [pro_com] of counselcenters 20316 item 0 distcounsels\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distcounsels\n\n ]\n
+764
+351
+853
+384
+distance_counsel
+ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distcounsels\nprint (word \"distance women counselcenter: \" item counselspos item 0 filter [x -> first x = [pro_com] of self] distcounsels)\n\n ]\n
 NIL
 1
 T
@@ -366,26 +367,115 @@ NIL
 1
 
 INPUTBOX
-779
-139
-934
-199
+760
+186
+853
+246
 womens_who
-0.0
+329.0
 1
 0
 Number
 
 INPUTBOX
-780
-203
-935
-263
+762
+253
+854
+314
 counsels_who
-0.0
+20264.0
 1
 0
 Number
+
+BUTTON
+858
+200
+950
+233
+womens_pro_com
+show  (word \"municipality woman \" [pro_com] of womens womens_who)
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+763
+315
+853
+348
+consel_pro_com
+show   (word \"municipality counselcenter \" [pro_com] of counselcenters counsels_who)
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+858
+351
+950
+384
+distance_hospital
+ask womens womens_who [\n\nlet hospitalpos position [pro_com] of hospitals hospital_who item 0 disthospitals\nprint  (word \"distance women hospital: \" item hospitalpos item 0 filter [x -> first x = [pro_com] of self] disthospitals)\n\n ]\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+857
+254
+950
+314
+hospital_who
+20385.0
+1
+0
+Number
+
+BUTTON
+858
+316
+949
+349
+hospital_pro_com
+show   (word \"municipality hospital \" [pro_com] of hospitals hospital_who)
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+761
+161
+952
+179
+Report distances
+15
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
