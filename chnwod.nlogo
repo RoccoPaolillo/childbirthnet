@@ -358,7 +358,7 @@ Extensions used: GIS, TABLE, CSV, see in the commented code for detail.
 In NetLogo GIS: VectorDataset is the whole sample passed by shp file; VectorFeature is the vector of individual municipality with information associated
 Municipalities represent the boundaries drawn with GIS. The three actors are women (women who gave birth from ricoveri_parti_2023), counselcenter (consultori, from elenco_consultori_2019_used.csv), and hospital (from accessi_parto_ospedali_used.csv)
 Each actor has the variable pro_com, which indicates their municipality, which allows to link between them and municipality from GIS and planned to be used for distance utility.
-Hospitals also hold "births" variable, equal to the number of women who gave bith (or at least delivered) (from accessi_parto_ospedalieri_used.csv", "parti_residenti"). These are the outcomes we want to reproduce for validation, with movement from "accessi_parto_ospedali_used.csv")
+Hospitals also hold "hospitalizations" variable, equal to the number of women who gave bith (or at least delivered) (from accessi_parto_ospedalieri_used.csv", "parti_residenti"). These are the outcomes we want to reproduce for validation, with movement from "accessi_parto_ospedali_used.csv")
 Shape of actors differ (circle: women, counselcenters: square, hospitals: triangle)
 Color of actors is similar by municipality (integer municipality)
 
