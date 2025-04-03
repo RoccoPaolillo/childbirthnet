@@ -42,7 +42,7 @@ disthospital[disthospital$womencom == "51041","49014"]
 
 # distall <- cbind(distcounsel,disthospital)
 distall <- read.csv("matrice_distanze_all.csv",sep="," , check.names = FALSE)
-distall[distall$womencom == "53014","47014"]
+distall[distall$womencom == "48049","52037"]
 
 
 
