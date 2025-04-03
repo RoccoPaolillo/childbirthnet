@@ -3,7 +3,7 @@ turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
-globals [tuscany distcounsels disthospitals]
+globals [tuscany distservices]
 counselcenter-own [ID]
 hospital-own [ID hospitalizations]
 
@@ -24,8 +24,7 @@ to setup
   output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
-  set distcounsels csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
-  set disthospitals csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_ospedali.csv"
+  set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_all.csv"
   reset-ticks
 end
 
@@ -355,7 +354,7 @@ BUTTON
 853
 384
 distance_counsel
-ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distcounsels\nprint (word \"distance women counselcenter: \" item counselspos item 0 filter [x -> first x = [pro_com] of self] distcounsels)\n\n ]\n
+ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint (word \"distance women counselcenter: \" item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices)\n\n ]\n
 NIL
 1
 T
@@ -372,7 +371,7 @@ INPUTBOX
 853
 246
 womens_who
-329.0
+12969.0
 1
 0
 Number
@@ -383,7 +382,7 @@ INPUTBOX
 854
 314
 counsels_who
-20264.0
+20272.0
 1
 0
 Number
@@ -428,7 +427,7 @@ BUTTON
 950
 384
 distance_hospital
-ask womens womens_who [\n\nlet hospitalpos position [pro_com] of hospitals hospital_who item 0 disthospitals\nprint  (word \"distance women hospital: \" item hospitalpos item 0 filter [x -> first x = [pro_com] of self] disthospitals)\n\n ]\n
+ask womens womens_who [\n\nlet hospitalpos position [pro_com] of hospitals hospital_who item 0 distservices\nprint  (word \"distance women hospital: \" item hospitalpos item 0 filter [x -> first x = [pro_com] of self] distservices)\n\n ]\n
 NIL
 1
 T
@@ -445,7 +444,7 @@ INPUTBOX
 950
 314
 hospital_who
-20385.0
+20380.0
 1
 0
 Number
