@@ -1,4 +1,4 @@
-extensions [gis table csv]
+extensions [gis table csv rnd]
 turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
@@ -96,9 +96,9 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   ]
 end
 
-to-report dist [destination]  ; utility function: sim = number similar (neighborhood moore); tot = total number agents in Moore distance
+to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
-report item destinationpos item 0 filter [x -> first x = [pro_com] of self] distservices
+report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
  end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -394,12 +394,12 @@ counsels_who
 Number
 
 BUTTON
-29
+28
 108
-94
+93
 141
 choice
-ask womens 12848 [\nlet radius 1\nlet counselsoptions no-turtles \n\nwhile [count counselsoptions < 5] [\n\nset counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]\nset radius radius + 1\n] \n\nask n-of 5 counselsoptions [set color [color] of myself set label [who] of myself]\n\n\n]
+ask womens 12848 [\nprint pro_com\nlet radius 1\n\nlet counselsoptions no-turtles \n\nwhile [count counselsoptions < 5] [\n\nset counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]\nset radius radius + 1\n] \n\nask n-of 5 counselsoptions [\nset color red\nlet utility 0 ; must be global\nset utility (weight_distance * dist myself self)\nprint (word utility \" \" dist myself self \" \" pro_com)\n]\n\n\n\n]
 NIL
 1
 T
@@ -426,6 +426,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+33
+209
+161
+242
+weight_distance
+weight_distance
+-10
+10
+-10.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
