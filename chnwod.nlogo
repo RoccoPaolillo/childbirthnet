@@ -96,9 +96,9 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   ]
 end
 
-to-report dist [destination]  ; utility function: sim = number similar (neighborhood moore); tot = total number agents in Moore distance
+to-report dist [origin destination]  ; utility function: sim = number similar (neighborhood moore); tot = total number agents in Moore distance
 let destinationpos position [pro_com] of destination item 0 distservices
-report item destinationpos item 0 filter [x -> first x = [pro_com] of self] distservices
+report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
  end
 @#$#@#$#@
 GRAPHICS-WINDOW

@@ -33,7 +33,7 @@ osp <- osp %>% group_by(presidio) %>% mutate(totparti = sum(parti))
 distcounsel <- read.csv("matrice_distanze_consultori.csv",sep="," , check.names = FALSE) 
 names(distcounsel)[1] <- "womencom"
 # to test: first element is municipality woman, second is municipality counselcenter
-distcounsel[distcounsel$womencom == "51041","49007"]
+distcounsel[distcounsel$womencom == "47005","48008"]
 
 disthospital <- read.csv("matrice_distanze_ospedali.csv",sep="," , check.names = FALSE) 
 names(disthospital)[1] <- "womencom"
@@ -42,7 +42,7 @@ disthospital[disthospital$womencom == "51041","49014"]
 
 # distall <- cbind(distcounsel,disthospital)
 distall <- read.csv("matrice_distanze_all.csv",sep="," , check.names = FALSE)
-distall[distall$womencom == "48049","52037"]
+distall[distall$womencom == "47005","48050"]
 
 
 

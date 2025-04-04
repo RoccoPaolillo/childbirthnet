@@ -1,4 +1,4 @@
-extensions [gis table csv]
+extensions [gis table csv rnd]
 turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
@@ -59,7 +59,7 @@ let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirt
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
-      set color item 0 x
+      set color gray ;  item 0 x
       set pro_com item 0 x
       set capacity 10
     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
@@ -96,9 +96,9 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   ]
 end
 
-to-report dist [destination]  ; utility function: sim = number similar (neighborhood moore); tot = total number agents in Moore distance
+to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
-report item destinationpos item 0 filter [x -> first x = [pro_com] of self] distservices
+report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
  end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -392,6 +392,55 @@ counsels_who
 1
 0
 Number
+
+BUTTON
+28
+108
+93
+141
+choice
+ask womens 12848 [\nprint pro_com\nlet radius 1\n\nlet counselsoptions no-turtles \n\nwhile [count counselsoptions < 5] [\n\nset counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]\nset radius radius + 1\n] \n\nask n-of 5 counselsoptions [\nset color red\nlet utility 0 ; must be global\nset utility (weight_distance * dist myself self)\nprint (word utility \" \" dist myself self \" \" pro_com)\n]\n\n\n\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+31
+162
+171
+195
+reset counselceter capacity
+ask counselcenter [set label \"\" set capacity 10]\nask n-of (count counselcenter / 2) counselcenter [set capacity 0]\nask counselcenter [set color grey]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+33
+209
+161
+242
+weight_distance
+weight_distance
+-10
+10
+-10.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
