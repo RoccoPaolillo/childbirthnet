@@ -59,7 +59,7 @@ let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirt
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
-      set color item 0 x
+      set color gray ;  item 0 x
       set pro_com item 0 x
       set capacity 10
     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
@@ -392,6 +392,40 @@ counsels_who
 1
 0
 Number
+
+BUTTON
+29
+108
+94
+141
+choice
+ask womens 12848 [\nlet radius 1\nlet counselsoptions no-turtles \n\nwhile [count counselsoptions < 5] [\n\nset counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]\nset radius radius + 1\n] \n\nask n-of 5 counselsoptions [set color [color] of myself set label [who] of myself]\n\n\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+31
+162
+171
+195
+reset counselceter capacity
+ask counselcenter [set label \"\" set capacity 10]\nask n-of (count counselcenter / 2) counselcenter [set capacity 0]\nask counselcenter [set color grey]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
