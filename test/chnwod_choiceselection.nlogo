@@ -26,7 +26,7 @@ to setup
   output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
-  set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_all.csv"
+  set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   reset-ticks
 end
 
@@ -444,23 +444,6 @@ NIL
 NIL
 1
 
-BUTTON
-29
-450
-169
-483
-reset counselceter capacity
-ask counselcenter [set label \"\" set capacity 10]\nask n-of (count counselcenter / 2) counselcenter [set capacity 0]\nask counselcenter [set color grey]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 33
 274
@@ -468,9 +451,9 @@ SLIDER
 307
 weight_distance
 weight_distance
--10
-10
--3.0
+-100
+100
+-51.0
 1
 1
 NIL
@@ -521,7 +504,7 @@ INPUTBOX
 79
 221
 stop_if
-13.0
+72.0
 1
 0
 Number
@@ -532,7 +515,7 @@ INPUTBOX
 99
 156
 count_pregnant
-10.0
+1.0
 1
 0
 Number
@@ -543,7 +526,7 @@ INPUTBOX
 204
 155
 wave_pregnant
-2.0
+1.0
 1
 0
 Number
@@ -562,7 +545,7 @@ Each wave_pregnant, a total of count_pregnant women randomly extracted are assig
 When called to execute "choice", they first scan the available counselcenters around them with in-radius 0.5, looking for at least 5 counselcenters (they can be more as long as match conditions); counselcenters have a capacity each (20 spots) that runs out as long as they are selected. If there are no counselcenters with empty spots, they enlarge the radius. This means the location is as local as possible. Once the set of possible counselcenters is available ( counselsoptions in choice block), the distance to the woman is calculated using dist reporter for each counselcenter (origin = woman, destination = counselcenter). For each counselcenter, a utility is computed by the individual woman as a weighted function of the distance, i.e.
 
 Utility = weight_distance parameter * distance
-Weight_distance parameter is negative because we need to select the option with lower distance, hence utility has to be negative [because in general we don't "maximize" distance in our case but minimize].
+Weight_distance parameter is negative because we need to select the option with lower distance, hence utility has to be negative [because higher utility for us means lower distance].
 Note that the computed utility of the counselcenter will remain that one until a new woman will assign "her utility" to  that counselcenter based on the distance to her.
 
 The actual selection of the closer counselcenter according to conditional logit (Pi = exp(Ui) / sum(exp(Uall)) is done with random-wheel-selection [rnd extension]:

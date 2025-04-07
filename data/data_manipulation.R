@@ -33,18 +33,37 @@ osp <- osp %>% group_by(presidio) %>% mutate(totparti = sum(parti))
 distcounsel <- read.csv("matrice_distanze_consultori.csv",sep="," , check.names = FALSE) 
 names(distcounsel)[1] <- "womencom"
 # to test: first element is municipality woman, second is municipality counselcenter
-distcounsel[distcounsel$womencom == "47005","48008"]
+distcounsel[distcounsel$womencom == "47005","45010"]
 
 disthospital <- read.csv("matrice_distanze_ospedali.csv",sep="," , check.names = FALSE) 
 names(disthospital)[1] <- "womencom"
 # to test: first element is municipality woman, second is municipality hospital
 disthospital[disthospital$womencom == "51041","49014"]
 
-# distall <- cbind(distcounsel,disthospital)
-distall <- read.csv("matrice_distanze_all.csv",sep="," , check.names = FALSE)
-distall[distall$womencom == "47005","48050"]
+# test that distcounsel already contains disthospital
 
+unique(levels(as.factor(names(disthospital)  %in% names(distcounsel))))
+unique(levels(as.factor(names(distcounsel)  %in% names(disthospital))))
 
+cols_to_exclude <- c("womencom")
+
+numeric_data <- distcounsel[ , !(names(distcounsel) %in% cols_to_exclude)]
+
+global_min <- min(as.matrix(numeric_data), na.rm = TRUE)
+global_max <- max(as.matrix(numeric_data), na.rm = TRUE)
+
+normalize_global <- function(x) {
+  if (is.numeric(x)) (x - global_min) / (global_max - global_min) else x
+}
+
+df_normalized <- distcounsel
+df_normalized[ , !(names(distcounsel) %in% cols_to_exclude)] <- lapply(
+  distcounsel[ , !(names(distcounsel) %in% cols_to_exclude)],
+  normalize_global
+)
+
+write.csv(df_normalized, file = "normalized_distance.csv",row.names = F)
+df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALSE)
 
 
 
