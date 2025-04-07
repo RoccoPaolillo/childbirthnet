@@ -11,6 +11,7 @@ women-own [pregnant givenbirth selcounsel]
 
 
 to setup
+  random-seed 10
   clear-all
   ask patches [set pcolor white]
   gis:load-coordinate-system "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
@@ -97,6 +98,36 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
 
     ]
   ]
+end
+
+
+to choice
+
+set pregnant true
+print (word "woman: " who " pro_com: " pro_com)
+let radius 0.5
+
+let counselsoptions no-turtles
+
+while [count counselsoptions < 5] [
+set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
+set radius radius + 1
+]
+
+ask  counselsoptions [
+set color [color] of myself
+set utility (weight_distance * dist myself self)
+
+print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility " distance: " dist myself self " pro_com: " pro_com)
+  ]
+
+set selcounsel [who] of rnd:weighted-one-of counselsoptions [exp( utility)]
+ask counselcenter with [who = [selcounsel] of myself][set capacity capacity - 1 ]
+print (word "woman: " who " pro_com: " pro_com " selcounsel: " selcounsel)
+ask  counselsoptions [
+print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility " distance: " dist myself self " pro_com: " pro_com)
+  ]
+
 end
 
 to-report dist [origin destination]
@@ -402,8 +433,8 @@ BUTTON
 175
 207
 choice
-if ticks > 0 and ticks mod wave_pregnant = 0 [\nask n-of count_pregnant women [\nset pregnant true\nprint (word \"woman: \" who \" pro_com: \" pro_com)\nlet radius 0.5\n\nlet counselsoptions no-turtles \n\nwhile [count counselsoptions < 5] [\nset counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]\nset radius radius + 1\n] \n\nask  counselsoptions [ \nset color [color] of myself\nset utility (weight_distance * dist myself self)\n\nprint (word \"counselcenter: \"  who \" capacity: \" capacity \" utility: \"  utility \" distance: \" dist myself self \" pro_com: \" pro_com)\n  ]\n  \nset selcounsel [who] of rnd:weighted-one-of counselsoptions [exp(utility)]\nask counselcenter with [who = [selcounsel] of myself][set capacity capacity - 1 ]\nprint (word \"woman: \" who \" pro_com: \" pro_com \" selcounsel: \" selcounsel)\nask  counselsoptions [ \nprint (word \"counselcenter: \"  who \" capacity: \" capacity \" utility: \"  utility \" distance: \" dist myself self \" pro_com: \" pro_com)\n  ]\n ]\n \n]\n\ntick\nif ticks = stop_if [stop]
-NIL
+if ticks > 0 and ticks mod wave_pregnant = 0 [\n  ask n-of count_pregnant women [\n choice\n]\n]\n\ntick\nif ticks = stop_if [stop]
+T
 1
 T
 OBSERVER
@@ -414,10 +445,10 @@ NIL
 1
 
 BUTTON
-31
-227
-171
-260
+29
+450
+169
+483
 reset counselceter capacity
 ask counselcenter [set label \"\" set capacity 10]\nask n-of (count counselcenter / 2) counselcenter [set capacity 0]\nask counselcenter [set color grey]
 NIL
@@ -439,7 +470,7 @@ weight_distance
 weight_distance
 -10
 10
-0.0
+-3.0
 1
 1
 NIL
@@ -490,7 +521,7 @@ INPUTBOX
 79
 221
 stop_if
-5.0
+13.0
 1
 0
 Number
@@ -501,7 +532,7 @@ INPUTBOX
 99
 156
 count_pregnant
-1.0
+10.0
 1
 0
 Number
@@ -512,56 +543,55 @@ INPUTBOX
 204
 155
 wave_pregnant
-1.0
+2.0
 1
 0
 Number
 
-SLIDER
-23
-436
-195
-469
-weight_distance
-weight_distance
-0
-20
-0.0
-1
-1
-NIL
-HORIZONTAL
-
 @#$#@#$#@
 ## WHAT IS IT?
 
-Initialization for model of childbirth hospital choice
+Test random utility model for counselcenter based on distance.
+Each wave, an amount of women get pregnant and make a decision on the counselcenter.
+They first scan in-radius 0.5 the available counselcenters, at each a utility is assigned based on distance and the one with closer distance is selected. The determinism of the choice is based on weighted parameter distance according to conditional logit.
+
 
 ## HOW IT WORKS
 
-Extensions used: GIS, TABLE, CSV, see in the commented code for detail.
-In NetLogo GIS: VectorDataset is the whole sample passed by shp file; VectorFeature is the vector of individual municipality with information associated
-Municipalities represent the boundaries drawn with GIS. The three actors are women (women who gave birth from ricoveri_parti_2023), counselcenter (consultori, from elenco_consultori_2019_used.csv), and hospital (from accessi_parto_ospedali_used.csv)
-Each actor has the variable pro_com, which indicates their municipality, which allows to link between them and municipality from GIS and planned to be used for distance utility.
-Hospitals also hold "hospitalizations" variable, equal to the number of women who gave bith (or at least delivered) (from accessi_parto_ospedalieri_used.csv", "parti_residenti"). These are the outcomes we want to reproduce for validation, with movement from "accessi_parto_ospedali_used.csv")
-Shape of actors differ (circle: women, counselcenters: square, hospitals: triangle)
-Color of actors is similar by municipality (integer municipality)
+Each wave_pregnant, a total of count_pregnant women randomly extracted are assigned to be pregnant. They will execute the "choice" commmand. In the simulation, they will behave according to being "pregnant", until they "givebirth", which is a way to avoid extraction of the same woman twice. 
+When called to execute "choice", they first scan the available counselcenters around them with in-radius 0.5, looking for at least 5 counselcenters (they can be more as long as match conditions); counselcenters have a capacity each (20 spots) that runs out as long as they are selected. If there are no counselcenters with empty spots, they enlarge the radius. This means the location is as local as possible. Once the set of possible counselcenters is available ( counselsoptions in choice block), the distance to the woman is calculated using dist reporter for each counselcenter (origin = woman, destination = counselcenter). For each counselcenter, a utility is computed by the individual woman as a weighted function of the distance, i.e.
+
+Utility = weight_distance parameter * distance
+Weight_distance parameter is negative because we need to select the option with lower distance, hence utility has to be negative [because in general we don't "maximize" distance in our case but minimize].
+Note that the computed utility of the counselcenter will remain that one until a new woman will assign "her utility" to  that counselcenter based on the distance to her.
+
+The actual selection of the closer counselcenter according to conditional logit (Pi = exp(Ui) / sum(exp(Uall)) is done with random-wheel-selection [rnd extension]:
+
+rnd:weighted-one-of counselsoptions [exp( utility)]
+
+this algorithm computes the weighted selection of options based on the size of a [reporter], in our case the exponentiation of the utility computed.
+Note that with weight_distance = 0, all options have equal opportunity to be extracted, the lower weight_distance, the higher the chance of option with minimal lower distance will be selected. 
+
+* What happens after the choice.
+
+By "selection" here we mean that the woman will correct its own variable "selcounsel" in its mind to the ID (who) of the counselcenter selected. In this way, we can use this variable to map women assigned to the same counselcenter.
+Once the woman has selected the counselcenter, it drops the available spots of the counselcenter by 1 unit, since the woman occupies one spot now. This will affect the options available to the next pregnant woman called to select a counselcenter, since the more time progresses, the fewer counselcenters spots are available.
 
 ## HOW TO USE IT
 
-SETUP: projects GIS and initialize all actors. They are mapped on the GIS. 
-Buttons are available to hide them or not from the simulation (they will exhist)
-Output is reported with total number of women, counselcenter and hospital; for hospital the total of births registered
+In this test, you can set the number of women who got pregnant at each wave with "count_pregnant". You can set how long a wave is with "wave_pregnant": it uses modulo based on ticks > 0 (mod check in NetLogo dictionary). "stop_it" sets how many ticks the simulation must run. For instance, with count_pregnant = 10 and wave_pregnant = 2 and stop_it 13, every 2 ticks 10 women get pregnant and select a counselcenter. This means 10 women are called at ticks = 2,4,6,8,10,12 = 60 women when the simulation stops.
 
 ## THINGS TO NOTICE
 
-On the right side, the output and inputs to extract either the pro_com by municipality, or color the area if needed, and buttons to hide the actors
+I let every pregnant woman to report their whoID, their location, the actual counselcenter it takes as possible options (they set the color of running woman), and report for each of them the distance to the woman, their capacity and their computed utility. After the selection is done, the woman reports her new selcounsel and updated values for counselcenters. Note that with lower weight_distance, the whoID of the counselcenter with lower distance should be now the selcounsel of woman, and that counselcenter report 1 unit less of capacity, With weight_distance = 0, every option should have the same probability to be extracted. You can also run in the command center:
 
-## THINGS TO TRY
+ask womens who [choice] to test on the same woman specifically
 
-NEXT: the matrix of distances
+## CAVEAT and next steps
 
-## EXTENDING THE MODEL
+* Considering utility = (weigthed_distance * distance), exp(utility) in NetLogo causes numbers too big, we need to normalize distance from 0 to 1 to avoid this
+* In the next steps of modeling, women will occupy a spot as long as they are pregnant and then leave. In this step new women would come from a new wave of pregnancy. I wonder if with the current setting we risk women of the same cohort will attend counselcenters at the same time, though in different spaces. We should increase the chance of women of different cohorts to interact, either through randomness in starting selection or modulating the length of staying at the counselcenter
+* Counselcenters now have a equal capacity, should this reflect the density of local population of gis area, or do we have the empirical actual capacity of each counselcenter?
 
 
 

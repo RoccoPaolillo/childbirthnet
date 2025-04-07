@@ -3,12 +3,12 @@ turtles-own [id systutility utility]
 
 to setup
   clear-all
-create-turtles 1 [set id 0 set systutility ( 1 * random 100) set utility exp(systutility )]
-create-turtles 1 [set id 1 set systutility ( 1 * random 100) set utility exp(systutility )]
-create-turtles 1 [set id 2 set systutility ( 1 * random 100) set utility exp(systutility )]
-create-turtles 1 [set id 3 set systutility ( 1 * random 100) set utility exp(systutility )]
-create-turtles 1 [set id 4 set systutility ( 1 * random 100) set utility exp(systutility )]
-create-turtles 1 [set id 5 set systutility ( 1 * random 100) set utility exp(systutility )]
+create-turtles 1 [set id 0 set systutility ( -1 * random 100) set utility exp(systutility )]
+create-turtles 1 [set id 1 set systutility ( -1 * random 100) set utility exp(systutility )]
+create-turtles 1 [set id 2 set systutility ( -1 * random 100) set utility exp(systutility )]
+create-turtles 1 [set id 3 set systutility ( -1 * random 100) set utility exp(systutility )]
+create-turtles 1 [set id 4 set systutility ( -1 * random 100) set utility exp(systutility )]
+create-turtles 1 [set id 5 set systutility ( -1 * random 100) set utility exp(systutility )]
   print "new turn"
   ask turtles [print (word who " systutility: " systutility " utility: " utility)]
 end
@@ -59,9 +59,9 @@ NIL
 
 BUTTON
 44
-71
+72
 107
-104
+105
 rnd
 print [who] of rnd:weighted-one-of turtles [utility]
 NIL
