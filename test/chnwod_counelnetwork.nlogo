@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
 hospital-own [ID hospitalizations ranking]
-women-own [pregnant givenbirth selcounsel counselstay ]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
 
@@ -563,30 +563,13 @@ NIL
 NIL
 1
 
-BUTTON
-768
-282
-831
-315
-OD
-discuss_hospital
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 INPUTBOX
 895
 204
 1003
 264
 inspectcounselcenter
-20190.0
+20345.0
 1
 0
 Number

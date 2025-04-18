@@ -1,15 +1,17 @@
-extensions [gis table csv]
+extensions [gis table csv rnd]
 turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
-counselcenter-own [ID capacity]
-hospital-own [ID hospitalizations]
+counselcenter-own [ID capacity utility]
+hospital-own [ID hospitalizations ranking]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
 
 to setup
+  random-seed 10
   clear-all
   ask patches [set pcolor white]
   gis:load-coordinate-system "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
@@ -24,7 +26,8 @@ to setup
   output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
-  set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_all.csv"
+  set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  reset-timer
   reset-ticks
 end
 
@@ -48,6 +51,9 @@ foreach but-first hosptlist [ x ->
      set shape "circle"
      set color gis:property-value this-municipality "PRO_COM"
      set size 0.2
+     set pregnant false
+     set selcounsel false
+     set counselstay 0
      set PRO_COM gis:property-value this-municipality "PRO_COM"
     ]
   ]
@@ -59,9 +65,9 @@ let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirt
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
-      set color item 0 x
+      set color gray ;  item 0 x
       set pro_com item 0 x
-      set capacity 10
+      set capacity 20
     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
     set xcor item 0 loc
     set ycor item 1 loc
@@ -86,6 +92,7 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
+      set ranking 0
       set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
@@ -96,15 +103,57 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   ]
 end
 
-to-report dist [origin destination]  ; utility function: sim = number similar (neighborhood moore); tot = total number agents in Moore distance
+to go
+ ; every wave_pregnant [   ; alternative to ticks
+    if ticks > 0 and ticks mod wave_pregnant = 0  [
+    ask n-of count_pregnant women [set pregnant true]
+  ]
+  ask women [if pregnant = true [
+    ifelse selcounsel = false [choice][set counselstay counselstay + 1]
+    ]
+  ]
+  if ticks = stop_if [stop]
+  tick
+end
+
+to choice
+
+print (word "woman: " who " pro_com: " pro_com)
+let radius 0.5
+
+let counselsoptions no-turtles
+
+while [count counselsoptions < 5] [
+set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
+set radius radius + 1
+]
+
+ask  counselsoptions [
+set color [color] of myself
+set utility (weight_distance * dist myself self)
+
+print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility " distance: " dist myself self " pro_com: " pro_com)
+  ]
+
+set selcounsel [who] of rnd:weighted-one-of counselsoptions [exp( utility)]
+ask counselcenter with [who = [selcounsel] of myself][set capacity capacity - 1 ]
+
+print (word "woman: " who " pro_com: " pro_com " selcounsel: " selcounsel)
+ask  counselsoptions [
+print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility " distance: " dist myself self " pro_com: " pro_com)
+  ]
+
+end
+
+to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
 report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
  end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+220
 10
-713
+723
 514
 -1
 -1
@@ -163,10 +212,10 @@ NIL
 1
 
 BUTTON
-902
-44
-1036
-77
+909
+36
+1043
+69
 hide women
 ask women [hide-turtle]
 NIL
@@ -180,10 +229,10 @@ NIL
 1
 
 BUTTON
-762
-44
-895
-77
+769
+36
+902
+69
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -253,10 +302,10 @@ NIL
 1
 
 BUTTON
-763
-81
-896
-114
+770
+73
+903
+106
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -270,10 +319,10 @@ NIL
 1
 
 BUTTON
-903
-81
-1036
-114
+910
+73
+1043
+106
 show women
 ask women [show-turtle]
 NIL
@@ -304,10 +353,10 @@ NIL
 1
 
 BUTTON
-1043
-44
-1158
-77
+1050
+36
+1165
+69
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -321,10 +370,10 @@ NIL
 1
 
 BUTTON
-1042
-82
-1159
-115
+1049
+74
+1166
+107
 show hospital
 ask hospital [show-turtle]
 NIL
@@ -355,10 +404,10 @@ OUTPUT
 10
 
 BUTTON
-813
-271
-913
-304
+1024
+112
+1096
+145
 testdistances
 ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
 NIL
@@ -372,10 +421,10 @@ NIL
 1
 
 INPUTBOX
-779
-139
-934
-199
+769
+113
+903
+173
 womens_who
 12886.0
 1
@@ -383,46 +432,209 @@ womens_who
 Number
 
 INPUTBOX
-780
-203
-935
-263
+905
+113
+1020
+173
 counsels_who
 20186.0
 1
 0
 Number
 
+BUTTON
+111
+175
+176
+208
+go
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+33
+274
+161
+307
+weight_distance
+weight_distance
+-100
+100
+-4.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+28
+324
+176
+369
+capacity counselcenters
+mean [capacity] of counselcenter
+2
+1
+11
+
+MONITOR
+28
+378
+175
+423
+pregnant women
+count women with [pregnant = true]
+17
+1
+11
+
+BUTTON
+1102
+111
+1215
+144
+check ticks advance
+if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+16
+161
+79
+221
+stop_if
+50.0
+1
+0
+Number
+
+INPUTBOX
+15
+96
+99
+156
+count_pregnant
+10.0
+1
+0
+Number
+
+INPUTBOX
+105
+95
+204
+155
+wave_pregnant
+4.0
+1
+0
+Number
+
+BUTTON
+764
+206
+890
+239
+counsel_networks
+ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+895
+204
+1003
+264
+inspectcounselcenter
+20345.0
+1
+0
+Number
+
+BUTTON
+765
+240
+890
+273
+inspect_counselcenter
+ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-Initialization for model of childbirth hospital choice
+Test random utility model for counselcenter based on distance.
+Each wave, an amount of women get pregnant and make a decision on the counselcenter.
+They first scan in-radius 0.5 the available counselcenters, at each a utility is assigned based on distance and the one with closer distance is selected. The determinism of the choice is based on weighted parameter distance according to conditional logit.
+
 
 ## HOW IT WORKS
 
-Extensions used: GIS, TABLE, CSV, see in the commented code for detail.
-In NetLogo GIS: VectorDataset is the whole sample passed by shp file; VectorFeature is the vector of individual municipality with information associated
-Municipalities represent the boundaries drawn with GIS. The three actors are women (women who gave birth from ricoveri_parti_2023), counselcenter (consultori, from elenco_consultori_2019_used.csv), and hospital (from accessi_parto_ospedali_used.csv)
-Each actor has the variable pro_com, which indicates their municipality, which allows to link between them and municipality from GIS and planned to be used for distance utility.
-Hospitals also hold "hospitalizations" variable, equal to the number of women who gave bith (or at least delivered) (from accessi_parto_ospedalieri_used.csv", "parti_residenti"). These are the outcomes we want to reproduce for validation, with movement from "accessi_parto_ospedali_used.csv")
-Shape of actors differ (circle: women, counselcenters: square, hospitals: triangle)
-Color of actors is similar by municipality (integer municipality)
+Each wave_pregnant, a total of count_pregnant women randomly extracted are assigned to be pregnant. They will execute the "choice" commmand. In the simulation, they will behave according to being "pregnant", until they "givebirth", which is a way to avoid extraction of the same woman twice. 
+When called to execute "choice", they first scan the available counselcenters around them with in-radius 0.5, looking for at least 5 counselcenters (they can be more as long as match conditions); counselcenters have a capacity each (20 spots) that runs out as long as they are selected. If there are no counselcenters with empty spots, they enlarge the radius. This means the location is as local as possible. Once the set of possible counselcenters is available ( counselsoptions in choice block), the distance to the woman is calculated using dist reporter for each counselcenter (origin = woman, destination = counselcenter). For each counselcenter, a utility is computed by the individual woman as a weighted function of the distance, i.e.
+
+Utility = weight_distance parameter * distance
+Weight_distance parameter is negative because we need to select the option with lower distance, hence utility has to be negative [because higher utility for us means lower distance].
+Note that the computed utility of the counselcenter will remain that one until a new woman will assign "her utility" to  that counselcenter based on the distance to her.
+
+The actual selection of the closer counselcenter according to conditional logit (Pi = exp(Ui) / sum(exp(Uall)) is done with random-wheel-selection [rnd extension]:
+
+rnd:weighted-one-of counselsoptions [exp( utility)]
+
+this algorithm computes the weighted selection of options based on the size of a [reporter], in our case the exponentiation of the utility computed.
+Note that with weight_distance = 0, all options have equal opportunity to be extracted, the lower weight_distance, the higher the chance of option with minimal lower distance will be selected. 
+
+* What happens after the choice.
+
+By "selection" here we mean that the woman will correct its own variable "selcounsel" in its mind to the ID (who) of the counselcenter selected. In this way, we can use this variable to map women assigned to the same counselcenter.
+Once the woman has selected the counselcenter, it drops the available spots of the counselcenter by 1 unit, since the woman occupies one spot now. This will affect the options available to the next pregnant woman called to select a counselcenter, since the more time progresses, the fewer counselcenters spots are available.
 
 ## HOW TO USE IT
 
-SETUP: projects GIS and initialize all actors. They are mapped on the GIS. 
-Buttons are available to hide them or not from the simulation (they will exhist)
-Output is reported with total number of women, counselcenter and hospital; for hospital the total of births registered
+In this test, you can set the number of women who got pregnant at each wave with "count_pregnant". You can set how long a wave is with "wave_pregnant": it uses modulo based on ticks > 0 (mod check in NetLogo dictionary). "stop_it" sets how many ticks the simulation must run. For instance, with count_pregnant = 10 and wave_pregnant = 2 and stop_it 13, every 2 ticks 10 women get pregnant and select a counselcenter. This means 10 women are called at ticks = 2,4,6,8,10,12 = 60 women when the simulation stops.
 
 ## THINGS TO NOTICE
 
-On the right side, the output and inputs to extract either the pro_com by municipality, or color the area if needed, and buttons to hide the actors
+I let every pregnant woman to report their whoID, their location, the actual counselcenter it takes as possible options (they set the color of running woman), and report for each of them the distance to the woman, their capacity and their computed utility. After the selection is done, the woman reports her new selcounsel and updated values for counselcenters. Note that with lower weight_distance, the whoID of the counselcenter with lower distance should be now the selcounsel of woman, and that counselcenter report 1 unit less of capacity, With weight_distance = 0, every option should have the same probability to be extracted. You can also run in the command center:
 
-## THINGS TO TRY
+ask womens who [choice] to test on the same woman specifically
 
-NEXT: the matrix of distances
+## CAVEAT and next steps
 
-## EXTENDING THE MODEL
+* Considering utility = (weigthed_distance * distance), exp(utility) in NetLogo causes numbers too big, we need to normalize distance from 0 to 1 to avoid this
+* In the next steps of modeling, women will occupy a spot as long as they are pregnant and then leave. In this step new women would come from a new wave of pregnancy. I wonder if with the current setting we risk women of the same cohort will attend counselcenters at the same time, though in different spaces. We should increase the chance of women of different cohorts to interact, either through randomness in starting selection or modulating the length of staying at the counselcenter
+* Counselcenters now have a equal capacity, should this reflect the density of local population of gis area, or do we have the empirical actual capacity of each counselcenter?
 
 
 
