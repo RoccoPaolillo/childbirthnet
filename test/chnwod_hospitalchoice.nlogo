@@ -597,12 +597,12 @@ NIL
 1
 
 BUTTON
-786
+785
 295
-891
+890
 328
 choicehospital
-ask womens 5977\n[\nprint who\nlet options no-turtles\nlet radius 1\n\nwhile [count options < 2] [\nset options other  hospital in-radius radius\nset radius radius + 0.5\n]\n\nask  options [\nset color red]\n]
+ask women with [selcounsel = 20190]\n[\nprint who\nlet options no-turtles\nlet radius 1\n\nwhile [count options < 2] [\nset options other  hospital in-radius radius\nset radius radius + 0.5\n]\n\n\nask  options [\nset color red\nprint (word \"woman: \" [who] of myself \" who: \"  who)]\n\n\n]
 NIL
 1
 T
