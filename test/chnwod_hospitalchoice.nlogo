@@ -73,7 +73,6 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
-      set ranking 0
       set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
@@ -170,8 +169,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -575,7 +574,7 @@ INPUTBOX
 1003
 264
 inspectcounselcenter
-20345.0
+20190.0
 1
 0
 Number
@@ -587,6 +586,23 @@ BUTTON
 273
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+786
+295
+891
+328
+choicehospital
+ask womens 5977\n[\nprint who\nlet options no-turtles\nlet radius 1\n\nwhile [count options < 2] [\nset options other  hospital in-radius radius\nset radius radius + 0.5\n]\n\nask  options [\nset color red]\n]
 NIL
 1
 T
