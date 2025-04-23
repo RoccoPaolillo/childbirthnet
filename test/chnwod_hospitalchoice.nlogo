@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations ranking]
+hospital-own [ID hospitalizations]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
@@ -27,6 +27,7 @@ to setup
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
   set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  ask women [foreach sort hospital [x -> table:put rankinglist [id] of x ((random-float 2.000001) - 1)]]
   reset-timer
   reset-ticks
 end
@@ -100,6 +101,9 @@ foreach but-first hosptlist [ x ->
      set selcounsel false
      set counselstay 0
      set PRO_COM gis:property-value this-municipality "PRO_COM"
+     set rankinglist  table:make
+     foreach sort hospital [x -> table:put rankinglist [id] of x ((random-float 2.000001) - 1)]
+
     ]
   ]
   ]
@@ -155,11 +159,11 @@ report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] di
 GRAPHICS-WINDOW
 220
 10
-723
-514
+728
+519
 -1
 -1
-15.0
+15.152
 1
 10
 1
