@@ -27,7 +27,8 @@ to setup
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
   set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
-  ask women [
+
+  ask women [ ; attributing proximal hospitals
     let hospitaloptions no-turtles
     let radius 1
 
@@ -38,7 +39,7 @@ to setup
 
     foreach sort hospitaloptions [x -> table:put rankinglist [id] of x ((random-float 2.000001) - 1)]
   ]
-  ; [foreach sort hospital [x -> table:put rankinglist [id] of x ((random-float 2.000001) - 1)]]
+
   reset-timer
   reset-ticks
 end
@@ -112,7 +113,6 @@ foreach but-first hosptlist [ x ->
      set counselstay 0
      set PRO_COM gis:property-value this-municipality "PRO_COM"
      set rankinglist  table:make
-     foreach sort hospital [x -> table:put rankinglist [id] of x ((random-float 2.000001) - 1)]
 
     ]
   ]
@@ -585,7 +585,7 @@ INPUTBOX
 1003
 264
 inspectcounselcenter
-20232.0
+20190.0
 1
 0
 Number
@@ -613,7 +613,7 @@ BUTTON
 890
 328
 choicehospital
-ask women with [selcounsel != false and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nforeach sort other women with  [selcounsel = [selcounsel]of myself] [x ->\nlet keys table:keys [rankinglist] of x \nforeach keys [key ->\nif not table:has-key? rankinglist key [\ntable:put rankinglist key 0\n\n]\n\n]\n\n]\nprint (word \"selcounsel: \" selcounsel \" who: \" who \" rankinglist: \" rankinglist)\n]\n
+ask women with [selcounsel = 20190][ ;  != false and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nforeach sort other women with  [selcounsel = [selcounsel]of myself] [x ->\nlet keys table:keys [rankinglist] of x \nforeach keys [key ->\nif not table:has-key? rankinglist key [\ntable:put rankinglist key 0\n\n]\n\n]\n\n]\nprint (word \"selcounsel: \" selcounsel \" who: \" who \" rankinglist: \" rankinglist)\n]\n
 NIL
 1
 T
