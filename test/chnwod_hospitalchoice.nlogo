@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations]
+hospital-own [ID hospitalizations utility]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
@@ -211,10 +211,10 @@ NIL
 1
 
 BUTTON
-1262
-14
-1490
-47
+1235
+10
+1463
+43
 show VectorDataset
 show gis:feature-list-of tuscany
 NIL
@@ -262,10 +262,10 @@ NIL
 1
 
 BUTTON
-1384
-122
-1490
-155
+1357
+118
+1463
+151
 color_municipality
 gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
 NIL
@@ -279,10 +279,10 @@ NIL
 1
 
 INPUTBOX
-1261
-120
-1375
-190
+1234
+116
+1348
+186
 area_municipality
 45002.0
 1
@@ -290,10 +290,10 @@ area_municipality
 Number
 
 INPUTBOX
-1262
-53
-1377
-113
+1235
+49
+1350
+109
 MUNICIPALITY_name
 Firenze
 1
@@ -301,10 +301,10 @@ Firenze
 String (reporter)
 
 BUTTON
-1384
-70
-1489
-103
+1357
+66
+1462
+99
 codCOMUNE
 print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
 NIL
@@ -352,10 +352,10 @@ NIL
 1
 
 BUTTON
-1385
-157
-1490
-190
+1358
+153
+1463
+186
 show VectorFeature
 print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
 NIL
@@ -413,10 +413,10 @@ the three actors
 1
 
 OUTPUT
-1058
-221
-1474
-608
+1011
+204
+1427
+591
 10
 
 BUTTON
@@ -563,10 +563,10 @@ wave_pregnant
 Number
 
 BUTTON
-803
-239
-915
-272
+773
+212
+885
+245
 counsel_networks
 ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
 NIL
@@ -580,10 +580,10 @@ NIL
 1
 
 INPUTBOX
-918
-242
-1026
-302
+888
+215
+996
+275
 inspectcounselcenter
 20190.0
 1
@@ -591,10 +591,10 @@ inspectcounselcenter
 Number
 
 BUTTON
-804
-273
-914
-306
+774
+246
+884
+279
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
 NIL
@@ -608,12 +608,12 @@ NIL
 1
 
 BUTTON
-824
-328
-929
-361
+793
+304
+898
+337
 choicehospital
-ask women with [selcounsel = 20190][ ;  != false and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nforeach sort other women with  [selcounsel = [selcounsel]of myself] [x ->\nlet keys table:keys [rankinglist] of x \nforeach keys [key ->\nif not table:has-key? rankinglist key [\ntable:put rankinglist key 0\n\n]\n\n]\n\n]\nprint (word \"selcounsel: \" selcounsel \" who: \" who \" rankinglist: \" rankinglist)\n]\n
+ask women with [selcounsel = 20190][ ;  != false and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nlet influencegamma table:make\n\nforeach sort other women with  [selcounsel = [selcounsel]of myself] [x ->\nlet keys table:keys [rankinglist] of x \nforeach keys [key ->\nif not table:has-key? rankinglist key [\ntable:put rankinglist key 0\n\n]\n\n]\n]\n\nprint (word \"selcounsel: \" selcounsel \" who: \" who \" rankinglist: \" rankinglist)\n; print (word \"selcounsel: \" selcounsel \" who: \" who \" gamma \" influencegamma)\n\n\n\n]\n
 NIL
 1
 T
