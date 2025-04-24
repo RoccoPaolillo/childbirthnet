@@ -167,10 +167,10 @@ report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] di
  end
 @#$#@#$#@
 GRAPHICS-WINDOW
-220
-10
-728
-519
+248
+11
+756
+520
 -1
 -1
 15.152
@@ -228,10 +228,10 @@ NIL
 1
 
 BUTTON
-909
-36
-1043
-69
+913
+33
+1047
+66
 hide women
 ask women [hide-turtle]
 NIL
@@ -245,10 +245,10 @@ NIL
 1
 
 BUTTON
-769
-36
-902
-69
+773
+33
+906
+66
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -318,10 +318,10 @@ NIL
 1
 
 BUTTON
-770
-73
-903
-106
+774
+70
+907
+103
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -335,10 +335,10 @@ NIL
 1
 
 BUTTON
-910
-73
-1043
-106
+914
+70
+1047
+103
 show women
 ask women [show-turtle]
 NIL
@@ -369,10 +369,10 @@ NIL
 1
 
 BUTTON
-1050
-36
-1165
-69
+1054
+33
+1169
+66
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -386,10 +386,10 @@ NIL
 1
 
 BUTTON
-1049
-74
-1166
-107
+1053
+71
+1170
+104
 show hospital
 ask hospital [show-turtle]
 NIL
@@ -403,10 +403,10 @@ NIL
 1
 
 TEXTBOX
-926
-15
-1007
-33
+930
+12
+1011
+30
 the three actors
 10
 0.0
@@ -414,16 +414,16 @@ the three actors
 
 OUTPUT
 1058
-199
-1485
-603
+221
+1474
+608
 10
 
 BUTTON
-1024
-112
-1096
-145
+1028
+109
+1100
+142
 testdistances
 ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
 NIL
@@ -437,10 +437,10 @@ NIL
 1
 
 INPUTBOX
-769
-113
-903
-173
+773
+110
+907
+170
 womens_who
 12886.0
 1
@@ -448,10 +448,10 @@ womens_who
 Number
 
 INPUTBOX
-905
-113
-1020
-173
+909
+110
+1024
+170
 counsels_who
 20186.0
 1
@@ -513,10 +513,10 @@ count women with [pregnant = true]
 11
 
 BUTTON
-1102
-111
-1215
-144
+1106
+108
+1219
+141
 check ticks advance
 if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
 T
@@ -563,10 +563,10 @@ wave_pregnant
 Number
 
 BUTTON
-764
-206
-890
+803
 239
+915
+272
 counsel_networks
 ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
 NIL
@@ -580,10 +580,10 @@ NIL
 1
 
 INPUTBOX
-895
-204
-1003
-264
+918
+242
+1026
+302
 inspectcounselcenter
 20190.0
 1
@@ -591,10 +591,10 @@ inspectcounselcenter
 Number
 
 BUTTON
-765
-240
-890
+804
 273
+914
+306
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
 NIL
@@ -608,10 +608,10 @@ NIL
 1
 
 BUTTON
-785
-295
-890
+824
 328
+929
+361
 choicehospital
 ask women with [selcounsel = 20190][ ;  != false and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nforeach sort other women with  [selcounsel = [selcounsel]of myself] [x ->\nlet keys table:keys [rankinglist] of x \nforeach keys [key ->\nif not table:has-key? rankinglist key [\ntable:put rankinglist key 0\n\n]\n\n]\n\n]\nprint (word \"selcounsel: \" selcounsel \" who: \" who \" rankinglist: \" rankinglist)\n]\n
 NIL
