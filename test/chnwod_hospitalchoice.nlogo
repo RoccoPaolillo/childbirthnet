@@ -54,7 +54,7 @@ end
 
 
 to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
-let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
+let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
