@@ -173,14 +173,27 @@ foreach sort hospitalsoptions [ x ->
    table:put rankinglist [who] of x beta-random 0.5 0.2
 ]
 
-  print (word "woman: " who " selcounsel: " selcounsel   " hospitals "  rankinglist  )
+; let hospa []
+; foreach sort women with [selcounsel = [selcounsel] of myself][ z ->
+; let dictall table:keys [rankinglist] of z
+; foreach dictall [x ->
+; if not member? x hospa [
+; set hospa lput x hospa ]]]
 
-    let companioncounsel other women with [selcounsel = [selcounsel] of myself]
-    if any? companioncounsel [
-      ask companioncounsel [print (word "otherwoman: " who " selcounsel: " selcounsel  " hospitals " rankinglist )] ]
+; print (word who " " selcounsel " rankinglist without missing: " rankinglist  " allist: " hospa )
+
+; foreach hospa [y ->
+; if not member? y table:keys rankinglist [
+; table:put rankinglist y 0
+; ]
+; ]
 
 
-  ]
+; print (word who " " selcounsel " allist: " hospa " rankinglist updated: " rankinglist  )
+
+
+]
+
 end
 
 
@@ -237,10 +250,10 @@ ticks
 30.0
 
 BUTTON
-27
-51
-90
-84
+24
+12
+87
+45
 setup
 setup
 NIL
@@ -502,10 +515,10 @@ counsels_who
 Number
 
 BUTTON
-111
-175
-176
-208
+108
+136
+173
+169
 go
 go
 T
@@ -519,10 +532,10 @@ NIL
 1
 
 SLIDER
-33
-274
-161
-307
+30
+235
+158
+268
 weight_distance
 weight_distance
 -100
@@ -534,10 +547,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-28
-324
-176
-369
+25
+285
+173
+330
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -545,10 +558,10 @@ mean [capacity] of counselcenter
 11
 
 MONITOR
-28
-378
-175
-423
+25
+339
+172
+384
 pregnant women
 count women with [pregnant = true]
 17
@@ -573,10 +586,10 @@ NIL
 1
 
 INPUTBOX
-16
-161
-79
-221
+13
+122
+76
+182
 stop_if
 50.0
 1
@@ -584,10 +597,10 @@ stop_if
 Number
 
 INPUTBOX
-15
+12
+57
 96
-99
-156
+117
 count_pregnant
 10.0
 1
@@ -595,10 +608,10 @@ count_pregnant
 Number
 
 INPUTBOX
-105
-95
-204
-155
+102
+56
+201
+116
 wave_pregnant
 4.0
 1
@@ -651,12 +664,29 @@ NIL
 1
 
 BUTTON
-1150
+1151
 103
-1234
+1235
 136
 choice_hospital
 choice_hospital
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1151
+147
+1306
+180
+test ranking complete
+ask women with [selcounsel != false][\nlet hospa []\nforeach sort women with [selcounsel = [selcounsel] of myself][ z -> \nlet dictall table:keys [rankinglist] of z\nforeach dictall [x ->\nif not member? x hospa [\nset hospa lput x hospa ]]]\n\n; print (word who \" \" selcounsel \" rankinglist without missing: \" rankinglist  \" allist: \" hospa )\n\nforeach hospa [y ->\nif not member? y table:keys rankinglist [\ntable:put rankinglist y 0\n]\n]\n\n\nprint (word who \" \" selcounsel \" allist: \" hospa \" rankinglist updated: \" rankinglist  )\n\n\nprint (word \"woman: \" who \" selcounsel: \" selcounsel   \" hospitals \"  rankinglist  )\nlet companioncounsel other women with [selcounsel = [selcounsel] of myself]\nif any? companioncounsel [\nask companioncounsel [print (word \"otherwoman: \" who \" selcounsel: \" selcounsel  \" hospitals \" rankinglist )] ]\n\n]
 NIL
 1
 T
