@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations ranking]
+hospital-own [ID hospitalizations ranking capacity]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
@@ -89,6 +89,8 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   foreach listhospitals [x ->                                      ; for each hospital, one agent hospital is created
     create-hospital 1 [
       set id x
+      set capacity 20
+      set color gray
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
@@ -97,7 +99,7 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
-     set ycor item 1 loc
+      set ycor item 1 loc
 
     ]
   ]
@@ -145,6 +147,34 @@ print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility 
 
 end
 
+
+to choice_hospital
+
+let radius 1.5
+
+let hospitalsoptions no-turtles
+
+while [count hospitalsoptions < 3] [
+set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
+set radius radius + 1
+]
+
+ask  hospitalsoptions [
+set color [color] of myself
+; set utility (weight_distance * dist myself self)
+
+print (word "hospital: "  who " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
+  ]
+
+end
+
+
+
+
+
+
+
+
 to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
 report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
@@ -165,7 +195,6 @@ to-report beta-random [means std-dev]
 
   report x / (x + y)
 end
-
 
 
 
@@ -603,6 +632,23 @@ BUTTON
 357
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+771
+436
+887
+469
+choice_hospital
+ask women with [selcounsel != false] [choice_hospital]\n
 NIL
 1
 T
