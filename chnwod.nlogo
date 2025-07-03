@@ -148,7 +148,29 @@ end
 to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
 report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
- end
+end
+
+to-report beta-random [means std-dev]
+  let variances std-dev * std-dev
+  let alpha means * ((means * (1 - means)) / variances - 1)
+  let beta (1 - means) * ((means * (1 - means)) / variances - 1)
+
+  if alpha <= 0 or beta <= 0 [
+    user-message (word "Invalid alpha/beta parameters: mean=" means ", std-dev=" std-dev)
+    report means ; fallback to mean
+  ]
+
+  let x random-gamma alpha 1
+  let y random-gamma beta 1
+
+  report x / (x + y)
+end
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 220
