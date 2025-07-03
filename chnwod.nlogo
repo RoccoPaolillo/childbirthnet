@@ -95,7 +95,7 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
       set ranking 0
-      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
+;      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
@@ -150,7 +150,11 @@ end
 
 to choice_hospital
 
+ask women with [selcounsel != false] [
+
+
 let radius 1.5
+
 
 let hospitalsoptions no-turtles
 
@@ -159,20 +163,25 @@ set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
 set radius radius + 1
 ]
 
-ask  hospitalsoptions [
-set color [color] of myself
-; set utility (weight_distance * dist myself self)
+ ask  hospitalsoptions [
+ set color [color] of myself
+ print (word "hospital: "  who " woman: " [who] of myself " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
+   ]
 
-print (word "hospital: "  who " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
+set rankinglist table:make
+foreach sort hospitalsoptions [ x ->
+   table:put rankinglist [who] of x beta-random 0.5 0.2
+]
+
+  print (word "woman: " who " selcounsel: " selcounsel   " hospitals "  rankinglist  )
+
+    let companioncounsel other women with [selcounsel = [selcounsel] of myself]
+    if any? companioncounsel [
+      ask companioncounsel [print (word "otherwoman: " who " selcounsel: " selcounsel  " hospitals " rankinglist )] ]
+
+
   ]
-
 end
-
-
-
-
-
-
 
 
 to-report dist [origin destination]
@@ -195,7 +204,6 @@ to-report beta-random [means std-dev]
 
   report x / (x + y)
 end
-
 
 
 
@@ -643,12 +651,12 @@ NIL
 1
 
 BUTTON
-771
-436
-887
-469
+1150
+103
+1234
+136
 choice_hospital
-ask women with [selcounsel != false] [choice_hospital]\n
+choice_hospital
 NIL
 1
 T
