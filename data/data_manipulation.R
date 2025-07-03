@@ -21,6 +21,21 @@ cons2019_used <- cons2019 %>% select(Codice.Comune,Codice.struttura)
 
 # write.csv(cons2019_used,"elenco_consultori_2019_used.csv",row.names = F)
 
+# filtered consultori
+
+cons2019used188 <- read.csv("elenco_consultori_2019_used.csv",sep=",")
+cons2019_48 <- read_excel("elenco_consultori_2019_XLS.xlsx") %>% filter(main == "X")
+
+cons2019_48[cons2019_48$`Codice struttura` == "10012D" & cons2019_48$Comune == "CAMAIORE", ]$`Codice struttura` <- "10012DCA"
+cons2019_48[cons2019_48$`Codice struttura` == "02002D" & cons2019_48$Comune == "LAMPORECCHIO", ]$`Codice struttura` <- "02002DLA"
+cons2019_48[cons2019_48$`Codice struttura` == "21012D" & cons2019_48$Comune == "SCANDICCI", ]$`Codice struttura`<- "21012DSC"
+cons2019_48[cons2019_48$`Codice struttura` == "22212D" & cons2019_48$Comune == "CASTELFRANCO DI SOTTO", ]$`Codice struttura` <- "22212DCS"
+cons2019_48[cons2019_48$`Codice struttura` == "31012D" & cons2019_48$Comune == "REGGELLO", ]$`Codice struttura` <- "31012DRE"
+
+cons2019filtered <- cons2019used188 %>% filter(Codice.struttura %in% cons2019_48$`Codice struttura`)
+
+write.csv(cons2019filtered,"elenco_consultori_2019FILTERED_used.csv",row.names = F)
+
 # 
 osp <- read_excel("accessi_parto_ospedali.xlsx")
 osp <- osp[,-6]
@@ -66,6 +81,14 @@ write.csv(df_normalized, file = "normalized_distance.csv",row.names = F)
 df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALSE)
 
 
+# editing figures
 
+library(magick)
+setwd("C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/")
+
+img <- image_read("landscape.jpeg")
+
+# Write it as an EPS file
+image_write(img, path = "landscape.eps", format = "eps")
 
 

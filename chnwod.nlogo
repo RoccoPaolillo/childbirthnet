@@ -61,7 +61,7 @@ foreach but-first hosptlist [ x ->
 end
 
 to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
-let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
+let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
@@ -212,10 +212,10 @@ NIL
 1
 
 BUTTON
-909
-36
-1043
-69
+1301
+485
+1435
+518
 hide women
 ask women [hide-turtle]
 NIL
@@ -229,10 +229,10 @@ NIL
 1
 
 BUTTON
-769
-36
-902
-69
+1161
+485
+1294
+518
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -302,10 +302,10 @@ NIL
 1
 
 BUTTON
-770
-73
-903
-106
+1162
+522
+1295
+555
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -319,10 +319,10 @@ NIL
 1
 
 BUTTON
-910
-73
-1043
-106
+1302
+522
+1435
+555
 show women
 ask women [show-turtle]
 NIL
@@ -353,10 +353,10 @@ NIL
 1
 
 BUTTON
-1050
-36
-1165
-69
+1442
+485
+1557
+518
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -370,10 +370,10 @@ NIL
 1
 
 BUTTON
-1049
-74
-1166
-107
+1441
+523
+1558
+556
 show hospital
 ask hospital [show-turtle]
 NIL
@@ -387,27 +387,27 @@ NIL
 1
 
 TEXTBOX
-926
-15
-1007
-33
+1318
+464
+1399
+482
 the three actors
 10
 0.0
 1
 
 OUTPUT
-1058
-199
-1485
-603
+727
+13
+1142
+417
 10
 
 BUTTON
-1024
-112
-1096
-145
+1416
+561
+1488
+594
 testdistances
 ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
 NIL
@@ -421,10 +421,10 @@ NIL
 1
 
 INPUTBOX
-769
-113
-903
-173
+1161
+562
+1295
+622
 womens_who
 12886.0
 1
@@ -432,10 +432,10 @@ womens_who
 Number
 
 INPUTBOX
-905
-113
-1020
-173
+1297
+562
+1412
+622
 counsels_who
 20186.0
 1
@@ -468,7 +468,7 @@ weight_distance
 weight_distance
 -100
 100
--4.0
+0.0
 1
 1
 NIL
@@ -497,10 +497,10 @@ count women with [pregnant = true]
 11
 
 BUTTON
-1102
-111
-1215
-144
+1494
+560
+1607
+593
 check ticks advance
 if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
 T
@@ -547,10 +547,10 @@ wave_pregnant
 Number
 
 BUTTON
-764
-206
-890
-239
+1290
+290
+1416
+323
 counsel_networks
 ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
 NIL
@@ -564,10 +564,10 @@ NIL
 1
 
 INPUTBOX
-895
-204
-1003
-264
+1421
+288
+1529
+348
 inspectcounselcenter
 20345.0
 1
@@ -575,10 +575,10 @@ inspectcounselcenter
 Number
 
 BUTTON
-765
-240
-890
-273
+1291
+324
+1416
+357
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
 NIL

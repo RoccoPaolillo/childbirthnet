@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations ranking]
+hospital-own [ID hospitalizations utility]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
@@ -27,6 +27,19 @@ to setup
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
   set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+
+  ask women [ ; attributing proximal hospitals
+    let hospitaloptions no-turtles
+    let radius 1
+
+    while [count hospitaloptions < 2] [
+      set hospitaloptions other  hospital in-radius radius
+      set radius radius + 0.5
+    ]
+
+    foreach sort hospitaloptions [x -> table:put rankinglist [id] of x ((random-float 2.000001) - 1)]
+  ]
+
   reset-timer
   reset-ticks
 end
@@ -41,7 +54,7 @@ end
 
 
 to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
-let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019_used.csv"                                        ; since the same municipality can have different counselcenters,
+let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
@@ -72,7 +85,6 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
-      set ranking 0
       set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
@@ -100,6 +112,8 @@ foreach but-first hosptlist [ x ->
      set selcounsel false
      set counselstay 0
      set PRO_COM gis:property-value this-municipality "PRO_COM"
+     set rankinglist  table:make
+
     ]
   ]
   ]
@@ -153,21 +167,21 @@ report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] di
  end
 @#$#@#$#@
 GRAPHICS-WINDOW
-220
-10
-723
-514
+248
+11
+756
+520
 -1
 -1
-15.0
+15.152
 1
 10
 1
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -197,10 +211,10 @@ NIL
 1
 
 BUTTON
-1262
-14
-1490
-47
+1235
+10
+1463
+43
 show VectorDataset
 show gis:feature-list-of tuscany
 NIL
@@ -214,10 +228,10 @@ NIL
 1
 
 BUTTON
-909
-36
-1043
-69
+913
+33
+1047
+66
 hide women
 ask women [hide-turtle]
 NIL
@@ -231,10 +245,10 @@ NIL
 1
 
 BUTTON
-769
-36
-902
-69
+773
+33
+906
+66
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -248,10 +262,10 @@ NIL
 1
 
 BUTTON
-1384
-122
-1490
-155
+1357
+118
+1463
+151
 color_municipality
 gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
 NIL
@@ -265,10 +279,10 @@ NIL
 1
 
 INPUTBOX
-1261
-120
-1375
-190
+1234
+116
+1348
+186
 area_municipality
 45002.0
 1
@@ -276,10 +290,10 @@ area_municipality
 Number
 
 INPUTBOX
-1262
-53
-1377
-113
+1235
+49
+1350
+109
 MUNICIPALITY_name
 Firenze
 1
@@ -287,10 +301,10 @@ Firenze
 String (reporter)
 
 BUTTON
-1384
-70
-1489
-103
+1357
+66
+1462
+99
 codCOMUNE
 print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
 NIL
@@ -304,10 +318,10 @@ NIL
 1
 
 BUTTON
-770
-73
-903
-106
+774
+70
+907
+103
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -321,10 +335,10 @@ NIL
 1
 
 BUTTON
-910
-73
-1043
-106
+914
+70
+1047
+103
 show women
 ask women [show-turtle]
 NIL
@@ -338,10 +352,10 @@ NIL
 1
 
 BUTTON
-1385
-157
-1490
-190
+1358
+153
+1463
+186
 show VectorFeature
 print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
 NIL
@@ -355,10 +369,10 @@ NIL
 1
 
 BUTTON
-1050
-36
-1165
-69
+1054
+33
+1169
+66
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -372,10 +386,10 @@ NIL
 1
 
 BUTTON
-1049
-74
-1166
-107
+1053
+71
+1170
+104
 show hospital
 ask hospital [show-turtle]
 NIL
@@ -389,27 +403,27 @@ NIL
 1
 
 TEXTBOX
-926
-15
-1007
-33
+930
+12
+1011
+30
 the three actors
 10
 0.0
 1
 
 OUTPUT
-1058
-199
-1485
-603
+1011
+204
+1427
+591
 10
 
 BUTTON
-1024
-112
-1096
-145
+1028
+109
+1100
+142
 testdistances
 ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
 NIL
@@ -423,10 +437,10 @@ NIL
 1
 
 INPUTBOX
-769
-113
-903
-173
+773
+110
+907
+170
 womens_who
 12886.0
 1
@@ -434,10 +448,10 @@ womens_who
 Number
 
 INPUTBOX
-905
-113
-1020
-173
+909
+110
+1024
+170
 counsels_who
 20186.0
 1
@@ -499,10 +513,10 @@ count women with [pregnant = true]
 11
 
 BUTTON
-1102
-111
-1215
-144
+1106
+108
+1219
+141
 check ticks advance
 if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
 T
@@ -521,7 +535,7 @@ INPUTBOX
 79
 221
 stop_if
-50.0
+52.0
 1
 0
 Number
@@ -549,10 +563,10 @@ wave_pregnant
 Number
 
 BUTTON
-764
-206
-890
-239
+773
+212
+885
+245
 counsel_networks
 ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
 NIL
@@ -566,23 +580,40 @@ NIL
 1
 
 INPUTBOX
-895
-204
-1003
-264
+888
+215
+996
+275
 inspectcounselcenter
-20345.0
+20190.0
 1
 0
 Number
 
 BUTTON
-765
-240
-890
-273
+774
+246
+884
+279
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+793
+304
+898
+337
+choicehospital
+ask women with [selcounsel = 20190][ ;  != false and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nlet influencegamma table:make\n\nforeach sort other women with  [selcounsel = [selcounsel]of myself] [x ->\nlet keys table:keys [rankinglist] of x \nforeach keys [key ->\nif not table:has-key? rankinglist key [\ntable:put rankinglist key 0\n\n]\n\n]\n]\n\nprint (word \"selcounsel: \" selcounsel \" who: \" who \" rankinglist: \" rankinglist)\n; print (word \"selcounsel: \" selcounsel \" who: \" who \" gamma \" influencegamma)\n\n\n\n]\n
 NIL
 1
 T
