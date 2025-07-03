@@ -158,21 +158,27 @@ let radius 1.5
 
 let hospitalsoptions no-turtles
 
+; to make up an own list of hospitals to select from based on proximity
 while [count hospitalsoptions < 3] [
 set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
 set radius radius + 1
 ]
 
+; placeholder (irrelevant)
  ask  hospitalsoptions [
  set color [color] of myself
  print (word "hospital: "  who " woman: " [who] of myself " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
    ]
 
+; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
 set rankinglist table:make
 foreach sort hospitalsoptions [ x ->
    table:put rankinglist [who] of x beta-random 0.5 0.2
 ]
 
+; here to make up a collective list of all hospitals women in same counselcenter think about and discuss on.
+; the idea now they will consider all hospitals in the individual list of each woman in the same counselcenter
+; if the ID of the hospital in the collective list is not in the individual list, then it is added with value 0
 ; let hospa []
 ; foreach sort women with [selcounsel = [selcounsel] of myself][ z ->
 ; let dictall table:keys [rankinglist] of z
@@ -182,6 +188,7 @@ foreach sort hospitalsoptions [ x ->
 
 ; print (word who " " selcounsel " rankinglist without missing: " rankinglist  " allist: " hospa )
 
+; here where it is added to the own individual list with value 0, which means it has no effect in the selection probability.
 ; foreach hospa [y ->
 ; if not member? y table:keys rankinglist [
 ; table:put rankinglist y 0
