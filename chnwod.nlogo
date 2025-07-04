@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations ranking]
+hospital-own [ID hospitalizations ranking capacity]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist]
 
 
@@ -89,15 +89,17 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   foreach listhospitals [x ->                                      ; for each hospital, one agent hospital is created
     create-hospital 1 [
       set id x
+      set capacity 20
+      set color gray
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
       set ranking 0
-      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
+;      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
-     set ycor item 1 loc
+      set ycor item 1 loc
 
     ]
   ]
@@ -145,6 +147,65 @@ print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility 
 
 end
 
+
+to choice_hospital
+
+ask women with [selcounsel != false] [
+
+
+let radius 1.5
+
+
+let hospitalsoptions no-turtles
+
+; to make up an own list of hospitals to select from based on proximity
+while [count hospitalsoptions < 3] [
+set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
+set radius radius + 1
+]
+
+; placeholder (irrelevant)
+ ask  hospitalsoptions [
+ set color [color] of myself
+ print (word "hospital: "  who " woman: " [who] of myself " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
+   ]
+
+; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
+set rankinglist table:make
+foreach sort hospitalsoptions [ x ->
+   table:put rankinglist [who] of x beta-random 0.5 0.2
+]
+
+]
+discuss
+end
+
+to discuss
+
+ask women with [selcounsel != false] [
+
+let hospa []
+foreach sort women with [selcounsel = [selcounsel] of myself][ z ->
+let dictall table:keys [rankinglist] of z
+foreach dictall [x ->
+ if not member? x hospa [
+ set hospa lput x hospa ]
+      ]
+    ]
+
+; print (word who " " selcounsel " rankinglist without missing: " rankinglist  " allist: " hospa )
+
+ foreach hospa [y ->
+ if not member? y table:keys rankinglist [
+ table:put rankinglist y 0
+ ]
+ ]
+
+ print (word who " " selcounsel " allist: " hospa " rankinglist updated: " rankinglist  )
+ ]
+
+end
+
 to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
 report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
@@ -165,9 +226,6 @@ to-report beta-random [means std-dev]
 
   report x / (x + y)
 end
-
-
-
 
 
 
@@ -200,10 +258,10 @@ ticks
 30.0
 
 BUTTON
-27
-51
-90
-84
+24
+12
+87
+45
 setup
 setup
 NIL
@@ -465,10 +523,10 @@ counsels_who
 Number
 
 BUTTON
-111
-175
-176
-208
+108
+136
+173
+169
 go
 go
 T
@@ -482,10 +540,10 @@ NIL
 1
 
 SLIDER
-33
-274
-161
-307
+30
+235
+158
+268
 weight_distance
 weight_distance
 -100
@@ -497,10 +555,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-28
-324
-176
-369
+25
+285
+173
+330
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -508,10 +566,10 @@ mean [capacity] of counselcenter
 11
 
 MONITOR
-28
-378
-175
-423
+25
+339
+172
+384
 pregnant women
 count women with [pregnant = true]
 17
@@ -536,10 +594,10 @@ NIL
 1
 
 INPUTBOX
-16
-161
-79
-221
+13
+122
+76
+182
 stop_if
 50.0
 1
@@ -547,10 +605,10 @@ stop_if
 Number
 
 INPUTBOX
-15
+12
+57
 96
-99
-156
+117
 count_pregnant
 10.0
 1
@@ -558,10 +616,10 @@ count_pregnant
 Number
 
 INPUTBOX
-105
-95
-204
-155
+102
+56
+201
+116
 wave_pregnant
 4.0
 1
@@ -603,6 +661,23 @@ BUTTON
 357
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1151
+103
+1235
+136
+choice_hospital
+choice_hospital
 NIL
 1
 T
