@@ -149,12 +149,15 @@ end
 
 
 to choice_hospital
+options_hospital
+discuss_hospital
+; select_hospital
+end
 
+to options_hospital
 ask women with [selcounsel != false] [
 
-
 let radius 1.5
-
 
 let hospitalsoptions no-turtles
 
@@ -177,10 +180,9 @@ foreach sort hospitalsoptions [ x ->
 ]
 
 ]
-discuss
 end
 
-to discuss
+to discuss_hospital
 
 ask women with [selcounsel != false] [
 
@@ -226,7 +228,6 @@ to-report beta-random [means std-dev]
 
   report x / (x + y)
 end
-
 
 
 @#$#@#$#@
