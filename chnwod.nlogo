@@ -176,33 +176,35 @@ foreach sort hospitalsoptions [ x ->
    table:put rankinglist [who] of x beta-random 0.5 0.2
 ]
 
-; here to make up a collective list of all hospitals women in same counselcenter think about and discuss on.
-; the idea now they will consider all hospitals in the individual list of each woman in the same counselcenter
-; if the ID of the hospital in the collective list is not in the individual list, then it is added with value 0
-; let hospa []
-; foreach sort women with [selcounsel = [selcounsel] of myself][ z ->
-; let dictall table:keys [rankinglist] of z
-; foreach dictall [x ->
-; if not member? x hospa [
-; set hospa lput x hospa ]]]
+]
+discuss
+end
+
+to discuss
+
+ask women with [selcounsel != false] [
+
+let hospa []
+foreach sort women with [selcounsel = [selcounsel] of myself][ z ->
+let dictall table:keys [rankinglist] of z
+foreach dictall [x ->
+ if not member? x hospa [
+ set hospa lput x hospa ]
+      ]
+    ]
 
 ; print (word who " " selcounsel " rankinglist without missing: " rankinglist  " allist: " hospa )
 
-; here where it is added to the own individual list with value 0, which means it has no effect in the selection probability.
-; foreach hospa [y ->
-; if not member? y table:keys rankinglist [
-; table:put rankinglist y 0
-; ]
-; ]
+ foreach hospa [y ->
+ if not member? y table:keys rankinglist [
+ table:put rankinglist y 0
+ ]
+ ]
 
-
-; print (word who " " selcounsel " allist: " hospa " rankinglist updated: " rankinglist  )
-
-
-]
+ print (word who " " selcounsel " allist: " hospa " rankinglist updated: " rankinglist  )
+ ]
 
 end
-
 
 to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
@@ -224,7 +226,6 @@ to-report beta-random [means std-dev]
 
   report x / (x + y)
 end
-
 
 
 
@@ -677,23 +678,6 @@ BUTTON
 136
 choice_hospital
 choice_hospital
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-1151
-147
-1306
-180
-test ranking complete
-ask women with [selcounsel != false][\nlet hospa []\nforeach sort women with [selcounsel = [selcounsel] of myself][ z -> \nlet dictall table:keys [rankinglist] of z\nforeach dictall [x ->\nif not member? x hospa [\nset hospa lput x hospa ]]]\n\n; print (word who \" \" selcounsel \" rankinglist without missing: \" rankinglist  \" allist: \" hospa )\n\nforeach hospa [y ->\nif not member? y table:keys rankinglist [\ntable:put rankinglist y 0\n]\n]\n\n\nprint (word who \" \" selcounsel \" allist: \" hospa \" rankinglist updated: \" rankinglist  )\n\n\nprint (word \"woman: \" who \" selcounsel: \" selcounsel   \" hospitals \"  rankinglist  )\nlet companioncounsel other women with [selcounsel = [selcounsel] of myself]\nif any? companioncounsel [\nask companioncounsel [print (word \"otherwoman: \" who \" selcounsel: \" selcounsel  \" hospitals \" rankinglist )] ]\n\n]
 NIL
 1
 T
