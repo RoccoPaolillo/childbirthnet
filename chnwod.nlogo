@@ -704,7 +704,7 @@ BUTTON
 1252
 87
 utility_ranking
-ask turtle 15176 [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_weight []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_weight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_weight\nprint (word who \" timetogether: \" timetogether)\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_weight)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking \" reduce + ranking_others)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\nlet utility_ranking sentence table:get [rankinglist] of myself [who] of self ranking_weight\nset utility reduce + utility_ranking\nprint (word who \" utility ranking list: \" utility_ranking)\nprint (word who \" utility ranking: \" utility)\n\n; this is to test the utility assigned by other women in the group\n]\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\n]
+ask turtle 15176 [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\nset sumtimetogether lput timetogether sumtimetogether\nprint (word who \" timetogether: \" timetogether)\n\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_othweight)\nprint (word \"sumtimetogether: \" reduce + sumtimetogether)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking weighted \" reduce + ranking_othweight)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\n; let utility_othranking sentence table:get [rankinglist] of myself [who] of self ranking_othweight\n; set utility reduce + utility_ranking\n\nprint (word who \" own ranking: \" table:get [rankinglist] of myself [who] of self)\n\n; print (word who \" utility ranking: \" utility)\n\nset utility (((8 - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\n\nprint (word who \" utility ranking others: \" (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\nprint (word who \" utility own ranking: \" ((8 - social_multiplier) * table:get [rankinglist] of myself [who] of self))\nprint (word who \" sys utility: \" utility)\n; this is to test the utility assigned by other women in the group\n]\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\n]
 NIL
 1
 T
@@ -714,6 +714,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+30
+406
+202
+439
+social_multiplier
+social_multiplier
+0
+8
+4.0
+1
+1
+max
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
