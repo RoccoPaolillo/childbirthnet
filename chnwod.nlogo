@@ -14,8 +14,8 @@ to setup
   random-seed 10
   clear-all
   ask patches [set pcolor white]
-  gis:load-coordinate-system "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
-  set tuscany gis:load-dataset "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
+  gis:load-coordinate-system "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
+  set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
   create-womens
@@ -26,7 +26,7 @@ to setup
   output-print (word "hospitalizations per hospital ")
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
-  set distservices csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   reset-timer
   reset-ticks
 end
@@ -39,7 +39,7 @@ end
 
 
 to create-womens
-let hosptlist csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
+let hosptlist csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
 let my-table table:make
 
 foreach but-first hosptlist [ x ->
@@ -61,7 +61,7 @@ foreach but-first hosptlist [ x ->
 end
 
 to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
-let consul2019 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
+let consul2019 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
@@ -77,7 +77,7 @@ end
 
 
 to create-hospitals
-let hospitals2023 csv:from-file "C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
+let hospitals2023 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
 let listhospitals []
 foreach but-first hospitals2023 [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
   let key item 2 row                                               ; so I make first a list of the hospitals we have (24)
@@ -239,7 +239,6 @@ to-report beta-random [means std-dev]
 
   report x / (x + y)
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 220
@@ -700,12 +699,12 @@ NIL
 1
 
 BUTTON
-1152
-52
-1263
-85
+1150
+54
+1252
+87
 utility_ranking
-ask turtle 15176 [\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\nask options [\nlet ranking_others []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others]\nprint (word who \" \" ranking_others)\nprint (word \" sum others ranking \" reduce + ranking_others)\nlet utility_ranking sentence table:get [rankinglist] of myself [who] of self ranking_others\nset utility reduce + utility_ranking\nprint (word who \" utility ranking list: \" utility_ranking)\nprint (word who \" utility ranking: \" utility)\n; set utility ((table:get [rankinglist] of myself [who] of self)) ]\n; print rankinglist\n; ask options [print (word who \" \" utility)]\n]\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\n]
+ask turtle 15176 [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_weight []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_weight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_weight\nprint (word who \" timetogether: \" timetogether)\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_weight)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking \" reduce + ranking_others)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\nlet utility_ranking sentence table:get [rankinglist] of myself [who] of self ranking_weight\nset utility reduce + utility_ranking\nprint (word who \" utility ranking list: \" utility_ranking)\nprint (word who \" utility ranking: \" utility)\n\n; this is to test the utility assigned by other women in the group\n]\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\n]
 NIL
 1
 T
