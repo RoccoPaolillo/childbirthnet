@@ -12,7 +12,16 @@ to setup
   clear-all
 
   create-turtles n_turtles [
-    set xval beta-random mean_beta sd_beta
+    set xval beta-random mean_dis sd_dis
+  ]
+plot-turtle-bars
+end
+
+to setup_normal
+  clear-all
+
+  create-turtles n_turtles [
+    set xval normal mean_dis sd_dis
   ]
 plot-turtle-bars
 end
@@ -48,6 +57,14 @@ to-report beta-random [means std-dev]
 
   report -1 + 2 * ( x / (x + y))
 end
+
+to-report normal [means std-devs]
+  let value random-normal means std-devs
+  ;; Clamp to -1 to 1
+  if value > 1 [ set value 1 ]
+  if value < -1 [ set value -1 ]
+  report value
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -81,8 +98,8 @@ INPUTBOX
 49
 92
 109
-mean_beta
-0.1
+mean_dis
+0.6
 1
 0
 Number
@@ -92,8 +109,8 @@ INPUTBOX
 49
 166
 109
-sd_beta
-0.01
+sd_dis
+0.1
 1
 0
 Number
@@ -116,10 +133,10 @@ NIL
 1
 
 BUTTON
-52
-134
-115
-167
+26
+131
+89
+164
 NIL
 setup
 NIL
@@ -164,6 +181,23 @@ n_turtles
 1
 NIL
 HORIZONTAL
+
+BUTTON
+96
+131
+173
+164
+setup_normal
+setup_normal
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
