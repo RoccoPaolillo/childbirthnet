@@ -40,13 +40,13 @@ to-report beta-random [means std-dev]
 
   if alpha <= 0 or beta <= 0 [
     user-message (word "Invalid alpha/beta parameters: mean=" means ", std-dev=" std-dev)
-    report means ; fallback to mean
+    report -1 + 2 * means ; means ; fallback to mean
   ]
 
   let x random-gamma alpha 1
   let y random-gamma beta 1
 
-  report x / (x + y)
+  report -1 + 2 * ( x / (x + y))
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -82,7 +82,7 @@ INPUTBOX
 92
 109
 mean_beta
-0.5
+0.1
 1
 0
 Number
@@ -93,7 +93,7 @@ INPUTBOX
 166
 109
 sd_beta
-0.4
+0.01
 1
 0
 Number
@@ -103,8 +103,8 @@ BUTTON
 187
 156
 220
-beta distribution
-let outcome beta-random mean_beta sd_beta\nprint outcome
+report
+print (word \"opinion (xval): \" mean [xval] of turtles \" min: \" min [xval] of turtles \" max: \" max [xval] of turtles)
 NIL
 1
 T
