@@ -177,7 +177,7 @@ set radius radius + 1
 ; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
 set rankinglist table:make
 foreach sort hospitalsoptions [ x ->
-   table:put rankinglist [who] of x beta-random 0.5 0.2
+   table:put rankinglist [who] of x normal mean_ranking sd_ranking
 ]
 
 ]
@@ -225,21 +225,29 @@ let destinationpos position [pro_com] of destination item 0 distservices
 report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
 end
 
-to-report beta-random [means std-dev]
-  let variances std-dev * std-dev
-  let alpha means * ((means * (1 - means)) / variances - 1)
-  let beta (1 - means) * ((means * (1 - means)) / variances - 1)
-
-  if alpha <= 0 or beta <= 0 [
-    user-message (word "Invalid alpha/beta parameters: mean=" means ", std-dev=" std-dev)
-    report means ; fallback to mean
-  ]
-
-  let x random-gamma alpha 1
-  let y random-gamma beta 1
-
-  report x / (x + y)
+to-report normal [means std-devs]
+  let value random-normal means std-devs
+  ;; Clamp to -1 to 1
+  if value > 1 [ set value 1 ]
+  if value < -1 [ set value -1 ]
+  report value
 end
+
+; to-report beta-random [means std-dev]
+;   let variances std-dev * std-dev
+;   let alpha means * ((means * (1 - means)) / variances - 1)
+;   let beta (1 - means) * ((means * (1 - means)) / variances - 1)
+
+;   if alpha <= 0 or beta <= 0 [
+;     user-message (word "Invalid alpha/beta parameters: mean=" means ", std-dev=" std-dev)
+;     report means ; fallback to mean
+;   ]
+
+;   let x random-gamma alpha 1
+;   let y random-gamma beta 1
+
+;   report x / (x + y)
+;  end
 @#$#@#$#@
 GRAPHICS-WINDOW
 220
@@ -552,24 +560,24 @@ NIL
 
 SLIDER
 30
-235
+202
 158
-268
+235
 weight_distance
 weight_distance
 -100
 100
-0.0
+-12.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-25
-285
-173
-330
+28
+260
+176
+305
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -577,10 +585,10 @@ mean [capacity] of counselcenter
 11
 
 MONITOR
-25
-339
-172
-384
+28
+314
+175
+359
 pregnant women
 count women with [pregnant = true]
 17
@@ -705,7 +713,7 @@ BUTTON
 1233
 87
 utility_influence
-ask turtle 15176 [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\nset sumtimetogether lput timetogether sumtimetogether\nprint (word who \" timetogether: \" timetogether)\n\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_othweight)\nprint (word \"sumtimetogether: \" reduce + sumtimetogether)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking weighted \" reduce + ranking_othweight)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\n; let utility_othranking sentence table:get [rankinglist] of myself [who] of self ranking_othweight\n; set utility reduce + utility_ranking\n\nprint (word who \" own ranking: \" table:get [rankinglist] of myself [who] of self)\n\n; print (word who \" utility ranking: \" utility)\n\nset utility (((maxsocialmultiplier - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\n\nprint (word who \" utility ranking others: \" (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\nprint (word who \" utility own ranking: \" ((maxsocialmultiplier - social_multiplier) * table:get [rankinglist] of myself [who] of self))\nprint (word who \" total utility: \" utility)\n; this is to test the utility assigned by other women in the group\n]\n\nset selectedhospital [who] of  rnd:weighted-one-of options [exp( utility)]\n\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\nprint (word \"selected hospital: \" selectedhospital)\n]
+ask turtle 15176 [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\nset sumtimetogether lput timetogether sumtimetogether\nprint (word who \" co-counsel: \" [who] of z \" timetogether: \" timetogether)\n\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_othweight)\nprint (word \"sumtimetogether: \" reduce + sumtimetogether)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking weighted \" reduce + ranking_othweight)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\n; let utility_othranking sentence table:get [rankinglist] of myself [who] of self ranking_othweight\n; set utility reduce + utility_ranking\n\nprint (word who \" own ranking: \" table:get [rankinglist] of myself [who] of self)\n\n; print (word who \" utility ranking: \" utility)\n\nset utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))) + (weight_distance_hospital * )   )\n \nprint (word who \" utility ranking others: \" (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\nprint (word who \" utility own ranking: \" ((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self))\nprint (word who \" total utility: \" utility)\nprint (word \"            \")\n; this is to test the utility assigned by other women in the group\n]\n\nset selectedhospital [who] of  rnd:weighted-one-of options [exp( utility)]\n\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\nprint (word \"selected hospital: \" selectedhospital)\n]
 NIL
 1
 T
@@ -717,30 +725,75 @@ NIL
 1
 
 SLIDER
-6
-405
-154
-438
+20
+451
+172
+484
 social_multiplier
 social_multiplier
 0
 100
-8.0
+14.0
 1
 1
 max
 HORIZONTAL
 
 INPUTBOX
-5
-441
-108
-501
-maxsocialmultiplier
-8.0
+33
+489
+154
+549
+weight_socialinfluence
+14.0
 1
 0
 Number
+
+SLIDER
+2
+367
+105
+400
+mean_ranking
+mean_ranking
+-1
+1
+1.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+107
+367
+210
+400
+sd_ranking
+sd_ranking
+0
+1
+0.11
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+20
+416
+172
+449
+weight_distance_hospital
+weight_distance_hospital
+-50
+50
+-14.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
