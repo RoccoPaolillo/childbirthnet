@@ -99,7 +99,7 @@ INPUTBOX
 92
 109
 mean_dis
-0.6
+-1.0
 1
 0
 Number
@@ -121,7 +121,7 @@ BUTTON
 156
 220
 report
-print (word \"opinion (xval): \" mean [xval] of turtles \" min: \" min [xval] of turtles \" max: \" max [xval] of turtles)
+print (word \"opinion (xval): \" mean [xval] of turtles \" min: \" min [xval] of turtles \" max: \" max [xval] of turtles \" sd: \" standard-deviation [xval] of turtles)
 NIL
 1
 T
