@@ -27,6 +27,7 @@ to setup
   output-print (word "  " )
   ask hospital [output-print (word id " = " hospitalizations)]
   set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
+  ask women [options_hospital]
   reset-timer
   reset-ticks
 end
@@ -105,20 +106,53 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
   ]
 end
 
+to options_hospital
+
+let radius 1.5
+
+let hospitalsoptions no-turtles
+
+; to make up an own list of hospitals to select from based on proximity
+while [count hospitalsoptions < 3] [
+set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
+set radius radius + 1
+]
+
+; placeholder (irrelevant)
+ ask  hospitalsoptions [
+ set color [color] of myself
+ ; print (word "hospital: "  who " woman: " [who] of myself " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
+   ]
+
+; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
+set rankinglist table:make
+foreach sort hospitalsoptions [ x ->
+   table:put rankinglist [who] of x normal mean_ranking sd_ranking
+]
+
+; discuss_hospital
+
+end
+
 to go
  ; every wave_pregnant [   ; alternative to ticks
     if ticks > 0 and ticks mod wave_pregnant = 0  [
     ask n-of count_pregnant women [set pregnant true]
   ]
   ask women [if pregnant = true [
-    ifelse selcounsel = false [choice][set counselstay counselstay + 1]
+    ifelse selcounsel = false
+    [choice_counsel]
+    [ifelse counselstay < 36
+      [set counselstay counselstay + 1]
+      [choice_hospital]
     ]
+  ]
   ]
   if ticks = stop_if [stop]
   tick
 end
 
-to choice
+to choice_counsel
 
 print (word "woman: " who " pro_com: " pro_com)
 let radius 0.5
@@ -149,43 +183,15 @@ end
 
 
 to choice_hospital
-options_hospital
+  if selectedhospital = 0 [
 discuss_hospital
 ; select_hospital
+  ]
 end
 
-to options_hospital
 
-ask women with [selcounsel != false] [
-
-let radius 1.5
-
-let hospitalsoptions no-turtles
-
-; to make up an own list of hospitals to select from based on proximity
-while [count hospitalsoptions < 3] [
-set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
-set radius radius + 1
-]
-
-; placeholder (irrelevant)
- ask  hospitalsoptions [
- set color [color] of myself
- print (word "hospital: "  who " woman: " [who] of myself " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
-   ]
-
-; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
-set rankinglist table:make
-foreach sort hospitalsoptions [ x ->
-   table:put rankinglist [who] of x normal mean_ranking sd_ranking
-]
-
-]
-end
 
 to discuss_hospital
-
-ask women with [selcounsel != false] [
 
 let hospa []
 foreach sort women with [selcounsel = [selcounsel] of myself][ z ->
@@ -205,16 +211,32 @@ foreach dictall [x ->
  ]
 
  print (word who " " selcounsel " allist: " hospa " rankinglist updated: " rankinglist  )
- ]
 
+; select_hospital
 end
 
-;to select_hospital
-;  ask women with [selcounsel != false][
-;  let options hospital with [member? who  table:keys [rankinglist] of myself]
-;    ask options [set utility table:get rankinglist [who] of self ]
-;  ]
-; end
+to select_hospital
+
+let options hospital with [member? who  table:keys [rankinglist] of myself]
+let womencompanion other women with [selcounsel != false and selcounsel = [selcounsel] of myself]
+
+ask options [
+
+; make up a list of ranking for that option by other women in group
+let ranking_others []
+let ranking_othweight []
+let sumtimetogether []
+foreach sort womencompanion [ z ->
+set ranking_others lput table:get [rankinglist] of z [who] of self ranking_others
+; let timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]
+; set ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight
+; set sumtimetogether lput timetogether sumtimetogether
+; print (word who " co-counsel: " [who] of z " timetogether: " timetogether)
+
+]
+  ]
+
+end
 
 
 
@@ -691,26 +713,9 @@ NIL
 1
 
 BUTTON
-1149
-15
-1233
-48
-choice_hospital
-choice_hospital
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-1150
+1151
 54
-1233
+1234
 87
 utility_influence
 ask turtle 15176 [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\nset sumtimetogether lput timetogether sumtimetogether\nprint (word who \" co-counsel: \" [who] of z \" timetogether: \" timetogether)\n\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_othweight)\nprint (word \"sumtimetogether: \" reduce + sumtimetogether)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking weighted \" reduce + ranking_othweight)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\n; let utility_othranking sentence table:get [rankinglist] of myself [who] of self ranking_othweight\n; set utility reduce + utility_ranking\n\nprint (word who \" own ranking: \" table:get [rankinglist] of myself [who] of self)\nprint (word who \" distance: \" dist myself self)\n; print (word who \" utility ranking: \" utility)\n\nset utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))) + (weight_distance_hospital * dist myself self ))\n \nprint (word who \" utility ranking others: \" (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\nprint (word who \" utility own ranking: \" ((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self))\nprint (word who \" utility distance: \" (weight_distance_hospital * dist myself self ) )\nprint (word who \" total utility: \" utility)\nprint (word \"            \")\n; this is to test the utility assigned by other women in the group\n]\n\nset selectedhospital [who] of  rnd:weighted-one-of options [exp( utility)]\n\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\nprint (word \"selected hospital: \" selectedhospital)\n]
@@ -794,6 +799,23 @@ weight_distance_hospital
 1
 NIL
 HORIZONTAL
+
+BUTTON
+804
+431
+867
+464
+check
+ask womens 11647 [\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\n; let timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\n; set ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\n; set sumtimetogether lput timetogether sumtimetogether\n; print (word who \" co-counsel: \" [who] of z \" timetogether: \" timetogether)\n\n]\n  ]\n \n\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
