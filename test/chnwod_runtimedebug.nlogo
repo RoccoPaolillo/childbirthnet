@@ -120,10 +120,10 @@ set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
 set radius radius + 1
 ]
 
-
+; placeholder (irrelevant)
  ask  hospitalsoptions [
  set color [color] of myself
-
+ ; print (word "hospital: "  who " woman: " [who] of myself " capacity: " capacity " distance: " dist myself self " pro_com: " pro_com)
    ]
 
 ; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
@@ -157,6 +157,7 @@ end
 
 to choice_counsel
 
+print (word "woman: " who " pro_com: " pro_com)
 let radius 0.5
 
 let counselsoptions no-turtles
@@ -169,10 +170,17 @@ set radius radius + 1
 ask  counselsoptions [
 set color [color] of myself
 set utility (weight_distance * dist myself self)
-]
+
+print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility " distance: " dist myself self " pro_com: " pro_com)
+  ]
 
 set selcounsel [who] of rnd:weighted-one-of counselsoptions [exp( utility)]
 ask counselcenter with [who = [selcounsel] of myself][set capacity capacity - 1 ]
+
+print (word "woman: " who " pro_com: " pro_com " selcounsel: " selcounsel)
+ask  counselsoptions [
+print (word "counselcenter: "  who " capacity: " capacity " utility: "  utility " distance: " dist myself self " pro_com: " pro_com)
+  ]
 
 end
 
@@ -208,6 +216,9 @@ foreach dictall [x ->
  ]
   ]
 
+; debug
+ print (word who " " counselstay " " selcounsel " allist: " hospa " rankinglist updated: " rankinglist  )
+  foreach sort womencompanion [ z -> print (word "companions: " [who] of z " counselstay: " [counselstay] of z  " rankinglist " [rankinglist] of z)]
 
 ;; here the real choice
 ; basket choice of hospitals to select from: all those now in the rankinglist
@@ -239,7 +250,26 @@ foreach dictall [x ->
     ; in case there is not other companion, so the decision is based on own ranking and distance
     [set utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self)  + (weight_distance_hospital * dist myself self ))]
 
+    ; debug report
+    if  any? womencompanion [
+      print (word " agent: " [who] of myself " hospital: " who " utility ranking others: " (social_multiplier * (reduce +   ranking_othweight / (reduce + sumtimetogether + 0.0001))  ) )]
+ print (word " agent: " [who] of myself " hospital: " who " utility own ranking: " ((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self))
+ print (word " agent: " [who] of myself " hospital: " who " utility distance: " (weight_distance_hospital * dist myself self ) )
+ print (word " agent: " [who] of myself " hospital: " who " total utility: " utility)
+ print (word "            ")
+
+
   ]
+ ; debug report
+ foreach sort options [w ->
+ print (word who " hospital: " [who] of w " utility: " [utility] of w)
+  ]
+; debug report
+ print (word who " Hospital options count: " count options)
+; debug report
+ask options [
+    print (word " agent: " [who] of myself " Hospital " who " utility: " utility " exp(utility): " exp(utility))
+]
 
  ; selection of hospital with random utility
  set selectedhospital [who] of rnd:weighted-one-of options [exp(utility)]
@@ -247,7 +277,7 @@ foreach dictall [x ->
  set givenbirth true
  set pregnant false
  ; debug
-; print(word who " selected hospital: " selectedhospital)
+ print(word who " selected hospital: " selectedhospital)
 
 
 end
