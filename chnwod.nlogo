@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations utility capacity]
+hospital-own [ID hospitalizations utility capacity womenhospital]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital]
 
 
@@ -21,13 +21,20 @@ to setup
   create-womens
   create-counselcenters
   create-hospitals
-  output-print (word "women: " count women "; counselcenters: " count counselcenter "; hospitals: " count hospital)
+  let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a > [hospitalizations] of b] hospital
+
+ output-print (word " Hospital choice  " )
+  foreach sorted-hospitals [ h ->
+  output-print (word [who] of h " = " [hospitalizations] of h)
+]
   output-print (word "  " )
-  output-print (word "hospitalizations per hospital ")
-  output-print (word "  " )
-  ask hospital [output-print (word id " = " hospitalizations)]
+ foreach sorted-hospitals [ h ->
+    output-print (word [who] of h " = " [id] of h " = " [hospitalizations] of h)
+]
+
   set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   ask women [options_hospital]
+  plot-hospitals
   reset-timer
   reset-ticks
 end
@@ -97,7 +104,6 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
       set utility 0
-;      set color gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"        ; the color and relocation are computed
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
@@ -136,7 +142,7 @@ foreach sort hospitalsoptions [ x ->
 end
 
 to go
-
+if not any? women with [givenbirth = false] [stop]
     if ticks > 0 and ticks mod wave_pregnant = 0  [
     ask n-of count_pregnant women [set pregnant true]
   ]
@@ -150,10 +156,12 @@ to go
     ]
   ]
   ]
+  ask counselcenter [set capacity 20 - count women with [pregnant = true and selcounsel = [who] of myself and givenbirth = false]]
+  plot-hospitals
 
-  if ticks = stop_if [stop]
   tick
 end
+
 
 to choice_counsel
 
@@ -168,18 +176,17 @@ set radius radius + 1
 
 ask  counselsoptions [
 set color [color] of myself
-set utility (weight_distance * dist myself self)
+set utility (weight_distance_counsel * dist myself self)
 ]
 
 set selcounsel [who] of rnd:weighted-one-of counselsoptions [exp( utility)]
-ask counselcenter with [who = [selcounsel] of myself][set capacity capacity - 1 ]
 
 end
 
 
 to choice_hospital
 ; identify women member of the same counselsente (not necessary 36 weeks, but the command is executed by those with week 36)
-let womencompanion other women with [selcounsel = [selcounsel] of myself]
+let womencompanion other women with [pregnant = true and givenbirth = false and selcounsel = [selcounsel] of myself]
 
 ;; to set up the complete basket choice of hospitals in the conversation
 ; if the woman has not the hospital of another companion woman in mind, she will add
@@ -246,12 +253,50 @@ foreach dictall [x ->
  ; at this step just for report counting
  set givenbirth true
  set pregnant false
+
  ; debug
 ; print(word who " selected hospital: " selectedhospital)
 
 
 end
 
+to plot-hospitals
+  set-current-plot "Hospital choice"
+  clear-plot
+
+  ; Sort hospitals by real hospitalizations
+  let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
+
+  ; First plot: real hospitalizations
+  set-current-plot-pen "actual"
+  let index 0
+  foreach sorted-hospitals [
+    t ->
+      let yval [hospitalizations] of t
+      plotxy index 0
+      plotxy index yval
+      set index index + 1
+  ]
+
+  ; Now compute simulated hospital choices per hospital
+  ask hospital [
+    set womenhospital count women with [selectedhospital = [who] of myself]
+  ]
+
+  ; Sort hospitals again in the same order to match indexing
+  let sorted-womenhospital sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
+
+  ; Second plot: simulated choices (overlay on same x)
+  set-current-plot-pen "simulated"
+  let indexsim 0
+  foreach sorted-womenhospital [
+    t ->
+      let yval [womenhospital] of t
+      plotxy indexsim 0
+      plotxy indexsim yval
+      set indexsim indexsim + 1
+  ]
+end
 
 to-report dist [origin destination]
 let destinationpos position [pro_com] of destination item 0 distservices
@@ -294,10 +339,10 @@ ticks
 30.0
 
 BUTTON
-24
-12
-87
-45
+16
+10
+79
+43
 setup
 setup
 NIL
@@ -311,10 +356,10 @@ NIL
 1
 
 BUTTON
-1262
-14
-1490
-47
+1636
+54
+1864
+87
 show VectorDataset
 show gis:feature-list-of tuscany
 NIL
@@ -328,10 +373,10 @@ NIL
 1
 
 BUTTON
-1301
-485
-1435
-518
+923
+422
+1057
+455
 hide women
 ask women [hide-turtle]
 NIL
@@ -345,10 +390,10 @@ NIL
 1
 
 BUTTON
-1161
-485
-1294
-518
+783
+422
+916
+455
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -362,10 +407,10 @@ NIL
 1
 
 BUTTON
-1384
-122
-1490
-155
+1758
+162
+1864
+195
 color_municipality
 gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
 NIL
@@ -379,10 +424,10 @@ NIL
 1
 
 INPUTBOX
-1261
-120
-1375
-190
+1635
+160
+1749
+230
 area_municipality
 45002.0
 1
@@ -390,10 +435,10 @@ area_municipality
 Number
 
 INPUTBOX
-1262
-53
-1377
-113
+1636
+93
+1751
+153
 MUNICIPALITY_name
 Firenze
 1
@@ -401,10 +446,10 @@ Firenze
 String (reporter)
 
 BUTTON
-1384
-70
-1489
-103
+1758
+110
+1863
+143
 codCOMUNE
 print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
 NIL
@@ -418,10 +463,10 @@ NIL
 1
 
 BUTTON
-1162
-522
-1295
-555
+784
+459
+917
+492
 show counselcenter
 ask counselcenter [ show-turtle]
 NIL
@@ -435,10 +480,10 @@ NIL
 1
 
 BUTTON
-1302
-522
-1435
-555
+924
+459
+1057
+492
 show women
 ask women [show-turtle]
 NIL
@@ -452,10 +497,10 @@ NIL
 1
 
 BUTTON
-1385
-157
-1490
-190
+1759
+197
+1864
+230
 show VectorFeature
 print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
 NIL
@@ -469,10 +514,10 @@ NIL
 1
 
 BUTTON
-1442
-485
-1557
-518
+1064
+422
+1179
+455
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -486,10 +531,10 @@ NIL
 1
 
 BUTTON
-1441
-523
-1558
-556
+1063
+460
+1180
+493
 show hospital
 ask hospital [show-turtle]
 NIL
@@ -503,27 +548,27 @@ NIL
 1
 
 TEXTBOX
-1318
-464
-1399
-482
+940
+401
+1021
+419
 the three actors
 10
 0.0
 1
 
 OUTPUT
-727
-13
-1148
-402
+728
+14
+877
+383
 10
 
 BUTTON
-1416
-561
-1488
-594
+1038
+498
+1110
+531
 testdistances
 ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
 NIL
@@ -537,10 +582,10 @@ NIL
 1
 
 INPUTBOX
-1161
-562
-1295
-622
+783
+499
+917
+559
 womens_who
 12886.0
 1
@@ -548,10 +593,10 @@ womens_who
 Number
 
 INPUTBOX
-1297
-562
-1412
-622
+919
+499
+1034
+559
 counsels_who
 20186.0
 1
@@ -559,10 +604,10 @@ counsels_who
 Number
 
 BUTTON
-108
-136
-173
-169
+99
+10
+164
+43
 go
 go
 T
@@ -576,12 +621,12 @@ NIL
 1
 
 SLIDER
-30
-202
-158
-235
-weight_distance
-weight_distance
+37
+150
+222
+183
+weight_distance_counsel
+weight_distance_counsel
 -100
 100
 -12.0
@@ -592,9 +637,9 @@ HORIZONTAL
 
 MONITOR
 28
-260
+203
 176
-305
+248
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -603,20 +648,20 @@ mean [capacity] of counselcenter
 
 MONITOR
 28
-314
+257
 175
-359
-pregnant women
-count women with [pregnant = true]
+302
+women given birth
+count women with [givenbirth = true]
 17
 1
 11
 
 BUTTON
-1494
-560
-1607
-593
+1116
+497
+1229
+530
 check ticks advance
 if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
 T
@@ -630,23 +675,12 @@ NIL
 1
 
 INPUTBOX
-13
-122
-76
-182
-stop_if
-50.0
-1
-0
-Number
-
-INPUTBOX
 12
 57
 96
 117
 count_pregnant
-10.0
+100.0
 1
 0
 Number
@@ -663,10 +697,10 @@ wave_pregnant
 Number
 
 BUTTON
-1290
-290
-1416
-323
+1664
+330
+1790
+363
 counsel_networks
 ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
 NIL
@@ -680,10 +714,10 @@ NIL
 1
 
 INPUTBOX
-1421
-288
-1529
-348
+1795
+328
+1903
+388
 inspectcounselcenter
 20345.0
 1
@@ -691,10 +725,10 @@ inspectcounselcenter
 Number
 
 BUTTON
-1291
-324
-1416
-357
+1665
+364
+1790
+397
 inspect_counselcenter
 ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
 NIL
@@ -708,10 +742,10 @@ NIL
 1
 
 BUTTON
-1150
-55
-1233
-88
+1518
+265
+1601
+298
 test utility
 ask women with [counselstay = 36 and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\n\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\nset sumtimetogether lput timetogether sumtimetogether\nprint (word who \" co-counsel: \" [who] of z \" timetogether: \" timetogether)\n\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_othweight)\nprint (word \"sumtimetogether: \" reduce + sumtimetogether)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking weighted \" reduce + ranking_othweight)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\n; let utility_othranking sentence table:get [rankinglist] of myself [who] of self ranking_othweight\n; set utility reduce + utility_ranking\n\nprint (word who \" own ranking: \" table:get [rankinglist] of myself [who] of self)\nprint (word who \" distance: \" dist myself self)\n; print (word who \" utility ranking: \" utility)\n\nset utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))) + (weight_distance_hospital * dist myself self ))\n \nprint (word who \" utility ranking others: \" (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\nprint (word who \" utility own ranking: \" ((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self))\nprint (word who \" utility distance: \" (weight_distance_hospital * dist myself self ) )\nprint (word who \" total utility: \" utility)\nprint (word \"            \")\n; this is to test the utility assigned by other women in the group\n]\n\nset selectedhospital [who] of  rnd:weighted-one-of options [exp( utility)]\n\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\nprint (word \"selected hospital: \" selectedhospital)\n]
 NIL
@@ -725,25 +759,25 @@ NIL
 1
 
 SLIDER
-20
-451
-172
-484
+29
+463
+181
+496
 social_multiplier
 social_multiplier
 0
 100
-5.0
+10.0
 1
 1
 max
 HORIZONTAL
 
 INPUTBOX
-33
-489
-154
-549
+42
+501
+163
+561
 weight_socialinfluence
 10.0
 1
@@ -751,15 +785,15 @@ weight_socialinfluence
 Number
 
 SLIDER
-2
-367
-105
-400
+1
+349
+104
+382
 mean_ranking
 mean_ranking
 -1
 1
-1.0
+0.0
 0.1
 1
 NIL
@@ -767,9 +801,9 @@ HORIZONTAL
 
 SLIDER
 107
-367
+349
 210
-400
+382
 sd_ranking
 sd_ranking
 0
@@ -781,66 +815,422 @@ NIL
 HORIZONTAL
 
 SLIDER
-20
-416
-172
-449
+29
+428
+181
+461
 weight_distance_hospital
 weight_distance_hospital
 -50
 50
-0.0
+-2.0
 1
 1
 NIL
 HORIZONTAL
 
+PLOT
+885
+208
+1235
+332
+Hospital choice
+NIL
+NIL
+0.0
+10.0
+0.0
+2000.0
+true
+true
+"" ""
+PENS
+"actual" 1.0 1 -2674135 true "" ""
+"simulated" 1.0 1 -13345367 true "" ""
+
+BUTTON
+1522
+311
+1593
+344
+printest
+let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital\n\n   let index 0\n   foreach sorted-hospitals [\n     t ->\n       let xvalordered [hospitalizations] of t\n       plotxy index 0\n       plotxy index xvalordered\n       set index index + 1\n       print (word [who] of t \" \" [xvalordered] of t)\n   ]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+1698
+132
+2178
+610
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"20234" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20234"
+"20231" 1.0 0 -7500403 true "" "plot [hospitalizations] of hospitals 20231"
+"20225" 1.0 0 -2674135 true "" "plot [hospitalizations] of hospitals 20225"
+"20230" 1.0 0 -955883 true "" "plot [hospitalizations] of hospitals 20230"
+"20239" 1.0 0 -6459832 true "" "plot [hospitalizations] of hospitals 20239"
+"20236" 1.0 0 -1184463 true "" "plot [hospitalizations] of hospitals 20236"
+"20245" 1.0 0 -10899396 true "" "plot [hospitalizations] of hospitals 20245"
+"20229" 1.0 0 -13840069 true "" "plot [hospitalizations] of hospitals 20229"
+"20247" 1.0 0 -14835848 true "" "plot [hospitalizations] of hospitals 20247"
+"20232" 1.0 0 -11221820 true "" "plot [hospitalizations] of hospitals 20232"
+"20242" 1.0 0 -13791810 true "" "plot [hospitalizations] of hospitals 20242"
+"20246" 1.0 0 -13345367 true "" "plot [hospitalizations] of hospitals 20246"
+"20235" 1.0 0 -8630108 true "" "plot [hospitalizations] of hospitals 20235"
+"20238" 1.0 0 -5825686 true "" "plot [hospitalizations] of hospitals 20238"
+"20244" 1.0 0 -2064490 true "" "plot [hospitalizations] of hospitals 20244"
+"20233" 1.0 0 -13840069 true "" "plot [hospitalizations] of hospitals 20233"
+"20227" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20227"
+"20240" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20240"
+"20243" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20243"
+"20228" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20228"
+"20248" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20248"
+"20226" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20226"
+"20237" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20237"
+"20241" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20241"
+
+MONITOR
+1066
+110
+1120
+155
+20234
+count women with [selectedhospital = 20234]
+2
+1
+11
+
+MONITOR
+946
+159
+1005
+204
+20231
+count women with [selectedhospital = 20231]
+2
+1
+11
+
+MONITOR
+1120
+16
+1175
+61
+20225
+count women with [selectedhospital = 20225]
+2
+1
+11
+
+MONITOR
+941
+63
+1000
+108
+20230
+count women with [selectedhospital = 20230]
+2
+1
+11
+
+MONITOR
+1178
+64
+1234
+109
+20239
+count women with [selectedhospital = 20239]
+2
+1
+11
+
+MONITOR
+946
+110
+1002
+155
+20236
+count women with [selectedhospital = 20236]
+2
+1
+11
+
+MONITOR
+1066
+158
+1120
+203
+20245
+count women with [selectedhospital = 20245]
+2
+1
+11
+
+MONITOR
+885
+158
+943
+203
+20229
+count women with [selectedhospital = 20229]
+2
+1
+11
+
+MONITOR
+1177
+158
+1234
+203
+20247
+count women with [selectedhospital = 20247]
+2
+1
+11
+
+MONITOR
+1122
+110
+1177
+155
+20232
+count women with [selectedhospital = 20232]
+2
+1
+11
+
+MONITOR
+1006
+110
+1063
+155
+20242
+count women with [selectedhospital = 20242]
+2
+1
+11
+
+MONITOR
+1062
+62
+1119
+107
+20246
+count women with [selectedhospital = 20246]
+2
+1
+11
+
+MONITOR
+1001
+16
+1058
+61
+20235
+count women with [selectedhospital = 20235]
+2
+1
+11
+
+MONITOR
+943
+16
+1000
+61
+20238
+count women with [selectedhospital = 20238]
+2
+1
+11
+
+MONITOR
+1121
+157
+1177
+202
+20244
+count women with [selectedhospital = 20244]
+2
+1
+11
+
+MONITOR
+1120
+62
+1175
+107
+20233
+count women with [selectedhospital = 20233]
+2
+1
+11
+
+MONITOR
+884
+15
+941
+60
+20227
+count women with [selectedhospital = 20227]
+2
+1
+11
+
+MONITOR
+1178
+14
+1235
+59
+20240
+count women with [selectedhospital = 20240]
+2
+1
+11
+
+MONITOR
+883
+63
+940
+108
+20243
+count women with [selectedhospital = 20243]
+2
+1
+11
+
+MONITOR
+886
+111
+943
+156
+20228
+count women with [selectedhospital = 20228]
+2
+1
+11
+
+MONITOR
+1007
+158
+1064
+203
+20248
+count women with [selectedhospital = 20248]
+2
+1
+11
+
+MONITOR
+1178
+112
+1235
+157
+20226
+count women with [selectedhospital = 20226]
+2
+1
+11
+
+MONITOR
+1061
+16
+1118
+61
+20237
+count women with [selectedhospital = 20237]
+2
+1
+11
+
+MONITOR
+1002
+62
+1059
+107
+20241
+count women with [selectedhospital = 20241]
+2
+1
+11
+
+TEXTBOX
+70
+324
+162
+342
+distribution ranking
+10
+0.0
+1
+
+TEXTBOX
+70
+402
+156
+420
+selection hospital
+10
+0.0
+1
+
+TEXTBOX
+45
+124
+155
+142
+selection counselcenter
+10
+0.0
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-Test random utility model for counselcenter based on distance.
-Each wave, an amount of women get pregnant and make a decision on the counselcenter.
-They first scan in-radius 0.5 the available counselcenters, at each a utility is assigned based on distance and the one with closer distance is selected. The determinism of the choice is based on weighted parameter distance according to conditional logit.
-
+Hospital choice based on social multiplier of formed networks in counselcenters. Actors of the simulation are women, counselcenters and hospitals. Random utility models applied for the selection of counselcenter and then hospitals. One cycle is equivalent to one week.
 
 ## HOW IT WORKS
 
-Each wave_pregnant, a total of count_pregnant women randomly extracted are assigned to be pregnant. They will execute the "choice" commmand. In the simulation, they will behave according to being "pregnant", until they "givebirth", which is a way to avoid extraction of the same woman twice. 
-When called to execute "choice", they first scan the available counselcenters around them with in-radius 0.5, looking for at least 5 counselcenters (they can be more as long as match conditions); counselcenters have a capacity each (20 spots) that runs out as long as they are selected. If there are no counselcenters with empty spots, they enlarge the radius. This means the location is as local as possible. Once the set of possible counselcenters is available ( counselsoptions in choice block), the distance to the woman is calculated using dist reporter for each counselcenter (origin = woman, destination = counselcenter). For each counselcenter, a utility is computed by the individual woman as a weighted function of the distance, i.e.
+Each wave_pregnant, a total of count_pregnant women randomly extracted are assigned to be pregnant. At initialization of the model, women hold a ranking distribution according to normal distribution (average and standard deviation to compute). The distribution is for hospitals in a radius. The first select a counselsenter where to follow a preparatory course where networks are formed. The selection occurs via a random utility model, selecting an array of options in a radius based on available spot, the decision occurs based on the distance, with higher probability for closer counselcenters. Women are connected to other women pregnant in the same counselcenter. They will stay until week 36. Due to different time of execution, time spent varies by individual woman. Women who reach week 36 need to decide the hospital to give birth. The list of options to decide from are the original one for the individual agent, plus hospitals brought to the discussion by each agent in the counselcenter.
+ This decision is implemented through a random utility model, based on distance (closer the better), plus individual ranking, plus social multiplies which models the weight of preference of other women in the network on the actual selection decision of agents. Weight of individual ranking and weight of social multiplier are complementary. The social multiplier is modeled with a weight given to weighted mean of women in the counselcenter for each hospital. The weight of the preference of each other woman to the selection of the woman at week 36 is equivalent to the time spent with that woman during the stay at the counselstay. As such, women most spent time with have higher influence. After the hospital is selected, the woman is given status givenbirth and is out of the dynamics of the simulation. The simulation ends when all women have given birth. 
 
-Utility = weight_distance parameter * distance
-Weight_distance parameter is negative because we need to select the option with lower distance, hence utility has to be negative [because higher utility for us means lower distance].
-Note that the computed utility of the counselcenter will remain that one until a new woman will assign "her utility" to  that counselcenter based on the distance to her.
-
-The actual selection of the closer counselcenter according to conditional logit (Pi = exp(Ui) / sum(exp(Uall)) is done with random-wheel-selection [rnd extension]:
-
-rnd:weighted-one-of counselsoptions [exp( utility)]
-
-this algorithm computes the weighted selection of options based on the size of a [reporter], in our case the exponentiation of the utility computed.
-Note that with weight_distance = 0, all options have equal opportunity to be extracted, the lower weight_distance, the higher the chance of option with minimal lower distance will be selected. 
-
-* What happens after the choice.
-
-By "selection" here we mean that the woman will correct its own variable "selcounsel" in its mind to the ID (who) of the counselcenter selected. In this way, we can use this variable to map women assigned to the same counselcenter.
-Once the woman has selected the counselcenter, it drops the available spots of the counselcenter by 1 unit, since the woman occupies one spot now. This will affect the options available to the next pregnant woman called to select a counselcenter, since the more time progresses, the fewer counselcenters spots are available.
 
 ## HOW TO USE IT
 
-In this test, you can set the number of women who got pregnant at each wave with "count_pregnant". You can set how long a wave is with "wave_pregnant": it uses modulo based on ticks > 0 (mod check in NetLogo dictionary). "stop_it" sets how many ticks the simulation must run. For instance, with count_pregnant = 10 and wave_pregnant = 2 and stop_it 13, every 2 ticks 10 women get pregnant and select a counselcenter. This means 10 women are called at ticks = 2,4,6,8,10,12 = 60 women when the simulation stops.
+* mean_ranking, sd_ranking: to set the distribution of ranking for hospitals. Currently it is global, i.e. not differentiating distribution for specific hospitals or else
+* weight_distance_counsel: weight for distance (negative) in selection counselcenter
+* weight_distance_hospital: weight for distance (negative) in selection hospital
+* social_multiplier: weight for effect social influence in selection hospital
+* weight_socialinfluence: used to compute weight of individual ranking as complementary to social multiplier. E.g. with weight_socialinfluence equal 10 and social_multiplier equal 6, weight individual ranking is equal 4
 
 ## THINGS TO NOTICE
 
-I let every pregnant woman to report their whoID, their location, the actual counselcenter it takes as possible options (they set the color of running woman), and report for each of them the distance to the woman, their capacity and their computed utility. After the selection is done, the woman reports her new selcounsel and updated values for counselcenters. Note that with lower weight_distance, the whoID of the counselcenter with lower distance should be now the selcounsel of woman, and that counselcenter report 1 unit less of capacity, With weight_distance = 0, every option should have the same probability to be extracted. You can also run in the command center:
+* Hospital choice in the printed box: actual number of births per hospital, ID who is reported (below in the box the complete name)
+* Monitors: simulated births per hospital
+* Hospital choice: each bar is the number of births per hospital (red: actual empirical, blue is simulated). Not possible to report the label.
 
-ask womens who [choice] to test on the same woman specifically
+## THINGS TO INVESTIGATE AND CHANGE
 
-## CAVEAT and next steps
-
-* Considering utility = (weigthed_distance * distance), exp(utility) in NetLogo causes numbers too big, we need to normalize distance from 0 to 1 to avoid this
-* In the next steps of modeling, women will occupy a spot as long as they are pregnant and then leave. In this step new women would come from a new wave of pregnancy. I wonder if with the current setting we risk women of the same cohort will attend counselcenters at the same time, though in different spaces. We should increase the chance of women of different cohorts to interact, either through randomness in starting selection or modulating the length of staying at the counselcenter
-* Counselcenters now have a equal capacity, should this reflect the density of local population of gis area, or do we have the empirical actual capacity of each counselcenter?
-
-
+*  weight_distance_counsel: maybe we can get it out: it complicates understanding of the dynamics since we need to understand the role of distance weight in the final decision of hospital. What most matters is under what condition women are "forced" to interact with others and consider options out of their space. This mostly happends because of limited capacity and need to find a spot elsewhere, due to capacity
+* effect of density of pregnant women in the radius of hospitals, and more precisely the number of women pregnant at the same time, what effects this would have on reinforcing the effect of ranking on hospital selection
+* the distribution of ranking, ideally changing by zone, so to effectively study under what conditions women would select one hospital that they would not consider or holds low ranking. This also considering the role of social influence over distance
+* The effect of the selection of one woman on other women of their spatial proximity (municipality), i.e. currently the ranking of hospital is set at initialization, so as the list of options bounded to space, women who give birth and select one hospital could change the initial list of options as effect of word-of-mouth of women who selected in a previous cycle. This dynamic is to be implemented.
 
 ## NETLOGO FEATURES
 
@@ -852,7 +1242,7 @@ ask womens who [choice] to test on the same woman specifically
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+Rocco Paolillo
 @#$#@#$#@
 default
 true
