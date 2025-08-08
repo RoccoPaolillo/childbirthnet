@@ -621,10 +621,10 @@ NIL
 1
 
 SLIDER
-37
-150
-222
-183
+25
+259
+186
+292
 weight_distance_counsel
 weight_distance_counsel
 -100
@@ -636,10 +636,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-28
-203
-176
-248
+1241
+14
+1389
+59
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -647,10 +647,10 @@ mean [capacity] of counselcenter
 11
 
 MONITOR
-28
-257
-175
-302
+1241
+68
+1388
+113
 women given birth
 count women with [givenbirth = true]
 17
@@ -760,9 +760,9 @@ NIL
 
 SLIDER
 29
-463
+387
 181
-496
+420
 social_multiplier
 social_multiplier
 0
@@ -775,9 +775,9 @@ HORIZONTAL
 
 INPUTBOX
 42
-501
+425
 163
-561
+485
 weight_socialinfluence
 10.0
 1
@@ -785,10 +785,10 @@ weight_socialinfluence
 Number
 
 SLIDER
-1
-349
-104
-382
+3
+160
+106
+193
 mean_ranking
 mean_ranking
 -1
@@ -800,10 +800,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-107
-349
-210
-382
+109
+160
+212
+193
 sd_ranking
 sd_ranking
 0
@@ -816,9 +816,9 @@ HORIZONTAL
 
 SLIDER
 29
-428
+352
 181
-461
+385
 weight_distance_hospital
 weight_distance_hospital
 -50
@@ -1171,10 +1171,10 @@ count women with [selectedhospital = 20241]
 11
 
 TEXTBOX
-70
-324
-162
-342
+72
+135
+164
+153
 distribution ranking
 10
 0.0
@@ -1182,19 +1182,19 @@ distribution ranking
 
 TEXTBOX
 70
-402
+326
 156
-420
+344
 selection hospital
 10
 0.0
 1
 
 TEXTBOX
-45
-124
-155
-142
+48
+233
+158
+251
 selection counselcenter
 10
 0.0
