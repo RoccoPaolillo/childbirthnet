@@ -1,7 +1,7 @@
 library(dplyr)
 library(readxl)
 
-setwd("C:/Users/rocpa/OneDrive/Documenti/GitHub/childbirthod/data/")
+setwd("C:/Users/LENOVO/Documents/GitHub/childbirthod/data/")
 
 ricoveriparti2023 <- read.csv("ricoveri_parti_2023.csv",sep=",")
 
