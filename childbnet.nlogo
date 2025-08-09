@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
 hospital-own [ID hospitalizations utility capacity womenhospital]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp]
 
 
 
@@ -18,9 +18,9 @@ to setup
   set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-  create-womens
   create-counselcenters
   create-hospitals
+  create-womens
   let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a > [hospitalizations] of b] hospital
 
  output-print (word " Hospital choice  " )
@@ -46,28 +46,7 @@ to displaymap
 end
 
 
-to create-womens
-let hosptlist csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
-let my-table table:make
 
-foreach but-first hosptlist [ x ->
-  table:put my-table item 0 x  item 1 x
-]
-  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
-    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
-     set shape "circle"
-     set color gis:property-value this-municipality "PRO_COM"
-     set size 0.2
-     set pregnant false
-     set selcounsel false
-     set givenbirth false
-     set counselstay 0
-     set PRO_COM gis:property-value this-municipality "PRO_COM"
-    ]
-  ]
-  ]
-end
 
 to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
 let consul2019 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
@@ -112,6 +91,40 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
 
     ]
   ]
+end
+
+to create-womens
+let hosptlist csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
+
+let my-table table:make
+
+foreach but-first hosptlist [ x ->
+  table:put my-table item 0 x  item 1 x
+]
+  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
+    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
+     set shape "circle"
+     set color gis:property-value this-municipality "PRO_COM"
+     set size 0.2
+     set pregnant false
+     set selcounsel false
+     set givenbirth false
+     set counselstay 0
+     set PRO_COM gis:property-value this-municipality "PRO_COM"
+    ]
+  ]
+  ]
+
+  let hospitals2023 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
+
+
+foreach but-first hospitals2023[ i ->
+ask n-of item 5 i women with [pro_com = item 0 i and selectedhospitalemp = 0][
+set selectedhospitalemp [who] of one-of hospital with [id = item 2 i ]
+    ]
+]
+
 end
 
 to options_hospital
@@ -407,10 +420,10 @@ NIL
 1
 
 BUTTON
-1758
-162
-1864
-195
+1757
+163
+1863
+196
 color_municipality
 gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
 NIL
@@ -468,7 +481,7 @@ BUTTON
 917
 492
 show counselcenter
-ask counselcenter [ show-turtle]
+ask counselcenter [set color gray show-turtle]
 NIL
 1
 T
@@ -485,7 +498,7 @@ BUTTON
 1057
 492
 show women
-ask women [show-turtle]
+ask women [set color gray show-turtle]
 NIL
 1
 T
@@ -536,7 +549,7 @@ BUTTON
 1180
 493
 show hospital
-ask hospital [show-turtle]
+ask hospital [set color gray show-turtle]
 NIL
 1
 T
@@ -865,47 +878,6 @@ NIL
 NIL
 1
 
-PLOT
-1698
-132
-2178
-610
-plot 1
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"20234" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20234"
-"20231" 1.0 0 -7500403 true "" "plot [hospitalizations] of hospitals 20231"
-"20225" 1.0 0 -2674135 true "" "plot [hospitalizations] of hospitals 20225"
-"20230" 1.0 0 -955883 true "" "plot [hospitalizations] of hospitals 20230"
-"20239" 1.0 0 -6459832 true "" "plot [hospitalizations] of hospitals 20239"
-"20236" 1.0 0 -1184463 true "" "plot [hospitalizations] of hospitals 20236"
-"20245" 1.0 0 -10899396 true "" "plot [hospitalizations] of hospitals 20245"
-"20229" 1.0 0 -13840069 true "" "plot [hospitalizations] of hospitals 20229"
-"20247" 1.0 0 -14835848 true "" "plot [hospitalizations] of hospitals 20247"
-"20232" 1.0 0 -11221820 true "" "plot [hospitalizations] of hospitals 20232"
-"20242" 1.0 0 -13791810 true "" "plot [hospitalizations] of hospitals 20242"
-"20246" 1.0 0 -13345367 true "" "plot [hospitalizations] of hospitals 20246"
-"20235" 1.0 0 -8630108 true "" "plot [hospitalizations] of hospitals 20235"
-"20238" 1.0 0 -5825686 true "" "plot [hospitalizations] of hospitals 20238"
-"20244" 1.0 0 -2064490 true "" "plot [hospitalizations] of hospitals 20244"
-"20233" 1.0 0 -13840069 true "" "plot [hospitalizations] of hospitals 20233"
-"20227" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20227"
-"20240" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20240"
-"20243" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20243"
-"20228" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20228"
-"20248" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20248"
-"20226" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20226"
-"20237" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20237"
-"20241" 1.0 0 -16777216 true "" "plot [hospitalizations] of hospitals 20241"
-
 MONITOR
 1066
 110
@@ -929,9 +901,9 @@ count women with [selectedhospital = 20231]
 11
 
 MONITOR
-1120
+1119
 16
-1175
+1174
 61
 20225
 count women with [selectedhospital = 20225]
@@ -1199,6 +1171,34 @@ selection counselcenter
 10
 0.0
 1
+
+BUTTON
+1256
+178
+1359
+211
+show mobility
+displaymap\nask counselcenter [ hide-turtle]\nask women [ hide-turtle]\nask hospital [ hide-turtle]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color red]\n\n\n\n; print gis:find-one-feature tuscany \"PRO_COM\" [pro_com] of  women with [selectedhospitalemp = [who] of myself]\n\n\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+1258
+118
+1363
+178
+hospital_id
+51.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
