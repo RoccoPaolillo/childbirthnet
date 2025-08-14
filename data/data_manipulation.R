@@ -48,12 +48,14 @@ osp <- osp %>% group_by(presidio) %>% mutate(totparti = sum(parti))
 distcounsel <- read.csv("matrice_distanze_consultori.csv",sep="," , check.names = FALSE) 
 names(distcounsel)[1] <- "womencom"
 # to test: first element is municipality woman, second is municipality counselcenter
-distcounsel[distcounsel$womencom == "47005","45010"]
+distcounsel[distcounsel$womencom == "53001","100007"]
+df_normalized[df_normalized$womencom == "53001","100007"]
 
-disthospital <- read.csv("matrice_distanze_ospedali.csv",sep="," , check.names = FALSE) 
-names(disthospital)[1] <- "womencom"
+
+#disthospital <- read.csv("matrice_distanze_ospedali.csv",sep="," , check.names = FALSE) 
+#names(disthospital)[1] <- "womencom"
 # to test: first element is municipality woman, second is municipality hospital
-disthospital[disthospital$womencom == "51041","49014"]
+# disthospital[disthospital$womencom == "51035","49014"]
 
 # test that distcounsel already contains disthospital
 

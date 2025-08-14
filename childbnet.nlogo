@@ -32,7 +32,7 @@ to setup
     output-print (word [who] of h " = " [id] of h " = " [hospitalizations] of h)
 ]
 
-  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
+  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   ask women [options_hospital]
   plot-hospitals
   reset-timer
@@ -573,7 +573,7 @@ the three actors
 OUTPUT
 728
 14
-877
+1074
 383
 10
 
@@ -649,10 +649,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1241
-14
-1389
-59
+1101
+142
+1234
+187
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -661,9 +661,9 @@ mean [capacity] of counselcenter
 
 MONITOR
 1241
-68
-1388
-113
+143
+1354
+188
 women given birth
 count women with [givenbirth = true]
 17
@@ -792,7 +792,7 @@ INPUTBOX
 163
 485
 weight_socialinfluence
-10.0
+20.0
 1
 0
 Number
@@ -836,17 +836,17 @@ weight_distance_hospital
 weight_distance_hospital
 -50
 50
--2.0
+-20.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-885
-208
-1235
-332
+1089
+10
+1439
+134
 Hospital choice
 NIL
 NIL
@@ -877,270 +877,6 @@ NIL
 NIL
 NIL
 1
-
-MONITOR
-1066
-110
-1120
-155
-20234
-count women with [selectedhospital = 20234]
-2
-1
-11
-
-MONITOR
-946
-159
-1005
-204
-20231
-count women with [selectedhospital = 20231]
-2
-1
-11
-
-MONITOR
-1119
-16
-1174
-61
-20225
-count women with [selectedhospital = 20225]
-2
-1
-11
-
-MONITOR
-941
-63
-1000
-108
-20230
-count women with [selectedhospital = 20230]
-2
-1
-11
-
-MONITOR
-1178
-64
-1234
-109
-20239
-count women with [selectedhospital = 20239]
-2
-1
-11
-
-MONITOR
-946
-110
-1002
-155
-20236
-count women with [selectedhospital = 20236]
-2
-1
-11
-
-MONITOR
-1066
-158
-1120
-203
-20245
-count women with [selectedhospital = 20245]
-2
-1
-11
-
-MONITOR
-885
-158
-943
-203
-20229
-count women with [selectedhospital = 20229]
-2
-1
-11
-
-MONITOR
-1177
-158
-1234
-203
-20247
-count women with [selectedhospital = 20247]
-2
-1
-11
-
-MONITOR
-1122
-110
-1177
-155
-20232
-count women with [selectedhospital = 20232]
-2
-1
-11
-
-MONITOR
-1006
-110
-1063
-155
-20242
-count women with [selectedhospital = 20242]
-2
-1
-11
-
-MONITOR
-1062
-62
-1119
-107
-20246
-count women with [selectedhospital = 20246]
-2
-1
-11
-
-MONITOR
-1001
-16
-1058
-61
-20235
-count women with [selectedhospital = 20235]
-2
-1
-11
-
-MONITOR
-943
-16
-1000
-61
-20238
-count women with [selectedhospital = 20238]
-2
-1
-11
-
-MONITOR
-1121
-157
-1177
-202
-20244
-count women with [selectedhospital = 20244]
-2
-1
-11
-
-MONITOR
-1120
-62
-1175
-107
-20233
-count women with [selectedhospital = 20233]
-2
-1
-11
-
-MONITOR
-884
-15
-941
-60
-20227
-count women with [selectedhospital = 20227]
-2
-1
-11
-
-MONITOR
-1178
-14
-1235
-59
-20240
-count women with [selectedhospital = 20240]
-2
-1
-11
-
-MONITOR
-883
-63
-940
-108
-20243
-count women with [selectedhospital = 20243]
-2
-1
-11
-
-MONITOR
-886
-111
-943
-156
-20228
-count women with [selectedhospital = 20228]
-2
-1
-11
-
-MONITOR
-1007
-158
-1064
-203
-20248
-count women with [selectedhospital = 20248]
-2
-1
-11
-
-MONITOR
-1178
-112
-1235
-157
-20226
-count women with [selectedhospital = 20226]
-2
-1
-11
-
-MONITOR
-1061
-16
-1118
-61
-20237
-count women with [selectedhospital = 20237]
-2
-1
-11
-
-MONITOR
-1002
-62
-1059
-107
-20241
-count women with [selectedhospital = 20241]
-2
-1
-11
 
 TEXTBOX
 72
@@ -1173,12 +909,12 @@ selection counselcenter
 1
 
 BUTTON
-1256
-178
-1359
-211
+1367
+217
+1447
+250
 show mobility
-displaymap\nask counselcenter [ hide-turtle]\nask women [ hide-turtle]\nask hospital [ hide-turtle]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color red]\n\n\n\n; print gis:find-one-feature tuscany \"PRO_COM\" [pro_com] of  women with [selectedhospitalemp = [who] of myself]\n\n\n]
+displaymap\nask counselcenter [ hide-turtle]\nask women [ hide-turtle]\nask hospital [ hide-turtle]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n\n\n]
 NIL
 1
 T
@@ -1190,12 +926,12 @@ NIL
 1
 
 INPUTBOX
-1258
-118
-1363
-178
+1364
+149
+1442
+209
 hospital_id
-51.0
+50.0
 1
 0
 Number
