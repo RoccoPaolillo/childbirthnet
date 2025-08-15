@@ -623,7 +623,7 @@ BUTTON
 1110
 531
 testdistances
-ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
+print dist turtle origin_from turtle destination_to
 NIL
 1
 T
@@ -639,7 +639,7 @@ INPUTBOX
 499
 917
 559
-womens_who
+origin_from
 12886.0
 1
 0
@@ -650,8 +650,8 @@ INPUTBOX
 499
 1034
 559
-counsels_who
-20186.0
+destination_to
+50.0
 1
 0
 Number
