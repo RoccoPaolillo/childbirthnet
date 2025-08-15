@@ -5,8 +5,8 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations utility capacity womenhospital]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
 
 
 
@@ -277,6 +277,7 @@ to plot-hospitals
   set-current-plot "Hospital choice"
   clear-plot
 
+if plot_show = "hospitalizations" [
   ; Sort hospitals by real hospitalizations
   let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
 
@@ -309,6 +310,45 @@ to plot-hospitals
       plotxy indexsim yval
       set indexsim indexsim + 1
   ]
+  ]
+
+  if plot_show = "mobilities" [
+  ; Sort hospitals by real hospitalizations
+    ask hospital [
+      set mobilitiesemp count women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]]
+  let sorted-hospitals sort-by [[a b] -> [mobilitiesemp] of a < [mobilitiesemp] of b] hospital
+
+  ; First plot: real hospitalizations
+  set-current-plot-pen "actual"
+  let index 0
+  foreach sorted-hospitals [
+    t ->
+      let yval [mobilitiesemp] of t
+      plotxy index 0
+      plotxy index yval
+      set index index + 1
+  ]
+
+  ; Now compute simulated hospital choices per hospital
+  ask hospital [
+      set womenhospital count women with [selectedhospital = [who] of myself and pro_com != [pro_com] of myself]
+  ]
+
+  ; Sort hospitals again in the same order to match indexing
+  let sorted-womenhospital sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
+
+  ; Second plot: simulated choices (overlay on same x)
+  set-current-plot-pen "simulated"
+  let indexsim 0
+  foreach sorted-womenhospital [
+    t ->
+      let yval [womenhospital] of t
+      plotxy indexsim 0
+      plotxy indexsim yval
+      set indexsim indexsim + 1
+  ]
+  ]
+
 end
 
 to-report dist [origin destination]
@@ -338,8 +378,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -481,7 +521,7 @@ BUTTON
 917
 492
 show counselcenter
-ask counselcenter [set color gray show-turtle]
+ask counselcenter [set color violet show-turtle]
 NIL
 1
 T
@@ -544,12 +584,12 @@ NIL
 1
 
 BUTTON
-1063
+1061
 460
-1180
+1178
 493
 show hospital
-ask hospital [set color gray show-turtle]
+ask hospital [set color green show-turtle]
 NIL
 1
 T
@@ -583,7 +623,7 @@ BUTTON
 1110
 531
 testdistances
-ask womens womens_who [\n\nlet counselspos position [pro_com] of counselcenters counsels_who item 0 distservices\nprint item counselspos item 0 filter [x -> first x = [pro_com] of self] distservices\n\n ]\n
+print dist turtle origin_from turtle destination_to
 NIL
 1
 T
@@ -599,7 +639,7 @@ INPUTBOX
 499
 917
 559
-womens_who
+origin_from
 12886.0
 1
 0
@@ -610,8 +650,8 @@ INPUTBOX
 499
 1034
 559
-counsels_who
-20186.0
+destination_to
+50.0
 1
 0
 Number
@@ -909,12 +949,12 @@ selection counselcenter
 1
 
 BUTTON
-1367
-217
-1447
-250
+1357
+221
+1449
+254
 show mobility
-displaymap\nask counselcenter [ hide-turtle]\nask women [ hide-turtle]\nask hospital [ hide-turtle]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n\n\n]
+displaymap\nask links [die]\n ask counselcenter [ hide-turtle]\n ask women [ hide-turtle]\n ask hospital [ set color gray]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nif plot_show = \"hospitalizations\" [\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\nif plot_show = \"mobilities\" [\nask women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\n]\n\nset-current-plot \"mobilities hospital_id\"\nclear-plot\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\n
 NIL
 1
 T
@@ -931,15 +971,65 @@ INPUTBOX
 1442
 209
 hospital_id
-50.0
+56.0
 1
 0
 Number
+
+CHOOSER
+1384
+64
+1484
+109
+plot_show
+plot_show
+"hospitalizations" "mobilities"
+1
+
+PLOT
+1113
+205
+1313
+355
+mobilities hospital_id
+NIL
+NIL
+0.0
+100.0
+0.0
+200.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" ""
+
+BUTTON
+1356
+259
+1451
+292
+link_all_hospitals
+ask links [die]\nask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]\nask hospital [\nset color random 100\nask my-in-links [set color [color] of myself]\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
 
 Hospital choice based on social multiplier of formed networks in counselcenters. Actors of the simulation are women, counselcenters and hospitals. Random utility models applied for the selection of counselcenter and then hospitals. One cycle is equivalent to one week.
+
+## NOTES ON HOSPITALS
+
+* San Rossore: private
+* Serristore Figlini: not a maternity department
 
 ## HOW IT WORKS
 
