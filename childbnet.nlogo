@@ -477,9 +477,9 @@ NIL
 1
 
 INPUTBOX
-1635
+1637
 160
-1749
+1751
 230
 area_municipality
 45002.0
@@ -794,23 +794,6 @@ NIL
 NIL
 1
 
-BUTTON
-1518
-265
-1601
-298
-test utility
-ask women with [counselstay = 36 and any? other women with [selcounsel = [selcounsel] of myself]] [\n\nlet options hospital with [member? who  table:keys [rankinglist] of myself]\n\nlet womencompanion other women with [selcounsel = [selcounsel] of myself]\n\nask options [\n\n; make up a list of ranking for that option by other women in group\nlet ranking_others []\nlet ranking_othweight []\nlet sumtimetogether []\nforeach sort womencompanion [ z ->\nset ranking_others lput table:get [rankinglist] of z [who] of self ranking_others\nlet timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]\nset ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight\nset sumtimetogether lput timetogether sumtimetogether\nprint (word who \" co-counsel: \" [who] of z \" timetogether: \" timetogether)\n\n]\nprint (word who \" ranking others: \" ranking_others)\nprint (word who \" ranking others weighted: \" ranking_othweight)\nprint (word \"sumtimetogether: \" reduce + sumtimetogether)\n; the total of utility given by ranking by other women in the group\nprint (word \" sum others ranking weighted \" reduce + ranking_othweight)\n\n; the total utility ranking given by own ranking and ranking by others, linked by sentence, then summed up\n; (to weight by influence)\n; let utility_othranking sentence table:get [rankinglist] of myself [who] of self ranking_othweight\n; set utility reduce + utility_ranking\n\nprint (word who \" own ranking: \" table:get [rankinglist] of myself [who] of self)\nprint (word who \" distance: \" dist myself self)\n; print (word who \" utility ranking: \" utility)\n\nset utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))) + (weight_distance_hospital * dist myself self ))\n \nprint (word who \" utility ranking others: \" (social_multiplier * ( (reduce + ranking_othweight)  / (reduce + sumtimetogether))))\nprint (word who \" utility own ranking: \" ((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self))\nprint (word who \" utility distance: \" (weight_distance_hospital * dist myself self ) )\nprint (word who \" total utility: \" utility)\nprint (word \"            \")\n; this is to test the utility assigned by other women in the group\n]\n\nset selectedhospital [who] of  rnd:weighted-one-of options [exp( utility)]\n\nprint (word \"own list: \" who \" : \" rankinglist)\nforeach sort womencompanion [y ->\nprint (word \"others: \" [who] of y \" : \" [rankinglist] of y)]\nprint (word \"selected hospital: \" selectedhospital)\n]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 29
 387
@@ -901,23 +884,6 @@ PENS
 "actual" 1.0 1 -2674135 true "" ""
 "simulated" 1.0 1 -13345367 true "" ""
 
-BUTTON
-1522
-311
-1593
-344
-printest
-let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital\n\n   let index 0\n   foreach sorted-hospitals [\n     t ->\n       let xvalordered [hospitalizations] of t\n       plotxy index 0\n       plotxy index xvalordered\n       set index index + 1\n       print (word [who] of t \" \" [xvalordered] of t)\n   ]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 TEXTBOX
 72
 135
@@ -949,12 +915,12 @@ selection counselcenter
 1
 
 BUTTON
-1357
-221
-1449
-254
+1373
+219
+1465
+252
 show mobility
-displaymap\nask links [die]\n ask counselcenter [ hide-turtle]\n ask women [ hide-turtle]\n ask hospital [ set color gray]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nif plot_show = \"hospitalizations\" [\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\nif plot_show = \"mobilities\" [\nask women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\n]\n\nset-current-plot \"mobilities hospital_id\"\nclear-plot\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\n
+displaymap\nask links [die]\n ask counselcenter [ hide-turtle]\n ask women [ hide-turtle]\n ask hospital [ set color gray]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nif plot_show = \"hospitalizations\" [\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\nif plot_show = \"mobilities\" [\nask women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\n]\n\nset-current-plot \"mobilities hospital_id\"\nclear-plot\nset-current-plot-pen \"actual\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\n\nset-current-plot-pen \"simulated\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\n
 NIL
 1
 T
@@ -971,7 +937,7 @@ INPUTBOX
 1442
 209
 hospital_id
-56.0
+50.0
 1
 0
 Number
@@ -987,10 +953,10 @@ plot_show
 1
 
 PLOT
-1113
+1093
 205
-1313
-355
+1362
+359
 mobilities hospital_id
 NIL
 NIL
@@ -999,18 +965,19 @@ NIL
 0.0
 200.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" ""
+"actual" 1.0 1 -2674135 true "" ""
+"simulated" 1.0 1 -13345367 true "" ""
 
 BUTTON
-1356
-259
-1451
-292
+1372
+257
+1467
+290
 link_all_hospitals
-ask links [die]\nask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]\nask hospital [\nset color random 100\nask my-in-links [set color [color] of myself]\n]
+ask links [die]\nifelse emp_tgt \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask hospital [\nset color random 100\nask my-in-links [set color [color] of myself]\n]
 NIL
 1
 T
@@ -1020,6 +987,17 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+1372
+294
+1475
+327
+emp_tgt
+emp_tgt
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
