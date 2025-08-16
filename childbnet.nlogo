@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
 counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
 
 
@@ -647,7 +647,7 @@ INPUTBOX
 917
 559
 origin_from
-12886.0
+53.0
 1
 0
 Number
@@ -658,7 +658,7 @@ INPUTBOX
 1034
 559
 destination_to
-50.0
+18444.0
 1
 0
 Number
@@ -822,7 +822,7 @@ INPUTBOX
 163
 485
 weight_socialinfluence
-0.0
+10.0
 1
 0
 Number
@@ -851,7 +851,7 @@ sd_ranking
 sd_ranking
 0
 1
-0.0
+0.28
 0.01
 1
 NIL
@@ -866,7 +866,7 @@ weight_distance_hospital
 weight_distance_hospital
 -50
 50
--10.0
+0.0
 1
 1
 NIL
@@ -944,7 +944,7 @@ INPUTBOX
 1442
 209
 hospital_id
-50.0
+67.0
 1
 0
 Number
@@ -1002,15 +1002,15 @@ SWITCH
 327
 emp_tgt
 emp_tgt
-1
+0
 1
 -1000
 
 PLOT
-1259
-419
-1459
-569
+1253
+422
+1453
+572
 distribution ranking
 NIL
 NIL
