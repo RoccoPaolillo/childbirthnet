@@ -18,6 +18,7 @@ to setup
   set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
+  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   create-counselcenters
   create-hospitals
   create-womens
@@ -32,7 +33,7 @@ to setup
     output-print (word [who] of h " = " [id] of h " = " [hospitalizations] of h)
 ]
 
-  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+
   ask women [options_hospital]
   plot-hospitals
   reset-timer
@@ -105,7 +106,28 @@ foreach but-first hosptlist [ x ->
     if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
      set shape "circle"
-     set color gis:property-value this-municipality "PRO_COM"
+;     set color gis:property-value this-municipality "PRO_COM"
+ ifelse any? hospital with [dist self myself <= 0] [set color 104]
+        [
+ifelse any? hospital with [dist self myself > 0 and dist self myself <= 15] [set color 105]
+        [
+ifelse any? hospital with [dist self myself > 15 and dist self myself <= 30] [set color 106]
+          [
+ifelse any? hospital with  [dist self myself > 30 and dist self myself <= 45] [set color 107]
+              [
+ifelse any? hospital with  [dist self myself > 45 and dist self myself <= 60] [set color 108]
+                [set color 109]
+              ]
+            ]
+          ]
+          ]
+
+
+
+
+
+
+
      set size 0.2
      set pregnant false
      set selcounsel false
@@ -433,10 +455,10 @@ NIL
 1
 
 BUTTON
-923
-422
-1057
-455
+885
+425
+1019
+458
 hide women
 ask women [hide-turtle]
 NIL
@@ -450,10 +472,10 @@ NIL
 1
 
 BUTTON
-783
-422
-916
-455
+745
+425
+878
+458
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -523,10 +545,10 @@ NIL
 1
 
 BUTTON
-784
-459
-917
-492
+746
+462
+879
+495
 show counselcenter
 ask counselcenter [set color violet show-turtle]
 NIL
@@ -540,10 +562,10 @@ NIL
 1
 
 BUTTON
-924
-459
-1057
-492
+886
+462
+1019
+495
 show women
 ask women [set color gray show-turtle]
 NIL
@@ -574,10 +596,10 @@ NIL
 1
 
 BUTTON
-1064
-422
-1179
-455
+1026
+425
+1141
+458
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -591,10 +613,10 @@ NIL
 1
 
 BUTTON
-1061
-460
-1178
-493
+1023
+463
+1140
+496
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -625,10 +647,10 @@ OUTPUT
 10
 
 BUTTON
-1038
-498
-1110
-531
+1000
+501
+1072
+534
 testdistances
 print dist turtle origin_from turtle destination_to
 NIL
@@ -642,23 +664,23 @@ NIL
 1
 
 INPUTBOX
-783
-499
-917
-559
+745
+502
+879
+562
 origin_from
-53.0
+5602.0
 1
 0
 Number
 
 INPUTBOX
-919
-499
-1034
-559
+881
+502
+996
+562
 destination_to
-18444.0
+18781.0
 1
 0
 Number
@@ -718,10 +740,10 @@ count women with [givenbirth = true]
 11
 
 BUTTON
-1116
-497
-1229
-530
+1078
+500
+1191
+533
 check ticks advance
 if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
 T
@@ -1039,6 +1061,16 @@ NIL
 NIL
 NIL
 NIL
+1
+
+TEXTBOX
+227
+517
+713
+535
+shade color women: hospital in 15 minutes range; darkest equals in municipality (0)
+10
+0.0
 1
 
 @#$#@#$#@
