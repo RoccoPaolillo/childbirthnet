@@ -4,7 +4,7 @@ breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
-counselcenter-own [ID capacity utility]
+counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
 
@@ -107,16 +107,16 @@ foreach but-first hosptlist [ x ->
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
      set shape "circle"
 ;     set color gis:property-value this-municipality "PRO_COM"
- ifelse any? hospital with [dist self myself <= 0] [set color 104]
+ ifelse any? hospital with [dist self myself <= 0] [set color red]
         [
-ifelse any? hospital with [dist self myself > 0 and dist self myself <= 15] [set color 105]
+ifelse any? hospital with [dist self myself > 0 and dist self myself <= 15] [set color yellow]
         [
-ifelse any? hospital with [dist self myself > 15 and dist self myself <= 30] [set color 106]
+ifelse any? hospital with [dist self myself > 15 and dist self myself <= 30] [set color orange]
           [
-ifelse any? hospital with  [dist self myself > 30 and dist self myself <= 45] [set color 107]
+ifelse any? hospital with  [dist self myself > 30 and dist self myself <= 45] [set color brown]
               [
-ifelse any? hospital with  [dist self myself > 45 and dist self myself <= 60] [set color 108]
-                [set color 109]
+ifelse any? hospital with  [dist self myself > 45 and dist self myself <= 60] [set color violet]
+                [set color blue]
               ]
             ]
           ]
@@ -197,6 +197,7 @@ if not any? women with [givenbirth = false] [stop]
   ]
   ]
   ask counselcenter [set capacity 20 - count women with [pregnant = true and selcounsel = [who] of myself and givenbirth = false]]
+  plot-counsel
   plot-hospitals
 
   tick
@@ -205,21 +206,21 @@ end
 
 to choice_counsel
 
-let radius 0.5
+; let radius 0.5
 
-let counselsoptions no-turtles
+; let counselsoptions no-turtles
 
-while [count counselsoptions < 5] [
-set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
-set radius radius + 1
-]
+; while [count counselsoptions < 5] [
+; set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
+; set radius radius + 1
+; ]
 
-ask  counselsoptions [
-set color [color] of myself
+ask  counselcenter [
+; set color [color] of myself
 set utility (weight_distance_counsel * dist myself self)
 ]
 
-set selcounsel [who] of rnd:weighted-one-of counselsoptions [exp( utility)]
+set selcounsel [who] of rnd:weighted-one-of counselcenter [exp( utility)]
 
 end
 
@@ -299,6 +300,29 @@ let womencompanion other women with [pregnant = true and givenbirth = false and 
  ; debug
 ; print(word who " selected hospital: " selectedhospital)
 
+
+end
+
+to plot-counsel
+  set-current-plot "Counsel choice"
+  clear-plot
+    ask counselcenter [
+      set womencounsel count women with [selcounsel = [who] of myself]
+  ]
+
+  ; Sort hospitals again in the same order to match indexing
+  let sorted-womencounsel sort-by [[a b] -> [womencounsel] of a < [womencounsel] of b] counselcenter
+
+  ; Second plot: simulated choices (overlay on same x)
+  set-current-plot-pen "simulated"
+  let indexsim 0
+  foreach sorted-womencounsel [
+    t ->
+      let yval [womencounsel] of t
+      plotxy indexsim 0
+      plotxy indexsim yval
+      set indexsim indexsim + 1
+  ]
 
 end
 
@@ -567,7 +591,7 @@ BUTTON
 1019
 495
 show women
-ask women [set color gray show-turtle]
+ask women [show-turtle]
 NIL
 1
 T
@@ -669,7 +693,7 @@ INPUTBOX
 879
 562
 origin_from
-5602.0
+32.0
 1
 0
 Number
@@ -680,7 +704,7 @@ INPUTBOX
 996
 562
 destination_to
-18781.0
+18874.0
 1
 0
 Number
@@ -703,10 +727,10 @@ NIL
 1
 
 SLIDER
-25
-259
-186
-292
+30
+239
+191
+272
 weight_distance_counsel
 weight_distance_counsel
 -100
@@ -824,10 +848,10 @@ NIL
 1
 
 SLIDER
-29
-387
-181
-420
+36
+341
+188
+374
 social_multiplier
 social_multiplier
 0
@@ -839,10 +863,10 @@ max
 HORIZONTAL
 
 INPUTBOX
-42
-425
-163
-485
+49
+379
+170
+439
 weight_socialinfluence
 10.0
 1
@@ -850,10 +874,10 @@ weight_socialinfluence
 Number
 
 SLIDER
-3
-160
-106
-193
+11
+161
+114
+194
 mean_ranking
 mean_ranking
 -1
@@ -865,10 +889,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-109
-160
-212
-193
+117
+161
+220
+194
 sd_ranking
 sd_ranking
 0
@@ -880,10 +904,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-29
-352
-181
-385
+36
+306
+188
+339
 weight_distance_hospital
 weight_distance_hospital
 -50
@@ -924,20 +948,20 @@ distribution ranking
 1
 
 TEXTBOX
-70
-326
-156
-344
+77
+280
+163
+298
 selection hospital
 10
 0.0
 1
 
 TEXTBOX
-48
-233
-158
-251
+53
+213
+163
+231
 selection counselcenter
 10
 0.0
@@ -1006,7 +1030,7 @@ BUTTON
 1467
 291
 link_all_hospitals
-ask links [die]\nifelse emp_tgt \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask hospital [\nset color random 100\nask my-in-links [set color [color] of myself]\n]
+ask links [die]\nifelse emp_tgt \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
 NIL
 1
 T
@@ -1029,10 +1053,10 @@ emp_tgt
 -1000
 
 PLOT
-1253
-422
-1453
-572
+21
+454
+206
+577
 distribution ranking
 NIL
 NIL
@@ -1047,10 +1071,10 @@ PENS
 "default" 1.0 1 -16777216 true "" ""
 
 BUTTON
-1263
-587
-1395
-620
+64
+579
+164
+612
 distribution ranking
 set-current-plot \"distribution ranking\"\n  clear-plot\n  \n  ; collect n samples\n  let samples []\n  repeat 20177 [\n    set samples lput (normal mean_ranking sd_ranking) samples\n  ]\n  \n  ; set axis ranges\n  ; set-plot-x-range -1 1\n   ;set-plot-y-range 0 22177 / 5   ;; rough guess for y max\n  \n  ; plot as histogram\n  set-histogram-num-bars 22177\n  set-plot-x-range -1.01 1.01 \n  histogram samples\n  print sort samples\n
 NIL
@@ -1064,11 +1088,56 @@ NIL
 1
 
 TEXTBOX
-227
+267
+518
+449
+609
+women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 31%\n16 - 30 = orange: 3162, 15%\n31 - 45 = brown: 1754, 8%\n46 - 60 = violet: 326, 1%\n61 > = blue: 80, 0.3%
+10
+0.0
+1
+
+BUTTON
+1001
+536
+1072
+569
+hide links
+ask links [die]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+1205
+367
+1444
 517
-713
-535
-shade color women: hospital in 15 minutes range; darkest equals in municipality (0)
+Counsel choice
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"simulated" 1.0 1 -13345367 true "" ""
+
+TEXTBOX
+464
+517
+615
+608
+women, distance counselcenter\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
 0.0
 1
