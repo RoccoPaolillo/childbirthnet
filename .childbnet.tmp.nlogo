@@ -421,10 +421,6 @@ end
 to-report distchoice [idd distmin distmax]
   report count women with [selectedhospital = [who] of idd and dist self idd distservices > distmin and dist self idd distservices <= distmax]
 end
-
-to-report womenwhoselected [idd]
-  report count women with [selectedhospital = [who] of idd ]
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 220
