@@ -107,7 +107,7 @@ foreach but-first hosptlist [ x ->
     if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
      set shape "circle"
-;     set color gis:property-value this-municipality "PRO_COM"
+
  ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
         [
 ifelse any? hospital with [dist self myself distservices > 0 and dist self myself distservices <= 15] [set color yellow]
@@ -122,11 +122,6 @@ ifelse any? hospital with  [dist self myself distservices > 45 and dist self mys
             ]
           ]
           ]
-
-
-
-
-
 
 
      set size 0.2
@@ -152,32 +147,8 @@ end
 
 to options_hospital
 
-; let radius 1.5
-
-; let hospitalsoptions no-turtles
-
-; to make up an own list of hospitals to select from based on proximity
-; while [count hospitalsoptions < 3] [
-; set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
-; set radius radius + 1
-; ]
-
-
-;  ask  hospitalsoptions [
-;  set color [color] of myself
-
-;    ]
-
-; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
-; set rankinglist table:make
-; foreach sort hospitalsoptions [ x ->
-;    table:put rankinglist [who] of x normal mean_ranking sd_ranking
-; ]
-; ; ; ;  all options
 set rankinglist table:make
 foreach sort hospital [ x ->
-;    ifelse [who] of x = 50 [table:put rankinglist [who] of x normal 1 0 1 -1]
-;   [table:put rankinglist [who] of x normal mean_ranking sd_ranking 1 -1]
 table:put rankinglist [who] of x 0
 ]
 
@@ -195,131 +166,32 @@ if not any? women with [givenbirth = false] [stop]
       ]
     ]
 
-
-
-; counselcenter option
-;   ask women [if pregnant = true and givenbirth = false [
-;     ifelse selcounsel = false
-;     [choice_counsel]
-;     [ifelse counselstay < 36
-;       [set counselstay counselstay + 1]
-;      [if selectedhospital = 0 [choice_hospital select_hospital]
- ;      ]
- ;    ]
-;   ]
-;   ]
-
-;   ask counselcenter [set capacity 20 - count women with [pregnant = true and selcounsel = [who] of myself and givenbirth = false]]
   plot-hospitals
 
   tick
 end
 
 
-; to choice_counsel
-
-;  let radius 0.5
-
-;  let counselsoptions no-turtles
-
-;  while [count counselsoptions < 5] [
-;  set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
-;  set radius radius + 1
-;   ]
-
-; ask  counselcenter [
-; set color [color] of myself
-; set utility (weight_distance_counsel * dist myself self)
-; ]
-
-; set selcounsel [who] of rnd:weighted-one-of counselcenter [exp( utility)]
-
-; end
-
-
-; to choice_hospital
-; identify women member of the same counselsente (not necessary 36 weeks, but the command is executed by those with week 36)
-; let womencompanion other women with [pregnant = true and givenbirth = false and selcounsel = [selcounsel] of myself]
-
-;; to set up the complete basket choice of hospitals in the conversation
-; if the woman has not the hospital of another companion woman in mind, she will add
-; let hospa []
-; foreach sort womencompanion [ z ->
-; let dictall table:keys [rankinglist] of z
-; foreach dictall [x ->
-;  if not member? x hospa [
-;  set hospa lput x hospa ]
-;       ]
-;     ]
-
-; hospitals who are not in the original rankinglist of the woman are given ranking 0 (each operation will have effect 0 for this hospital)
-;  foreach hospa [y ->
-;  if not member? y table:keys rankinglist [
-;  table:put rankinglist y 0
-;  ]
-;  ]
-
-; also women in the circle of counselcenter are given the complete list with ranking 0 for hospitals not originally considered
-;   ask womencompanion [
-;     foreach table:keys [rankinglist] of myself [y ->
-;       if not member? y table:keys [rankinglist] of self [
-;  table:put [rankinglist] of self y 0
-;  ]
-;  ]
-;   ]
-; end
-
 to select_hospital
-; let womencompanion other women with [pregnant = true and givenbirth = false and selcounsel = [selcounsel] of myself]
-;; here the real choice
-; basket choice of hospitals to select from: all those now in the rankinglist
+
 let friends  rnd:weighted-n-of 50 other women [exp(distfriend * (dist myself self distservices ))]
-;  let options hospital with [member? who table:keys  [rankinglist] of myself]
 
-
-; each hospital option is given an utility for that agent woman executing the command
   ask hospital [
 
-
     let ranking_othweight []
-;    let sum []
-   ; for each woman in the circle counselcenter, the time spent together and the ranking of the hospital in the group is computed, with weighted mean, weigthed by the time spent together
     foreach sort friends [ z ->
-    ; to compute time together <= 1
-;     let timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]
-    ; the weighted effect of ranking of the companion woman by time spent together
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
-    ; the sum of all time spent together with all women in circle counselcenter
-;   set sumtimetogether lput timetogether sumtimetogether
 
    ]
-;    print (word "agt: " [who] of myself " hosp: "  who " - "  ranking_othweight)
-  ;; compute the system utility for random utility model
-;   ifelse any? womencompanion
-    ; if there are other women, the utility is composed by (beta_ind * own ranking) plus (beta_soc * weighted mean) minus (weight_distance * distance)
-    ; weighted mean is computed with sum ranking of others weighted by time together / sum time together (timetogether is weight of weighted mean). beta_ind and beta_soc are complementary
-;     [set utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * (reduce +   ranking_othweight / (reduce + sumtimetogether + 0.0001))  ) + (weight_distance_hospital * dist myself self ))]
-     ; in case there is not other companion, so the decision is based on own ranking and distance
-;     [set utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self)  + (weight_distance_hospital * dist myself self ))]
 
     set utility ( (weight_distance_hospital * dist myself self distservices ) + (social_multiplier * (reduce +   ranking_othweight / count friends )))
-;    print (word "utisoc: " (social_multiplier * (reduce +   ranking_othweight / count friends )))
+
   ]
 
- ; selection of hospital with random utility
- ;  print( word "max utility: " max [utility] of hospital)
-;  print(word "all utility: " [utility] of hospital)
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
- ; table:put rankinglist [who] of hospital with [who = [selectedhospital] of myself] 1
   table:put rankinglist selectedhospital 1
-; print (word "rnk: " rankinglist)
- ; at this step just for report counting
  set givenbirth true
  set pregnant false
-
- ; debug
-; print(word who " selected hospital: " selectedhospital)
-
 
 end
 
