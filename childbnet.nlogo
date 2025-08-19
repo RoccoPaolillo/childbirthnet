@@ -189,6 +189,7 @@ let friends  rnd:weighted-n-of 50 other women [exp(distfriend * (dist myself sel
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
+  ; the "ranking experience" is max 1 by default
   table:put rankinglist selectedhospital 1
  set givenbirth true
  set pregnant false
@@ -741,7 +742,7 @@ social_multiplier
 social_multiplier
 -10
 10
-1.0
+10.0
 1
 1
 max
