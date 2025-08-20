@@ -371,10 +371,10 @@ NIL
 1
 
 BUTTON
-882
-392
-976
-425
+1200
+400
+1294
+433
 hide women
 ask women [hide-turtle]
 NIL
@@ -388,10 +388,10 @@ NIL
 1
 
 BUTTON
-771
-393
-877
-426
+1089
+401
+1195
+434
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -405,10 +405,10 @@ NIL
 1
 
 BUTTON
-771
-430
-878
-463
+1089
+438
+1196
+471
 show counselcenter
 ask counselcenter [set color cyan show-turtle]
 NIL
@@ -422,10 +422,10 @@ NIL
 1
 
 BUTTON
-883
-429
-978
-462
+1201
+437
+1296
+470
 show women
 ask women [show-turtle]
 NIL
@@ -439,10 +439,10 @@ NIL
 1
 
 BUTTON
-982
-391
-1060
-424
+1300
+399
+1378
+432
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -456,10 +456,10 @@ NIL
 1
 
 BUTTON
-981
-429
-1062
-462
+1299
+437
+1380
+470
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -473,27 +473,27 @@ NIL
 1
 
 TEXTBOX
-728
-410
-768
-451
+1046
+418
+1086
+459
 three actors
 10
 0.0
 1
 
 OUTPUT
-728
-14
-1074
-383
+1047
+18
+1393
+387
 10
 
 BUTTON
-963
-482
-1035
-515
+937
+521
+1009
+554
 testdistances
 print dist turtle origin_from turtle destination_to distservices
 NIL
@@ -507,10 +507,10 @@ NIL
 1
 
 INPUTBOX
-791
-485
-867
-545
+765
+524
+841
+584
 origin_from
 56.0
 1
@@ -518,10 +518,10 @@ origin_from
 Number
 
 INPUTBOX
-869
-485
-954
-545
+843
+524
+928
+584
 destination_to
 1797.0
 1
@@ -572,11 +572,11 @@ mean [capacity] of counselcenter
 11
 
 MONITOR
-1125
-475
-1238
-520
-women given birth
+218
+517
+285
+562
+given birth
 count women with [givenbirth = true]
 17
 1
@@ -719,20 +719,20 @@ NIL
 1
 
 TEXTBOX
-366
-518
-548
-609
+1150
+479
+1328
+570
 women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 31%\n16 - 30 = orange: 3162, 15%\n31 - 45 = brown: 1754, 8%\n46 - 60 = violet: 326, 1%\n+ 61 = blue: 80, 0.4%
 10
 0.0
 1
 
 BUTTON
-964
-517
-1035
-550
+938
+556
+1008
+589
 hide links
 ask links [die]
 NIL
@@ -746,10 +746,10 @@ NIL
 1
 
 TEXTBOX
-571
-518
-722
-609
+1332
+479
+1483
+570
 women, distance counselcenter\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
 0.0
@@ -805,12 +805,12 @@ NIL
 1
 
 BUTTON
-1860
-352
-1944
-385
-numb_women
-foreach gis:feature-list-of tuscany [ this-municipality ->  \nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" count women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
+41
+405
+169
+438
+pop_concentration
+ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
 1
 T
@@ -833,10 +833,10 @@ show_networks
 -1000
 
 PLOT
-1084
-321
-1378
-471
+727
+367
+1036
+517
 Mobility hospital origin (proportion)
 NIL
 NIL
@@ -856,20 +856,20 @@ PENS
 "61+" 1.0 0 -13345367 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicemax hospitals hospital_id 60 / womenwhoselected hospitals hospital_id)]\n"
 
 CHOOSER
-1381
-22
-1476
-67
+728
+10
+820
+55
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-1
+0
 
 BUTTON
-1382
-71
-1477
-104
+543
+523
+638
+556
 highlight hospital
 ask hospitals hospital_id [set color blue]\nplot-hospitals
 NIL
@@ -883,10 +883,10 @@ NIL
 1
 
 PLOT
-1086
-167
-1378
-317
+729
+213
+1037
+363
 Mobility hospital origin (raw numbers)
 NIL
 NIL
@@ -943,10 +943,10 @@ NIL
 1
 
 PLOT
-1088
-14
-1378
-164
+730
+60
+1038
+210
 Selection hospital
 NIL
 NIL
@@ -962,10 +962,10 @@ PENS
 "simulated" 1.0 1 -13345367 true "" ""
 
 TEXTBOX
-233
-522
-329
-566
+1046
+483
+1142
+527
 women: 20177\nhospitals: 24\ncounselcenters: 48
 10
 0.0
@@ -983,10 +983,10 @@ resizescale
 Number
 
 MONITOR
-1383
-110
-1487
-155
+821
+10
+909
+55
 actual affluence
 count women with [selectedhospitalemp = [who] of hospitals hospital_id]
 2
@@ -994,10 +994,10 @@ count women with [selectedhospitalemp = [who] of hospitals hospital_id]
 11
 
 MONITOR
-1384
-159
-1489
-204
+911
+10
+1016
+55
 simulated affluence
 count women with [selectedhospital = [who] of hospitals hospital_id]
 2
@@ -1005,10 +1005,10 @@ count women with [selectedhospital = [who] of hospitals hospital_id]
 11
 
 MONITOR
-1244
-475
-1344
-520
+290
+517
+373
+562
 NIL
 count women
 2
@@ -1031,10 +1031,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-1395
-226
-1475
-259
+377
+522
+436
+555
 networks
 ask links [die]\nask women [hide-turtle]\nask counselcenter [hide-turtle]\nifelse emp_net \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
 NIL
@@ -1048,13 +1048,13 @@ NIL
 1
 
 SWITCH
-1382
-263
-1485
-296
+440
+522
+530
+555
 emp_net
 emp_net
-0
+1
 1
 -1000
 
@@ -1093,6 +1093,8 @@ The network is an agentset from which the average rating is computed
 * weight_distance_hospital: the weight of distance to hospital selection (negative value since the less distance is better)
 * social_multiplier: weight of social influence in the hospital selection
 * resizepop: to scale down to *resizescale* input value (in decimal).
+* popconcentration: to show the concentration of women in that municipality compared to the whole region
+
 
 ## THINGS TO NOTICE
 
