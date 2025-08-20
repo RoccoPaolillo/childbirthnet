@@ -512,7 +512,7 @@ INPUTBOX
 841
 584
 origin_from
-56.0
+48.0
 1
 0
 Number
@@ -805,10 +805,10 @@ NIL
 1
 
 BUTTON
-41
-405
-169
-438
+36
+404
+164
+437
 pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -863,12 +863,12 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-0
+6
 
 BUTTON
-543
+536
 523
-638
+631
 556
 highlight hospital
 ask hospitals hospital_id [set color blue]\nplot-hospitals
