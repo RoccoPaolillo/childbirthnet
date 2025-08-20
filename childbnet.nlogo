@@ -378,10 +378,10 @@ NIL
 1
 
 BUTTON
-1200
-400
-1294
-433
+1254
+394
+1348
+427
 hide women
 ask women [hide-turtle]
 NIL
@@ -395,10 +395,10 @@ NIL
 1
 
 BUTTON
-1089
-401
-1195
-434
+1143
+395
+1249
+428
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -412,10 +412,10 @@ NIL
 1
 
 BUTTON
-1089
-438
-1196
-471
+1143
+432
+1250
+465
 show counselcenter
 ask counselcenter [set color cyan show-turtle]
 NIL
@@ -429,10 +429,10 @@ NIL
 1
 
 BUTTON
-1201
-437
-1296
-470
+1255
+431
+1350
+464
 show women
 ask women [show-turtle]
 NIL
@@ -446,10 +446,10 @@ NIL
 1
 
 BUTTON
-1300
-399
-1378
-432
+1354
+393
+1432
+426
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -463,10 +463,10 @@ NIL
 1
 
 BUTTON
-1299
-437
-1380
-470
+1353
+431
+1434
+464
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -480,10 +480,10 @@ NIL
 1
 
 TEXTBOX
-1046
-418
-1086
-459
+1100
+412
+1140
+453
 three actors
 10
 0.0
