@@ -82,6 +82,12 @@ df_normalized[ , !(names(distcounsel) %in% cols_to_exclude)] <- lapply(
 write.csv(df_normalized, file = "normalized_distance.csv",row.names = F)
 df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALSE)
 
+# resize mobilities
+
+df_mob <- read.csv("accessi_parto_ospedali_used.csv",sep=",")
+# value <= 3 is imposed as 1
+df_mob$res_15 <- ifelse(df_mob$parti > 3, round(df_mob$parti * 0.15), 1 )
+write.csv(df_mob,"accessi_parto_ospedali_used.csv",row.names = F)
 
 # editing figures
 
