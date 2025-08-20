@@ -22,7 +22,7 @@ to setup
   set distservicesnorm csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   create-counselcenters
   create-hospitals
-  create-womens
+ ; create-womens
   let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a > [hospitalizations] of b] hospital
 
  output-print (word " Hospital choice  " )
@@ -35,7 +35,7 @@ to setup
 ]
 
 
-  ask women [options_hospital]
+;  ask women [options_hospital]
   plot-hospitals
   reset-timer
   reset-ticks
@@ -815,6 +815,23 @@ TEXTBOX
 1 = full original dataset
 10
 0.0
+1
+
+BUTTON
+59
+497
+148
+530
+testwomen
+let df csv:from-file \"C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv\"\nshow df\n\n foreach gis:feature-list-of tuscany [ this-municipality ->  \n foreach but-first df [s ->\n if  position 0 s = gis:property-value this-municipality \"PRO_COM\"[\n gis:create-turtles-inside-polygon this-municipality women item 5 s [\n set shape \"circle\"\n ]\n ]\n ]\n ]\n \n \n 
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
 1
 
 @#$#@#$#@
