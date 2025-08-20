@@ -3,7 +3,7 @@ turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
-globals [tuscany distservices]
+globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
@@ -19,6 +19,7 @@ to setup
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
   set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  set distservicesnorm csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   create-counselcenters
   create-hospitals
   create-womens
@@ -54,7 +55,7 @@ let consul2019 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data
   foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
    create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
       set id item 1 x
-      set color gray ;  item 0 x
+      set color cyan ;  item 0 x
       set pro_com item 0 x
       set capacity 20
     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
@@ -79,7 +80,7 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     create-hospital 1 [
       set id x
       set capacity 20
-      set color gray
+      set color green
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
@@ -104,28 +105,23 @@ foreach but-first hosptlist [ x ->
 ]
   foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
     if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
-    gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
+    gis:create-turtles-inside-polygon this-municipality women (table:get my-table gis:property-value this-municipality "PRO_COM") [  ; women derive their pro_com from the municipality
      set shape "circle"
-;     set color gis:property-value this-municipality "PRO_COM"
- ifelse any? hospital with [dist self myself <= 0] [set color red]
+
+ ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
         [
-ifelse any? hospital with [dist self myself > 0 and dist self myself <= 15] [set color yellow]
+ifelse any? hospital with [dist self myself distservices > 0 and dist self myself distservices <= 15] [set color yellow]
         [
-ifelse any? hospital with [dist self myself > 15 and dist self myself <= 30] [set color orange]
+ifelse any? hospital with [dist self myself distservices > 15 and dist self myself distservices <= 30] [set color orange]
           [
-ifelse any? hospital with  [dist self myself > 30 and dist self myself <= 45] [set color brown]
+ifelse any? hospital with  [dist self myself distservices > 30 and dist self myself distservices <= 45] [set color brown]
               [
-ifelse any? hospital with  [dist self myself > 45 and dist self myself <= 60] [set color violet]
+ifelse any? hospital with  [dist self myself distservices > 45 and dist self myself distservices <= 60] [set color violet]
                 [set color blue]
               ]
             ]
           ]
           ]
-
-
-
-
-
 
 
      set size 0.2
@@ -141,43 +137,19 @@ ifelse any? hospital with  [dist self myself > 45 and dist self myself <= 60] [s
   let hospitals2023 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
 
 
-foreach but-first hospitals2023[ i ->
-ask n-of item 5 i women with [pro_com = item 0 i and selectedhospitalemp = 0][
-set selectedhospitalemp [who] of one-of hospital with [id = item 2 i ]
+ foreach but-first hospitals2023[ i ->
+ ask n-of item 5 i women with [pro_com = item 0 i and selectedhospitalemp = 0][
+ set selectedhospitalemp [who] of one-of hospital with [id = item 2 i ]
     ]
-]
+ ]
 
 end
 
 to options_hospital
 
-; let radius 1.5
-
-; let hospitalsoptions no-turtles
-
-; to make up an own list of hospitals to select from based on proximity
-; while [count hospitalsoptions < 3] [
-; set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
-; set radius radius + 1
-; ]
-
-
-;  ask  hospitalsoptions [
-;  set color [color] of myself
-
-;    ]
-
-; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
-; set rankinglist table:make
-; foreach sort hospitalsoptions [ x ->
-;    table:put rankinglist [who] of x normal mean_ranking sd_ranking
-; ]
-; ; ; ;  all options
 set rankinglist table:make
 foreach sort hospital [ x ->
-    ifelse [who] of x = 50 [table:put rankinglist [who] of x normal 1 0 1 -1]
-    [table:put rankinglist [who] of x normal mean_ranking sd_ranking 1 -1]
-
+table:put rankinglist [who] of x 0
 ]
 
 
@@ -185,206 +157,149 @@ end
 
 to go
 if not any? women with [givenbirth = false] [stop]
-    if ticks > 0 and ticks mod wave_pregnant = 0  [
-    ask n-of count_pregnant women [set pregnant true]
-  ]
-  ask women [if pregnant = true and givenbirth = false [
-    ifelse selcounsel = false
-    [choice_counsel]
-    [ifelse counselstay < 36
-      [set counselstay counselstay + 1]
-     [if selectedhospital = 0 [choice_hospital select_hospital]
+
+
+  ask one-of women with [pregnant = false and givenbirth = false] [
+   set pregnant true
+   if selectedhospital = 0 [select_hospital]
       ]
-    ]
-  ]
-  ]
-  ask counselcenter [set capacity 20 - count women with [pregnant = true and selcounsel = [who] of myself and givenbirth = false]]
+
+
   plot-hospitals
 
   tick
 end
 
 
-to choice_counsel
-
- let radius 0.5
-
- let counselsoptions no-turtles
-
- while [count counselsoptions < 5] [
- set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
- set radius radius + 1
-  ]
-
-ask  counselcenter [
-; set color [color] of myself
-set utility (weight_distance_counsel * dist myself self)
-]
-
-set selcounsel [who] of rnd:weighted-one-of counselcenter [exp( utility)]
-
-end
-
-
-to choice_hospital
-; identify women member of the same counselsente (not necessary 36 weeks, but the command is executed by those with week 36)
-let womencompanion other women with [pregnant = true and givenbirth = false and selcounsel = [selcounsel] of myself]
-
-;; to set up the complete basket choice of hospitals in the conversation
-; if the woman has not the hospital of another companion woman in mind, she will add
-let hospa []
-foreach sort womencompanion [ z ->
-let dictall table:keys [rankinglist] of z
-foreach dictall [x ->
- if not member? x hospa [
- set hospa lput x hospa ]
-      ]
-    ]
-
-; hospitals who are not in the original rankinglist of the woman are given ranking 0 (each operation will have effect 0 for this hospital)
- foreach hospa [y ->
- if not member? y table:keys rankinglist [
- table:put rankinglist y 0
- ]
- ]
-
-; also women in the circle of counselcenter are given the complete list with ranking 0 for hospitals not originally considered
-  ask womencompanion [
-    foreach table:keys [rankinglist] of myself [y ->
-      if not member? y table:keys [rankinglist] of self [
- table:put [rankinglist] of self y 0
- ]
- ]
-  ]
-end
-
 to select_hospital
-let womencompanion other women with [pregnant = true and givenbirth = false and selcounsel = [selcounsel] of myself]
-;; here the real choice
-; basket choice of hospitals to select from: all those now in the rankinglist
-  let options hospital with [member? who table:keys  [rankinglist] of myself]
 
+let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist myself self distservices ))]
 
-; each hospital option is given an utility for that agent woman executing the command
-  ask options [
+  ask hospital [
 
-
-   let ranking_othweight []
-   let sumtimetogether []
-   ; for each woman in the circle counselcenter, the time spent together and the ranking of the hospital in the group is computed, with weighted mean, weigthed by the time spent together
-   foreach sort womencompanion [ z ->
-    ; to compute time together <= 1
-    let timetogether ifelse-value ([counselstay] of z / [counselstay] of myself >= 1) [1] [([counselstay] of z / [counselstay] of myself)]
-    ; the weighted effect of ranking of the companion woman by time spent together
-   set ranking_othweight lput (table:get [rankinglist] of z [who] of self * timetogether) ranking_othweight
-    ; the sum of all time spent together with all women in circle counselcenter
-   set sumtimetogether lput timetogether sumtimetogether
+    let ranking_othweight []
+    foreach sort friends [ z ->
+    set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
 
    ]
 
-  ;; compute the system utility for random utility model
-  ifelse any? womencompanion
-    ; if there are other women, the utility is composed by (beta_ind * own ranking) plus (beta_soc * weighted mean) minus (weight_distance * distance)
-    ; weighted mean is computed with sum ranking of others weighted by time together / sum time together (timetogether is weight of weighted mean). beta_ind and beta_soc are complementary
-    [set utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self) + (social_multiplier * (reduce +   ranking_othweight / (reduce + sumtimetogether + 0.0001))  ) + (weight_distance_hospital * dist myself self ))]
-    ; in case there is not other companion, so the decision is based on own ranking and distance
-    [set utility (((weight_socialinfluence - social_multiplier) * table:get [rankinglist] of myself [who] of self)  + (weight_distance_hospital * dist myself self ))]
+    set utility ( (weight_distance_hospital * dist myself self distservices ) + (social_multiplier * (reduce +   ranking_othweight / count friends )))
 
   ]
 
- ; selection of hospital with random utility
- set selectedhospital [who] of rnd:weighted-one-of options [exp(utility)]
- ; at this step just for report counting
+  set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
+  ; the "ranking experience" is max 1 by default
+  table:put rankinglist selectedhospital 1
+ if show_networks [
+  create-link-with one-of hospital with [who = [selectedhospital] of myself]
+  ask my-out-links [set color [color] of myself]
+  ]
  set givenbirth true
  set pregnant false
-
- ; debug
-; print(word who " selected hospital: " selectedhospital)
-
 
 end
 
 to plot-hospitals
-  set-current-plot "Hospital choice"
-  clear-plot
+;    set-current-plot "Hospital choice"
+;    clear-plot
 
-if plot_show = "hospitalizations" [
+; if plot_show = "hospitalizations" [
   ; Sort hospitals by real hospitalizations
-  let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
+;   let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
 
   ; First plot: real hospitalizations
-  set-current-plot-pen "actual"
-  let index 0
-  foreach sorted-hospitals [
-    t ->
-      let yval [hospitalizations] of t
-      plotxy index 0
-      plotxy index yval
-      set index index + 1
-  ]
+  ; set-current-plot-pen "actual"
+  ; let index 0
+  ; foreach sorted-hospitals [
+   ; t ->
+    ;  let yval [hospitalizations] of t
+     ; plotxy index 0
+      ; plotxy index yval
+      ; set index index + 1
+  ; ]
 
   ; Now compute simulated hospital choices per hospital
-  ask hospital [
-    set womenhospital count women with [selectedhospital = [who] of myself]
-  ]
+;   ask hospital [
+;     set womenhospital count women with [selectedhospital = [who] of myself]
+;   ]
 
   ; Sort hospitals again in the same order to match indexing
-  let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
+;   let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
 
   ; Second plot: simulated choices (overlay on same x)
-  set-current-plot-pen "simulated"
-  let indexsim 0
-  foreach sorted-womenhospital [
-    t ->
-      let yval [womenhospital] of t
-      plotxy indexsim 0
-      plotxy indexsim yval
-      set indexsim indexsim + 1
-  ]
-  ]
+;   set-current-plot-pen "simulated"
+;   let indexsim 0
+;   foreach sorted-womenhospital [
+;     t ->
+;       let yval [womenhospital] of t
+;       plotxy indexsim 0
+;       plotxy indexsim yval
+;       set indexsim indexsim + 1
+;   ]
+;   ]
 
-  if plot_show = "mobilities" [
+;    if plot_show = "mobilities" [
   ; Sort hospitals by real hospitalizations
-    ask hospital [
-      set mobilitiesemp count women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]]
-  let sorted-hospitals sort-by [[a b] -> [mobilitiesemp] of a < [mobilitiesemp] of b] hospital
+;      ask hospital [
+;        set mobilitiesemp count women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]]
+;    let sorted-hospitals sort-by [[a b] -> [mobilitiesemp] of a < [mobilitiesemp] of b] hospital
 
   ; First plot: real hospitalizations
-  set-current-plot-pen "actual"
-  let index 0
-  foreach sorted-hospitals [
-    t ->
-      let yval [mobilitiesemp] of t
-      plotxy index 0
-      plotxy index yval
-      set index index + 1
-  ]
+;    set-current-plot-pen "actual"
+;    let index 0
+;    foreach sorted-hospitals [
+;      t ->
+ ;        let yval [mobilitiesemp] of t
+ ;      plotxy index 0
+  ;      plotxy index yval
+ ;      set index index + 1
+;   ]
 
   ; Now compute simulated hospital choices per hospital
-  ask hospital [
-      set womenhospital count women with [selectedhospital = [who] of myself and pro_com != [pro_com] of myself]
-  ]
+;   ask hospital [
+;       set womenhospital count women with [selectedhospital = [who] of myself and pro_com != [pro_com] of myself]
+;   ]
 
   ; Sort hospitals again in the same order to match indexing
-  let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
+;   let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
 
   ; Second plot: simulated choices (overlay on same x)
-  set-current-plot-pen "simulated"
-  let indexsim 0
-  foreach sorted-womenhospital [
-    t ->
-      let yval [womenhospital] of t
-      plotxy indexsim 0
-      plotxy indexsim yval
-      set indexsim indexsim + 1
-  ]
-  ]
+;   set-current-plot-pen "simulated"
+;   let indexsim 0
+;   foreach sorted-womenhospital [
+;     t ->
+ ;      let yval [womenhospital] of t
+;        plotxy indexsim 0
+;       plotxy indexsim yval
+;       set indexsim indexsim + 1
+;   ]
+;    ]
+
+ set-current-plot "Selection hospital"
+clear-plot
+set-current-plot-pen "actual"
+
+let womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]
+let xs [ dist self hospitals hospital_id distservices ] of womenselecthosp
+set-plot-x-range 0 200
+
+histogram xs
+
+
+set-current-plot-pen "simulated"
+
+let womenselecthospsim women with [selectedhospital = [who] of hospitals hospital_id]
+let xsim [ dist self hospitals hospital_id distservices] of womenselecthospsim
+set-plot-x-range 0 200
+
+histogram xsim
+
 
 end
 
-to-report dist [origin destination]
-let destinationpos position [pro_com] of destination item 0 distservices
-report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
+to-report dist [origin destination matrix]
+let destinationpos position [pro_com] of destination item 0 matrix
+report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] matrix
 end
 
 to-report normal [means std-devs maxlim minlim]
@@ -393,6 +308,22 @@ to-report normal [means std-devs maxlim minlim]
   if value > maxlim [ set value maxlim ]
   if value < minlim [ set value minlim]
   report value
+end
+
+to-report distchoicezero [idd]
+  report count women with [selectedhospital = [who] of idd and dist self idd distservices <= 0]
+end
+
+to-report distchoice [idd distmin distmax]
+  report count women with [selectedhospital = [who] of idd and dist self idd distservices > distmin and dist self idd distservices <= distmax]
+end
+
+to-report distchoicemax [idd distmax]
+  report count women with [selectedhospital = [who] of idd and dist self idd distservices > distmax]
+end
+
+to-report womenwhoselected [idd]
+  report count women with [selectedhospital = [who] of idd ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -423,10 +354,10 @@ ticks
 30.0
 
 BUTTON
-16
-10
-79
-43
+38
+13
+101
+46
 setup
 setup
 NIL
@@ -440,27 +371,10 @@ NIL
 1
 
 BUTTON
-1636
-54
-1864
-87
-show VectorDataset
-show gis:feature-list-of tuscany
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-885
-425
-1019
-458
+1200
+400
+1294
+433
 hide women
 ask women [hide-turtle]
 NIL
@@ -474,10 +388,10 @@ NIL
 1
 
 BUTTON
-745
-425
-878
-458
+1089
+401
+1195
+434
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -491,68 +405,12 @@ NIL
 1
 
 BUTTON
-1757
-163
-1863
-196
-color_municipality
-gis:set-drawing-color red gis:fill gis:find-one-feature tuscany \"PRO_COM\" area_municipality 5
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-INPUTBOX
-1637
-160
-1751
-230
-area_municipality
-48017.0
-1
-0
-Number
-
-INPUTBOX
-1636
-93
-1751
-153
-MUNICIPALITY_name
-Firenze
-1
-0
-String (reporter)
-
-BUTTON
-1758
-110
-1863
-143
-codCOMUNE
-print gis:property-value gis:find-one-feature tuscany \"COMUNE\" MUNICIPALITY_name \"PRO_COM\" 
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-746
-462
-879
-495
+1089
+438
+1196
+471
 show counselcenter
-ask counselcenter [set color violet show-turtle]
+ask counselcenter [set color cyan show-turtle]
 NIL
 1
 T
@@ -564,10 +422,10 @@ NIL
 1
 
 BUTTON
-886
-462
-1019
-495
+1201
+437
+1296
+470
 show women
 ask women [show-turtle]
 NIL
@@ -581,27 +439,10 @@ NIL
 1
 
 BUTTON
-1759
-197
-1864
-230
-show VectorFeature
-print gis:find-one-feature tuscany \"PRO_COM\" area_municipality
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-1026
-425
-1141
-458
+1300
+399
+1378
+432
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -615,10 +456,10 @@ NIL
 1
 
 BUTTON
-1023
-463
-1140
-496
+1299
+437
+1380
+470
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -632,29 +473,29 @@ NIL
 1
 
 TEXTBOX
-940
-401
-1021
-419
-the three actors
+1046
+418
+1086
+459
+three actors
 10
 0.0
 1
 
 OUTPUT
-728
-14
-1074
-383
+1047
+18
+1393
+387
 10
 
 BUTTON
-1000
-501
-1072
-534
+937
+521
+1009
+554
 testdistances
-print dist turtle origin_from turtle destination_to
+print dist turtle origin_from turtle destination_to distservices
 NIL
 1
 T
@@ -666,21 +507,21 @@ NIL
 1
 
 INPUTBOX
-745
-502
-879
-562
+765
+524
+841
+584
 origin_from
-56.0
+48.0
 1
 0
 Number
 
 INPUTBOX
-881
-502
-996
-562
+843
+524
+928
+584
 destination_to
 1797.0
 1
@@ -688,10 +529,10 @@ destination_to
 Number
 
 BUTTON
-99
-10
-164
-43
+105
+12
+170
+45
 go
 go
 T
@@ -705,10 +546,10 @@ NIL
 1
 
 SLIDER
-30
-239
-191
-272
+1692
+546
+1853
+579
 weight_distance_counsel
 weight_distance_counsel
 -100
@@ -720,10 +561,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1101
-142
-1234
-187
+1844
+464
+1977
+509
 capacity counselcenters
 mean [capacity] of counselcenter
 2
@@ -731,109 +572,25 @@ mean [capacity] of counselcenter
 11
 
 MONITOR
-1241
-143
-1354
-188
-women given birth
+218
+517
+285
+562
+given birth
 count women with [givenbirth = true]
 17
 1
 11
 
-BUTTON
-1078
-500
-1191
-533
-check ticks advance
-if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-INPUTBOX
-12
-57
-96
-117
-count_pregnant
-100.0
-1
-0
-Number
-
-INPUTBOX
-102
-56
-201
-116
-wave_pregnant
-4.0
-1
-0
-Number
-
-BUTTON
-1664
-330
-1790
-363
-counsel_networks
-ask counselcenter [if count women with [selcounsel = [who] of myself] > 1 [\nprint (word \" counselcenter: \" who \" women: \" [who] of women with [selcounsel = [who] of myself] )]]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-INPUTBOX
-1795
-328
-1903
-388
-inspectcounselcenter
-20345.0
-1
-0
-Number
-
-BUTTON
-1665
-364
-1790
-397
-inspect_counselcenter
-ask counselcenters inspectcounselcenter [\nask women with [selcounsel = [who] of myself] [print (word \"woman: \" who \" counselstay: \" counselstay)]]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 36
-341
+262
 188
-374
+295
 social_multiplier
 social_multiplier
-0
-100
+-10
+10
 0.0
 1
 1
@@ -841,10 +598,10 @@ max
 HORIZONTAL
 
 INPUTBOX
-49
-379
-170
-439
+1719
+375
+1801
+435
 weight_socialinfluence
 0.0
 1
@@ -852,10 +609,10 @@ weight_socialinfluence
 Number
 
 SLIDER
-12
-162
-115
-195
+1721
+584
+1824
+617
 mean_ranking
 mean_ranking
 -1
@@ -867,10 +624,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-117
-161
-220
-194
+1722
+475
+1825
+508
 sd_ranking
 sd_ranking
 0
@@ -883,43 +640,24 @@ HORIZONTAL
 
 SLIDER
 38
-303
+224
 191
-336
+257
 weight_distance_hospital
 weight_distance_hospital
--50
-50
+-10
+0
 -5.0
 1
 1
 NIL
 HORIZONTAL
 
-PLOT
-1089
-10
-1439
-134
-Hospital choice
-NIL
-NIL
-0.0
-10.0
-0.0
-2000.0
-true
-true
-"" ""
-PENS
-"actual" 1.0 1 -2674135 true "" ""
-"simulated" 1.0 1 -13345367 true "" ""
-
 TEXTBOX
-72
-135
-164
-153
+1726
+446
+1818
+464
 distribution ranking
 10
 0.0
@@ -927,114 +665,29 @@ distribution ranking
 
 TEXTBOX
 77
-280
+201
 163
-298
+219
 selection hospital
 10
 0.0
 1
 
 TEXTBOX
-53
-213
-163
-231
+1707
+524
+1817
+542
 selection counselcenter
 10
 0.0
 1
 
-BUTTON
-1373
-219
-1465
-252
-show mobility
-displaymap\nask links [die]\n ask counselcenter [ hide-turtle]\n ask women [ hide-turtle]\n; ask hospital [ set color gray]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nif plot_show = \"hospitalizations\" [\n; ask women with [selectedhospitalemp = [who] of myself]\n; [show-turtle \n; set color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\nif plot_show = \"mobilities\" [\n; ask women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]\n; [show-turtle \n; set color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\n\n\n]\n\n;;\nask links [die]\nifelse emp_tgt \n[if any? women with [selectedhospitalemp = hospital_id] [\nask women with [selectedhospitalemp = hospital_id][create-link-with one-of hospital with [ who = hospital_id]]]]\n[if any? women with [selectedhospital = hospital_id] [\nask women with [selectedhospital = hospital_id][create-link-with one-of hospital with [ who = hospital_id]]]]\nask women [ask my-out-links [set color [color] of myself]]\n\n\n\nset-current-plot \"mobilities hospital_id\"\nclear-plot\nset-current-plot-pen \"actual\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\n\nset-current-plot-pen \"simulated\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\n\n\n\n\n\nlet sorted-hospitals sort-by [[a b] -> [womenhospital] of a > [womenhospital] of b] hospital\n\n \n  foreach sorted-hospitals [ h ->\n print (word [who] of h \" :simul: \" [womenhospital] of h)\n]\n\n\n\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-INPUTBOX
-1364
-149
-1442
-209
-hospital_id
-65.0
-1
-0
-Number
-
-CHOOSER
-1384
-64
-1484
-109
-plot_show
-plot_show
-"hospitalizations" "mobilities"
-0
-
 PLOT
-1093
-205
-1362
-359
-mobilities hospital_id
-NIL
-NIL
-0.0
-100.0
-0.0
-200.0
-true
-true
-"" ""
-PENS
-"actual" 1.0 1 -2674135 true "" ""
-"simulated" 1.0 1 -13345367 true "" ""
-
-BUTTON
-1372
-258
-1467
-291
-link_all_hospitals
-ask links [die]\nifelse emp_tgt \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SWITCH
-1372
-294
-1475
-327
-emp_tgt
-emp_tgt
-1
-1
--1000
-
-PLOT
-21
-454
-206
-577
+1683
+192
+1868
+312
 distribution ranking
 NIL
 NIL
@@ -1049,10 +702,10 @@ PENS
 "default" 1.0 1 -16777216 true "" ""
 
 BUTTON
-66
-579
-166
-612
+1728
+314
+1828
+347
 distribution ranking
 set-current-plot \"distribution ranking\"\n  clear-plot\n  \n  ; collect n samples\n  let samples []\n  repeat 20177 [\n    set samples lput (normal mean_ranking sd_ranking 1 -1) samples\n  ]\n  \n  ; set axis ranges\n  ; set-plot-x-range -1 1\n   ;set-plot-y-range 0 22177 / 5   ;; rough guess for y max\n  \n  ; plot as histogram\n  set-histogram-num-bars 22177\n  set-plot-x-range -1.01 1.01 \n  histogram samples\n  print sort samples\n
 NIL
@@ -1066,20 +719,20 @@ NIL
 1
 
 TEXTBOX
-267
-518
-449
-609
-women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 31%\n16 - 30 = orange: 3162, 15%\n31 - 45 = brown: 1754, 8%\n46 - 60 = violet: 326, 1%\n+ 61 = blue: 80, 0.3%
+1150
+479
+1328
+570
+women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 31%\n16 - 30 = orange: 3162, 15%\n31 - 45 = brown: 1754, 8%\n46 - 60 = violet: 326, 1%\n+ 61 = blue: 80, 0.4%
 10
 0.0
 1
 
 BUTTON
-1001
-536
-1072
-569
+938
+556
+1008
+589
 hide links
 ask links [die]
 NIL
@@ -1093,19 +746,322 @@ NIL
 1
 
 TEXTBOX
-471
-518
-622
-609
+1332
+479
+1483
+570
 women, distance counselcenter\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
 0.0
 1
 
+BUTTON
+1863
+388
+1943
+421
+friends
+; let friends []\nask links [die]\nask turtles [hide-turtle]\nask one-of women [\nlet friendlist []\nshow-turtle\nset color blue\nlet friends  rnd:weighted-n-of 200 other women [exp(distweight * (dist myself self distservices ))]\nask friends [show-turtle set color green]\nforeach sort friends [ x ->\ncreate-link-with x\nprint (word [who] of self \" - \" dist self x distservices)\n]\n\nprint friends\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+16
+141
+108
+174
+distweight
+distweight
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+1863
+424
+1943
+457
+ranking_exptest
+ask women with [givenbirth = true] [show length filter [v -> v = 1] table:values rankinglist]\nprint(word \"givenbirth, ranking > 0: \" count women with [givenbirth = true and (length filter [v -> v = 1] table:values rankinglist) > 1])
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+36
+404
+164
+437
+pop_concentration
+ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SWITCH
+44
+62
+166
+95
+show_networks
+show_networks
+0
+1
+-1000
+
+PLOT
+727
+367
+1036
+517
+Mobility hospital origin (proportion)
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+true
+"" ""
+PENS
+"0" 1.0 0 -2674135 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicezero hospitals hospital_id / womenwhoselected hospitals hospital_id)]\n"
+"1-15" 1.0 0 -1184463 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 0 15 / womenwhoselected hospitals hospital_id)]\n"
+"16-30" 1.0 0 -955883 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 15 30 / womenwhoselected hospitals hospital_id)]\n"
+"31-45" 1.0 0 -6459832 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 30 45 / womenwhoselected hospitals hospital_id)]\n"
+"46-60" 1.0 0 -8630108 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 45 60 / womenwhoselected hospitals hospital_id)]\n"
+"61+" 1.0 0 -13345367 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicemax hospitals hospital_id 60 / womenwhoselected hospitals hospital_id)]\n"
+
+CHOOSER
+728
+10
+820
+55
+hospital_id
+hospital_id
+50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
+6
+
+BUTTON
+536
+523
+631
+556
+highlight hospital
+ask hospitals hospital_id [set color blue]\nplot-hospitals
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+729
+213
+1037
+363
+Mobility hospital origin (raw numbers)
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"0" 1.0 0 -2674135 true "" "plot (distchoicezero hospitals hospital_id)"
+"1-15" 1.0 0 -1184463 true "" "plot (distchoice hospitals hospital_id 0 15)"
+"16-30" 1.0 0 -955883 true "" "plot (distchoice hospitals hospital_id 15 30 )"
+"31-45" 1.0 0 -6459832 true "" "plot (distchoice hospitals hospital_id 30 45)"
+"46-60" 1.0 0 -8630108 true "" "plot (distchoice hospitals hospital_id 45 60)"
+"61+" 1.0 0 -13345367 true "" "plot (distchoicemax hospitals hospital_id 60)"
+
+TEXTBOX
+62
+115
+148
+133
+network formation
+10
+0.0
+1
+
+TEXTBOX
+1705
+128
+1855
+154
+old parameter to reintegrate or delete
+10
+0.0
+1
+
+BUTTON
+18
+336
+100
+369
+resizepop
+foreach gis:feature-list-of tuscany [ this-municipality ->  \nask n-of (count women with [pro_com = gis:property-value this-municipality \"PRO_COM\"] * (1 - resizescale)) women with [pro_com = gis:property-value this-municipality \"PRO_COM\"] [die]\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+730
+60
+1038
+210
+Selection hospital
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"actual" 1.0 1 -2674135 true "" ""
+"simulated" 1.0 1 -13345367 true "" ""
+
+TEXTBOX
+1046
+483
+1142
+527
+women: 20177\nhospitals: 24\ncounselcenters: 48
+10
+0.0
+1
+
+INPUTBOX
+104
+322
+175
+382
+resizescale
+0.25
+1
+0
+Number
+
+MONITOR
+821
+10
+909
+55
+actual affluence
+count women with [selectedhospitalemp = [who] of hospitals hospital_id]
+2
+1
+11
+
+MONITOR
+911
+10
+1016
+55
+simulated affluence
+count women with [selectedhospital = [who] of hospitals hospital_id]
+2
+1
+11
+
+MONITOR
+290
+517
+373
+562
+NIL
+count women
+2
+1
+11
+
+SLIDER
+116
+141
+208
+174
+n_network
+n_network
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+377
+522
+436
+555
+networks
+ask links [die]\nask women [hide-turtle]\nask counselcenter [hide-turtle]\nifelse emp_net \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SWITCH
+440
+522
+530
+555
+emp_net
+emp_net
+1
+1
+-1000
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-Hospital choice based on social multiplier of formed networks in counselcenters. Actors of the simulation are women, counselcenters and hospitals. Random utility models applied for the selection of counselcenter and then hospitals. One cycle is equivalent to one week.
+Hospital choice based on social multiplier of formed networks. Actors of the simulation are women, counselcenters and hospitals. Random utility models applied for the selection hospitals.
 
 ## NOTES ON HOSPITALS
 
@@ -1114,38 +1070,44 @@ Hospital choice based on social multiplier of formed networks in counselcenters.
 
 ## HOW IT WORKS
 
-Each wave_pregnant, a total of count_pregnant women randomly extracted are assigned to be pregnant. At initialization of the model, women hold a ranking distribution according to normal distribution (average and standard deviation to compute). The distribution is for hospitals in a radius. The first select a counselsenter where to follow a preparatory course where networks are formed. The selection occurs via a random utility model, selecting an array of options in a radius based on available spot, the decision occurs based on the distance, with higher probability for closer counselcenters. Women are connected to other women pregnant in the same counselcenter. They will stay until week 36. Due to different time of execution, time spent varies by individual woman. Women who reach week 36 need to decide the hospital to give birth. The list of options to decide from are the original one for the individual agent, plus hospitals brought to the discussion by each agent in the counselcenter.
- This decision is implemented through a random utility model, based on distance (closer the better), plus individual ranking, plus social multiplies which models the weight of preference of other women in the network on the actual selection decision of agents. Weight of individual ranking and weight of social multiplier are complementary. The social multiplier is modeled with a weight given to weighted mean of women in the counselcenter for each hospital. The weight of the preference of each other woman to the selection of the woman at week 36 is equivalent to the time spent with that woman during the stay at the counselstay. As such, women most spent time with have higher influence. After the hospital is selected, the woman is given status givenbirth and is out of the dynamics of the simulation. The simulation ends when all women have given birth. 
+In this version, in each cycle one woman is set to be pregnant and search for an hospital. The woman selects n_network other agents based on the distance in space modeled with discrete choice probability. At time 0, each agent holds 0 as ranking for each hospital. When the agent selects an hospital, the assessment is based on the distance (closer has higher probability) and ranking of the hospital from the agent in their network. By default, the ranking of the hospital where an agent has given birth is 1. The social multiplier includes the average of agents in the network that have experience of the hospital, weighted by a parameter modeling the effect of social influence. When an agent has selected the hospital, givenbirth is set to true. The simulation ends when no women with givenbirth false are available.
+
+The utility is computed as ((-weightdistance * distance) + (weightsocialinfluence * (rankingalter/sumalter))
+sumalter refers to the number of other people in the network of the caller agent.
+
+This strategy is aimed at explaining mechanisms and inequalities in hospital selection through the interaction of distance and social influence, leveraging the modeling of cascade effects and relative weights between distance and social influence in the decisional process.
+
+Initialized with data from Tuscany, results are bounded to spatial inequalities in the distribution of services and proximity of services.  
 
 
 ## HOW TO USE IT
 
-* mean_ranking, sd_ranking: to set the distribution of ranking for hospitals. Currently it is global, i.e. not differentiating distribution for specific hospitals or else
-* weight_distance_counsel: weight for distance (negative) in selection counselcenter
-* weight_distance_hospital: weight for distance (negative) in selection hospital
-* social_multiplier: weight for effect social influence in selection hospital
-* weight_socialinfluence: used to compute weight of individual ranking as complementary to social multiplier. E.g. with weight_socialinfluence equal 10 and social_multiplier equal 6, weight individual ranking is equal 4
+SETUP
+Color of women show the minimum distance to reach one hospital
+
+* show_networks: to show mobilities through networks during the simulation
+* distweight: weight of distance for network selection in the word of mouth
+(-1 preference for closer people; 0 random; 1 preference for further people)
+* n_network: number of people in the network
+The network is an agentset from which the average rating is computed
+* weight_distance_hospital: the weight of distance to hospital selection (negative value since the less distance is better)
+* social_multiplier: weight of social influence in the hospital selection
+* resizepop: to scale down to *resizescale* input value (in decimal).
+* popconcentration: to show the concentration of women in that municipality compared to the whole region
+
 
 ## THINGS TO NOTICE
 
-* Hospital choice in the printed box: actual number of births per hospital, ID who is reported (below in the box the complete name)
-* Monitors: simulated births per hospital
-* Hospital choice: each bar is the number of births per hospital (red: actual empirical, blue is simulated). Not possible to report the label.
+The three plots show results for the individual hospital to select (hospital_id)
+* Selection hospital: the number of women who selected the hospital distributed by distance on x-axis. Red line the actual data, blue line the simulation results
+* Mobility hospital origin (raw numbers): the number of women in the simulation that select hospital id, signaling the distance from the hospital
+* Mobility hospital origin (proportion): the proportion of women that selected the hospital in the simulation by distance
 
-## THINGS TO INVESTIGATE AND CHANGE
+* networks button: to show all networks mobolities from empirical data (emp_net set to on) or from the simulation
 
-*  weight_distance_counsel: maybe we can get it out: it complicates understanding of the dynamics since we need to understand the role of distance weight in the final decision of hospital. What most matters is under what condition women are "forced" to interact with others and consider options out of their space. This mostly happends because of limited capacity and need to find a spot elsewhere, due to capacity
-* effect of density of pregnant women in the radius of hospitals, and more precisely the number of women pregnant at the same time, what effects this would have on reinforcing the effect of ranking on hospital selection
-* the distribution of ranking, ideally changing by zone, so to effectively study under what conditions women would select one hospital that they would not consider or holds low ranking. This also considering the role of social influence over distance
-* The effect of the selection of one woman on other women of their spatial proximity (municipality), i.e. currently the ranking of hospital is set at initialization, so as the list of options bounded to space, women who give birth and select one hospital could change the initial list of options as effect of word-of-mouth of women who selected in a previous cycle. This dynamic is to be implemented.
+# NOTE 
 
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Effect of concentration of the population and distribution of services reflecting the concentration. In fact, slow mobility from further zones (Val di Chiana to Grosset).
 
 ## CREDITS AND REFERENCES
 
@@ -1471,6 +1433,247 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>distchoicezero hospitals 50</metric>
+    <metric>distchoicezero hospitals 61</metric>
+    <metric>distchoicezero hospitals 58</metric>
+    <metric>distchoicezero hospitals 60</metric>
+    <metric>distchoicezero hospitals 48</metric>
+    <metric>distchoicezero hospitals 63</metric>
+    <metric>distchoicezero hospitals 53</metric>
+    <metric>distchoicezero hospitals 64</metric>
+    <metric>distchoicezero hospitals 69</metric>
+    <metric>distchoicezero hospitals 56</metric>
+    <metric>distchoicezero hospitals 66</metric>
+    <metric>distchoicezero hospitals 51</metric>
+    <metric>distchoicezero hospitals 59</metric>
+    <metric>distchoicezero hospitals 65</metric>
+    <metric>distchoicezero hospitals 57</metric>
+    <metric>distchoicezero hospitals 62</metric>
+    <metric>distchoicezero hospitals 55</metric>
+    <metric>distchoicezero hospitals 49</metric>
+    <metric>distchoicezero hospitals 52</metric>
+    <metric>distchoicezero hospitals 54</metric>
+    <metric>distchoicezero hospitals 71</metric>
+    <metric>distchoicezero hospitals 68</metric>
+    <metric>distchoicezero hospitals 67</metric>
+    <metric>distchoicezero hospitals 70</metric>
+    <metric>distchoice hospitals 50 0 15</metric>
+    <metric>distchoice hospitals 61 0 15</metric>
+    <metric>distchoice hospitals 58 0 15</metric>
+    <metric>distchoice hospitals 60 0 15</metric>
+    <metric>distchoice hospitals 48 0 15</metric>
+    <metric>distchoice hospitals 63 0 15</metric>
+    <metric>distchoice hospitals 53 0 15</metric>
+    <metric>distchoice hospitals 64 0 15</metric>
+    <metric>distchoice hospitals 69 0 15</metric>
+    <metric>distchoice hospitals 56 0 15</metric>
+    <metric>distchoice hospitals 66 0 15</metric>
+    <metric>distchoice hospitals 51 0 15</metric>
+    <metric>distchoice hospitals 59 0 15</metric>
+    <metric>distchoice hospitals 65 0 15</metric>
+    <metric>distchoice hospitals 57 0 15</metric>
+    <metric>distchoice hospitals 62 0 15</metric>
+    <metric>distchoice hospitals 55 0 15</metric>
+    <metric>distchoice hospitals 49 0 15</metric>
+    <metric>distchoice hospitals 52 0 15</metric>
+    <metric>distchoice hospitals 54 0 15</metric>
+    <metric>distchoice hospitals 71 0 15</metric>
+    <metric>distchoice hospitals 68 0 15</metric>
+    <metric>distchoice hospitals 67 0 15</metric>
+    <metric>distchoice hospitals 70 0 15</metric>
+    <metric>distchoice hospitals 50 15 30</metric>
+    <metric>distchoice hospitals 61 15 30</metric>
+    <metric>distchoice hospitals 58 15 30</metric>
+    <metric>distchoice hospitals 60 15 30</metric>
+    <metric>distchoice hospitals 48 15 30</metric>
+    <metric>distchoice hospitals 63 15 30</metric>
+    <metric>distchoice hospitals 53 15 30</metric>
+    <metric>distchoice hospitals 64 15 30</metric>
+    <metric>distchoice hospitals 69 15 30</metric>
+    <metric>distchoice hospitals 56 15 30</metric>
+    <metric>distchoice hospitals 66 15 30</metric>
+    <metric>distchoice hospitals 51 15 30</metric>
+    <metric>distchoice hospitals 59 15 30</metric>
+    <metric>distchoice hospitals 65 15 30</metric>
+    <metric>distchoice hospitals 57 15 30</metric>
+    <metric>distchoice hospitals 62 15 30</metric>
+    <metric>distchoice hospitals 55 15 30</metric>
+    <metric>distchoice hospitals 49 15 30</metric>
+    <metric>distchoice hospitals 52 15 30</metric>
+    <metric>distchoice hospitals 54 15 30</metric>
+    <metric>distchoice hospitals 71 15 30</metric>
+    <metric>distchoice hospitals 68 15 30</metric>
+    <metric>distchoice hospitals 67 15 30</metric>
+    <metric>distchoice hospitals 70 15 30</metric>
+    <metric>distchoice hospitals 50 30 45</metric>
+    <metric>distchoice hospitals 61 30 45</metric>
+    <metric>distchoice hospitals 58 30 45</metric>
+    <metric>distchoice hospitals 60 30 45</metric>
+    <metric>distchoice hospitals 48 30 45</metric>
+    <metric>distchoice hospitals 63 30 45</metric>
+    <metric>distchoice hospitals 53 30 45</metric>
+    <metric>distchoice hospitals 64 30 45</metric>
+    <metric>distchoice hospitals 69 30 45</metric>
+    <metric>distchoice hospitals 56 30 45</metric>
+    <metric>distchoice hospitals 66 30 45</metric>
+    <metric>distchoice hospitals 51 30 45</metric>
+    <metric>distchoice hospitals 59 30 45</metric>
+    <metric>distchoice hospitals 65 30 45</metric>
+    <metric>distchoice hospitals 57 30 45</metric>
+    <metric>distchoice hospitals 62 30 45</metric>
+    <metric>distchoice hospitals 55 30 45</metric>
+    <metric>distchoice hospitals 49 30 45</metric>
+    <metric>distchoice hospitals 52 30 45</metric>
+    <metric>distchoice hospitals 54 30 45</metric>
+    <metric>distchoice hospitals 71 30 45</metric>
+    <metric>distchoice hospitals 68 30 45</metric>
+    <metric>distchoice hospitals 67 30 45</metric>
+    <metric>distchoice hospitals 70 30 45</metric>
+    <metric>distchoice hospitals 50 45 60</metric>
+    <metric>distchoice hospitals 61 45 60</metric>
+    <metric>distchoice hospitals 58 45 60</metric>
+    <metric>distchoice hospitals 60 45 60</metric>
+    <metric>distchoice hospitals 48 45 60</metric>
+    <metric>distchoice hospitals 63 45 60</metric>
+    <metric>distchoice hospitals 53 45 60</metric>
+    <metric>distchoice hospitals 64 45 60</metric>
+    <metric>distchoice hospitals 69 45 60</metric>
+    <metric>distchoice hospitals 56 45 60</metric>
+    <metric>distchoice hospitals 66 45 60</metric>
+    <metric>distchoice hospitals 51 45 60</metric>
+    <metric>distchoice hospitals 59 45 60</metric>
+    <metric>distchoice hospitals 65 45 60</metric>
+    <metric>distchoice hospitals 57 45 60</metric>
+    <metric>distchoice hospitals 62 45 60</metric>
+    <metric>distchoice hospitals 55 45 60</metric>
+    <metric>distchoice hospitals 49 45 60</metric>
+    <metric>distchoice hospitals 52 45 60</metric>
+    <metric>distchoice hospitals 54 45 60</metric>
+    <metric>distchoice hospitals 71 45 60</metric>
+    <metric>distchoice hospitals 68 45 60</metric>
+    <metric>distchoice hospitals 67 45 60</metric>
+    <metric>distchoice hospitals 70 45 60</metric>
+    <metric>distchoicemax hospitals 50 60</metric>
+    <metric>distchoicemax hospitals 61 60</metric>
+    <metric>distchoicemax hospitals 58 60</metric>
+    <metric>distchoicemax hospitals 60 60</metric>
+    <metric>distchoicemax hospitals 48 60</metric>
+    <metric>distchoicemax hospitals 63 60</metric>
+    <metric>distchoicemax hospitals 53 60</metric>
+    <metric>distchoicemax hospitals 64 60</metric>
+    <metric>distchoicemax hospitals 69 60</metric>
+    <metric>distchoicemax hospitals 56 60</metric>
+    <metric>distchoicemax hospitals 66 60</metric>
+    <metric>distchoicemax hospitals 51 60</metric>
+    <metric>distchoicemax hospitals 59 60</metric>
+    <metric>distchoicemax hospitals 65 60</metric>
+    <metric>distchoicemax hospitals 57 60</metric>
+    <metric>distchoicemax hospitals 62 60</metric>
+    <metric>distchoicemax hospitals 55 60</metric>
+    <metric>distchoicemax hospitals 49 60</metric>
+    <metric>distchoicemax hospitals 52 60</metric>
+    <metric>distchoicemax hospitals 54 60</metric>
+    <metric>distchoicemax hospitals 71 60</metric>
+    <metric>distchoicemax hospitals 68 60</metric>
+    <metric>distchoicemax hospitals 67 60</metric>
+    <metric>distchoicemax hospitals 70 60</metric>
+    <metric>womenwhoselected hospitals 50</metric>
+    <metric>womenwhoselected hospitals 61</metric>
+    <metric>womenwhoselected hospitals 58</metric>
+    <metric>womenwhoselected hospitals 60</metric>
+    <metric>womenwhoselected hospitals 48</metric>
+    <metric>womenwhoselected hospitals 63</metric>
+    <metric>womenwhoselected hospitals 53</metric>
+    <metric>womenwhoselected hospitals 64</metric>
+    <metric>womenwhoselected hospitals 69</metric>
+    <metric>womenwhoselected hospitals 56</metric>
+    <metric>womenwhoselected hospitals 66</metric>
+    <metric>womenwhoselected hospitals 51</metric>
+    <metric>womenwhoselected hospitals 59</metric>
+    <metric>womenwhoselected hospitals 65</metric>
+    <metric>womenwhoselected hospitals 57</metric>
+    <metric>womenwhoselected hospitals 62</metric>
+    <metric>womenwhoselected hospitals 55</metric>
+    <metric>womenwhoselected hospitals 49</metric>
+    <metric>womenwhoselected hospitals 52</metric>
+    <metric>womenwhoselected hospitals 54</metric>
+    <metric>womenwhoselected hospitals 71</metric>
+    <metric>womenwhoselected hospitals 68</metric>
+    <metric>womenwhoselected hospitals 67</metric>
+    <metric>womenwhoselected hospitals 70</metric>
+    <metric>[id] of hospitals 50</metric>
+    <metric>[id] of hospitals 61</metric>
+    <metric>[id] of hospitals 58</metric>
+    <metric>[id] of hospitals 60</metric>
+    <metric>[id] of hospitals 48</metric>
+    <metric>[id] of hospitals 63</metric>
+    <metric>[id] of hospitals 53</metric>
+    <metric>[id] of hospitals 64</metric>
+    <metric>[id] of hospitals 69</metric>
+    <metric>[id] of hospitals 56</metric>
+    <metric>[id] of hospitals 66</metric>
+    <metric>[id] of hospitals 51</metric>
+    <metric>[id] of hospitals 59</metric>
+    <metric>[id] of hospitals 65</metric>
+    <metric>[id] of hospitals 57</metric>
+    <metric>[id] of hospitals 62</metric>
+    <metric>[id] of hospitals 55</metric>
+    <metric>[id] of hospitals 49</metric>
+    <metric>[id] of hospitals 52</metric>
+    <metric>[id] of hospitals 54</metric>
+    <metric>[id] of hospitals 71</metric>
+    <metric>[id] of hospitals 68</metric>
+    <metric>[id] of hospitals 67</metric>
+    <metric>[id] of hospitals 70</metric>
+    <steppedValueSet variable="social_multiplier" first="0" step="1" last="10"/>
+    <steppedValueSet variable="weight_distance_hospital" first="-10" step="1" last="0"/>
+    <enumeratedValueSet variable="distfriend">
+      <value value="-1"/>
+      <value value="0"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd_ranking">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="plot_show">
+      <value value="&quot;hospitalizations&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="area_municipality">
+      <value value="48017"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean_ranking">
+      <value value="-9.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="emp_tgt">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="destination_to">
+      <value value="1797"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="inspectcounselcenter">
+      <value value="20345"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="weight_distance_counsel">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="origin_from">
+      <value value="56"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="weight_socialinfluence">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="hospital_id">
+      <value value="61"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MUNICIPALITY_name">
+      <value value="&quot;Firenze&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
