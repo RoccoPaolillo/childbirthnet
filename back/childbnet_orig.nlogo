@@ -4,20 +4,21 @@ breed [hospital hospitals]
 breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices]
-counselcenter-own [ID capacity utility]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp]
+counselcenter-own [ID capacity utility womencounsel]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
 
 
 
 to setup
-  random-seed 10
+;  random-seed 10
   clear-all
   ask patches [set pcolor white]
   gis:load-coordinate-system "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.prj"
   set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
+  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   create-counselcenters
   create-hospitals
   create-womens
@@ -32,7 +33,7 @@ to setup
     output-print (word [who] of h " = " [id] of h " = " [hospitalizations] of h)
 ]
 
-  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+
   ask women [options_hospital]
   plot-hospitals
   reset-timer
@@ -105,7 +106,28 @@ foreach but-first hosptlist [ x ->
     if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
     gis:create-turtles-inside-polygon this-municipality women  table:get my-table gis:property-value this-municipality "PRO_COM" [  ; women derive their pro_com from the municipality
      set shape "circle"
-     set color gis:property-value this-municipality "PRO_COM"
+;     set color gis:property-value this-municipality "PRO_COM"
+ ifelse any? hospital with [dist self myself <= 0] [set color red]
+        [
+ifelse any? hospital with [dist self myself > 0 and dist self myself <= 15] [set color yellow]
+        [
+ifelse any? hospital with [dist self myself > 15 and dist self myself <= 30] [set color orange]
+          [
+ifelse any? hospital with  [dist self myself > 30 and dist self myself <= 45] [set color brown]
+              [
+ifelse any? hospital with  [dist self myself > 45 and dist self myself <= 60] [set color violet]
+                [set color blue]
+              ]
+            ]
+          ]
+          ]
+
+
+
+
+
+
+
      set size 0.2
      set pregnant false
      set selcounsel false
@@ -129,26 +151,33 @@ end
 
 to options_hospital
 
-let radius 1.5
+; let radius 1.5
 
-let hospitalsoptions no-turtles
+; let hospitalsoptions no-turtles
 
 ; to make up an own list of hospitals to select from based on proximity
-while [count hospitalsoptions < 3] [
-set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
-set radius radius + 1
-]
+; while [count hospitalsoptions < 3] [
+; set hospitalsoptions other  hospital in-radius radius with [capacity > 0 ]
+; set radius radius + 1
+; ]
 
 
- ask  hospitalsoptions [
- set color [color] of myself
+;  ask  hospitalsoptions [
+;  set color [color] of myself
 
-   ]
+;    ]
 
 ; to make up for ranking given to each hospital in the list key: ID hospital, value: [0,1] with beta distribution
+; set rankinglist table:make
+; foreach sort hospitalsoptions [ x ->
+;    table:put rankinglist [who] of x normal mean_ranking sd_ranking
+; ]
+; ; ; ;  all options
 set rankinglist table:make
-foreach sort hospitalsoptions [ x ->
-   table:put rankinglist [who] of x normal mean_ranking sd_ranking
+foreach sort hospital [ x ->
+    ifelse [who] of x = 50 [table:put rankinglist [who] of x normal 1 0 1 -1]
+    [table:put rankinglist [who] of x normal mean_ranking sd_ranking 1 -1]
+
 ]
 
 
@@ -164,7 +193,7 @@ if not any? women with [givenbirth = false] [stop]
     [choice_counsel]
     [ifelse counselstay < 36
       [set counselstay counselstay + 1]
-     [if selectedhospital = 0 [choice_hospital]
+     [if selectedhospital = 0 [choice_hospital select_hospital]
       ]
     ]
   ]
@@ -178,21 +207,21 @@ end
 
 to choice_counsel
 
-let radius 0.5
+ let radius 0.5
 
-let counselsoptions no-turtles
+ let counselsoptions no-turtles
 
-while [count counselsoptions < 5] [
-set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
-set radius radius + 1
-]
+ while [count counselsoptions < 5] [
+ set counselsoptions other  counselcenter in-radius radius with [capacity > 0 ]
+ set radius radius + 1
+  ]
 
-ask  counselsoptions [
-set color [color] of myself
+ask  counselcenter [
+; set color [color] of myself
 set utility (weight_distance_counsel * dist myself self)
 ]
 
-set selcounsel [who] of rnd:weighted-one-of counselsoptions [exp( utility)]
+set selcounsel [who] of rnd:weighted-one-of counselcenter [exp( utility)]
 
 end
 
@@ -227,8 +256,10 @@ foreach dictall [x ->
  ]
  ]
   ]
+end
 
-
+to select_hospital
+let womencompanion other women with [pregnant = true and givenbirth = false and selcounsel = [selcounsel] of myself]
 ;; here the real choice
 ; basket choice of hospitals to select from: all those now in the rankinglist
   let options hospital with [member? who table:keys  [rankinglist] of myself]
@@ -298,7 +329,7 @@ if plot_show = "hospitalizations" [
   ]
 
   ; Sort hospitals again in the same order to match indexing
-  let sorted-womenhospital sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
+  let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
 
   ; Second plot: simulated choices (overlay on same x)
   set-current-plot-pen "simulated"
@@ -335,7 +366,7 @@ if plot_show = "hospitalizations" [
   ]
 
   ; Sort hospitals again in the same order to match indexing
-  let sorted-womenhospital sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
+  let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
 
   ; Second plot: simulated choices (overlay on same x)
   set-current-plot-pen "simulated"
@@ -356,11 +387,11 @@ let destinationpos position [pro_com] of destination item 0 distservices
 report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] distservices
 end
 
-to-report normal [means std-devs]
+to-report normal [means std-devs maxlim minlim]
   let value random-normal means std-devs
   ;; Clamp to -1 to 1
-  if value > 1 [ set value 1 ]
-  if value < -1 [ set value -1 ]
+  if value > maxlim [ set value maxlim ]
+  if value < minlim [ set value minlim]
   report value
 end
 @#$#@#$#@
@@ -426,10 +457,10 @@ NIL
 1
 
 BUTTON
-923
-422
-1057
-455
+885
+425
+1019
+458
 hide women
 ask women [hide-turtle]
 NIL
@@ -443,10 +474,10 @@ NIL
 1
 
 BUTTON
-783
-422
-916
-455
+745
+425
+878
+458
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -482,7 +513,7 @@ INPUTBOX
 1751
 230
 area_municipality
-45002.0
+48017.0
 1
 0
 Number
@@ -516,10 +547,10 @@ NIL
 1
 
 BUTTON
-784
-459
-917
-492
+746
+462
+879
+495
 show counselcenter
 ask counselcenter [set color violet show-turtle]
 NIL
@@ -533,12 +564,12 @@ NIL
 1
 
 BUTTON
-924
-459
-1057
-492
+886
+462
+1019
+495
 show women
-ask women [set color gray show-turtle]
+ask women [show-turtle]
 NIL
 1
 T
@@ -567,10 +598,10 @@ NIL
 1
 
 BUTTON
-1064
-422
-1179
-455
+1026
+425
+1141
+458
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -584,10 +615,10 @@ NIL
 1
 
 BUTTON
-1061
-460
-1178
-493
+1023
+463
+1140
+496
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -618,10 +649,10 @@ OUTPUT
 10
 
 BUTTON
-1038
-498
-1110
-531
+1000
+501
+1072
+534
 testdistances
 print dist turtle origin_from turtle destination_to
 NIL
@@ -635,23 +666,23 @@ NIL
 1
 
 INPUTBOX
-783
-499
-917
-559
+745
+502
+879
+562
 origin_from
-12886.0
+56.0
 1
 0
 Number
 
 INPUTBOX
-919
-499
-1034
-559
+881
+502
+996
+562
 destination_to
-50.0
+1797.0
 1
 0
 Number
@@ -674,15 +705,15 @@ NIL
 1
 
 SLIDER
-25
-259
-186
-292
+30
+239
+191
+272
 weight_distance_counsel
 weight_distance_counsel
 -100
 100
--12.0
+0.0
 1
 1
 NIL
@@ -711,10 +742,10 @@ count women with [givenbirth = true]
 11
 
 BUTTON
-1116
-497
-1229
-530
+1078
+500
+1191
+533
 check ticks advance
 if ticks mod 2 = 0 [\n  show (word \"Tick \" ticks \": This runs on even ticks\")\n]\ntick
 T
@@ -795,71 +826,71 @@ NIL
 1
 
 SLIDER
-29
-387
-181
-420
+36
+341
+188
+374
 social_multiplier
 social_multiplier
 0
 100
-10.0
+0.0
 1
 1
 max
 HORIZONTAL
 
 INPUTBOX
-42
-425
-163
-485
+49
+379
+170
+439
 weight_socialinfluence
-20.0
+0.0
 1
 0
 Number
 
 SLIDER
-3
-160
-106
-193
+12
+162
+115
+195
 mean_ranking
 mean_ranking
 -1
 1
-0.0
+-9.9
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-109
-160
-212
-193
+117
+161
+220
+194
 sd_ranking
 sd_ranking
 0
 1
-0.11
+0.5
 0.01
 1
 NIL
 HORIZONTAL
 
 SLIDER
-29
-352
-181
-385
+38
+303
+191
+336
 weight_distance_hospital
 weight_distance_hospital
 -50
 50
--20.0
+-5.0
 1
 1
 NIL
@@ -895,20 +926,20 @@ distribution ranking
 1
 
 TEXTBOX
-70
-326
-156
-344
+77
+280
+163
+298
 selection hospital
 10
 0.0
 1
 
 TEXTBOX
-48
-233
-158
-251
+53
+213
+163
+231
 selection counselcenter
 10
 0.0
@@ -920,7 +951,7 @@ BUTTON
 1465
 252
 show mobility
-displaymap\nask links [die]\n ask counselcenter [ hide-turtle]\n ask women [ hide-turtle]\n ask hospital [ set color gray]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nif plot_show = \"hospitalizations\" [\nask women with [selectedhospitalemp = [who] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\nif plot_show = \"mobilities\" [\nask women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]\n[show-turtle \nset color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\n]\n\nset-current-plot \"mobilities hospital_id\"\nclear-plot\nset-current-plot-pen \"actual\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\n\nset-current-plot-pen \"simulated\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range min xs max xs\n\nhistogram xs\nprint sort xs]\n
+displaymap\nask links [die]\n ask counselcenter [ hide-turtle]\n ask women [ hide-turtle]\n; ask hospital [ set color gray]\nask hospitals hospital_id [\nshow-turtle\nset color blue\nif plot_show = \"hospitalizations\" [\n; ask women with [selectedhospitalemp = [who] of myself]\n; [show-turtle \n; set color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\nif plot_show = \"mobilities\" [\n; ask women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]\n; [show-turtle \n; set color scale-color 12 dist self myself 260 0  ]\n\nshow (word id \" municip: \" pro_com)\n\nforeach remove-duplicates [pro_com] of women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself][x ->\nshow (word x \" dist: \" dist self one-of women with [pro_com = x])\n\n]\n]\n\n\n\n]\n\n;;\nask links [die]\nifelse emp_tgt \n[if any? women with [selectedhospitalemp = hospital_id] [\nask women with [selectedhospitalemp = hospital_id][create-link-with one-of hospital with [ who = hospital_id]]]]\n[if any? women with [selectedhospital = hospital_id] [\nask women with [selectedhospital = hospital_id][create-link-with one-of hospital with [ who = hospital_id]]]]\nask women [ask my-out-links [set color [color] of myself]]\n\n\n\nset-current-plot \"mobilities hospital_id\"\nclear-plot\nset-current-plot-pen \"actual\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospitalemp = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\n\nset-current-plot-pen \"simulated\"\nif plot_show = \"hospitalizations\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\nif plot_show = \"mobilities\" [\nlet womenselecthosp women with [selectedhospital = [who] of hospitals hospital_id and pro_com != [pro_com] of hospitals hospital_id]\nlet xs [ dist self hospitals hospital_id ] of womenselecthosp\nset-plot-x-range 0 200\n\nhistogram xs\nprint sort xs]\n\n\n\n\n\nlet sorted-hospitals sort-by [[a b] -> [womenhospital] of a > [womenhospital] of b] hospital\n\n \n  foreach sorted-hospitals [ h ->\n print (word [who] of h \" :simul: \" [womenhospital] of h)\n]\n\n\n\n
 NIL
 1
 T
@@ -937,7 +968,7 @@ INPUTBOX
 1442
 209
 hospital_id
-50.0
+65.0
 1
 0
 Number
@@ -950,7 +981,7 @@ CHOOSER
 plot_show
 plot_show
 "hospitalizations" "mobilities"
-1
+0
 
 PLOT
 1093
@@ -973,11 +1004,11 @@ PENS
 
 BUTTON
 1372
-257
+258
 1467
-290
+291
 link_all_hospitals
-ask links [die]\nifelse emp_tgt \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask hospital [\nset color random 100\nask my-in-links [set color [color] of myself]\n]
+ask links [die]\nifelse emp_tgt \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
 NIL
 1
 T
@@ -998,6 +1029,78 @@ emp_tgt
 1
 1
 -1000
+
+PLOT
+21
+454
+206
+577
+distribution ranking
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" ""
+
+BUTTON
+66
+579
+166
+612
+distribution ranking
+set-current-plot \"distribution ranking\"\n  clear-plot\n  \n  ; collect n samples\n  let samples []\n  repeat 20177 [\n    set samples lput (normal mean_ranking sd_ranking 1 -1) samples\n  ]\n  \n  ; set axis ranges\n  ; set-plot-x-range -1 1\n   ;set-plot-y-range 0 22177 / 5   ;; rough guess for y max\n  \n  ; plot as histogram\n  set-histogram-num-bars 22177\n  set-plot-x-range -1.01 1.01 \n  histogram samples\n  print sort samples\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+267
+518
+449
+609
+women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 31%\n16 - 30 = orange: 3162, 15%\n31 - 45 = brown: 1754, 8%\n46 - 60 = violet: 326, 1%\n+ 61 = blue: 80, 0.3%
+10
+0.0
+1
+
+BUTTON
+1001
+536
+1072
+569
+hide links
+ask links [die]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+471
+518
+622
+609
+women, distance counselcenter\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
+10
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
