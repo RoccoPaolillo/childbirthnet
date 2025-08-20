@@ -185,11 +185,8 @@ let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist mys
     let ranking_othweight []
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
-
    ]
-
     set utility ( (weight_distance_hospital * dist myself self distservices ) + (social_multiplier * (reduce +   ranking_othweight / count friends )))
-
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
@@ -207,82 +204,8 @@ let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist mys
 end
 
 to plot-hospitals
-;    set-current-plot "Hospital choice"
-;    clear-plot
 
-; if plot_show = "hospitalizations" [
-  ; Sort hospitals by real hospitalizations
-;   let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a < [hospitalizations] of b] hospital
-
-  ; First plot: real hospitalizations
-  ; set-current-plot-pen "actual"
-  ; let index 0
-  ; foreach sorted-hospitals [
-   ; t ->
-    ;  let yval [hospitalizations] of t
-     ; plotxy index 0
-      ; plotxy index yval
-      ; set index index + 1
-  ; ]
-
-  ; Now compute simulated hospital choices per hospital
-;   ask hospital [
-;     set womenhospital count women with [selectedhospital = [who] of myself]
-;   ]
-
-  ; Sort hospitals again in the same order to match indexing
-;   let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
-
-  ; Second plot: simulated choices (overlay on same x)
-;   set-current-plot-pen "simulated"
-;   let indexsim 0
-;   foreach sorted-womenhospital [
-;     t ->
-;       let yval [womenhospital] of t
-;       plotxy indexsim 0
-;       plotxy indexsim yval
-;       set indexsim indexsim + 1
-;   ]
-;   ]
-
-;    if plot_show = "mobilities" [
-  ; Sort hospitals by real hospitalizations
-;      ask hospital [
-;        set mobilitiesemp count women with [selectedhospitalemp = [who] of myself and pro_com != [pro_com] of myself]]
-;    let sorted-hospitals sort-by [[a b] -> [mobilitiesemp] of a < [mobilitiesemp] of b] hospital
-
-  ; First plot: real hospitalizations
-;    set-current-plot-pen "actual"
-;    let index 0
-;    foreach sorted-hospitals [
-;      t ->
- ;        let yval [mobilitiesemp] of t
- ;      plotxy index 0
-  ;      plotxy index yval
- ;      set index index + 1
-;   ]
-
-  ; Now compute simulated hospital choices per hospital
-;   ask hospital [
-;       set womenhospital count women with [selectedhospital = [who] of myself and pro_com != [pro_com] of myself]
-;   ]
-
-  ; Sort hospitals again in the same order to match indexing
-;   let sorted-womenhospital sort-by [[a b] -> [womenhospital] of a < [womenhospital] of b] hospital
-
-  ; Second plot: simulated choices (overlay on same x)
-;   set-current-plot-pen "simulated"
-;   let indexsim 0
-;   foreach sorted-womenhospital [
-;     t ->
- ;      let yval [womenhospital] of t
-;        plotxy indexsim 0
-;       plotxy indexsim yval
-;       set indexsim indexsim + 1
-;   ]
-;    ]
-
- set-current-plot "Selection hospital"
+set-current-plot "Selection hospital"
 clear-plot
 set-current-plot-pen "actual"
 
@@ -292,7 +215,6 @@ set-plot-x-range 0 200
 
 histogram xs
 
-
 set-current-plot-pen "simulated"
 
 let womenselecthospsim women with [selectedhospital = [who] of hospitals hospital_id]
@@ -300,7 +222,6 @@ let xsim [ dist self hospitals hospital_id distservices] of womenselecthospsim
 set-plot-x-range 0 200
 
 histogram xsim
-
 
 end
 
@@ -536,10 +457,10 @@ destination_to
 Number
 
 BUTTON
-71
-428
-136
-461
+68
+442
+133
+475
 go
 go
 T
@@ -679,7 +600,7 @@ SWITCH
 384
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -880,7 +801,7 @@ size_population
 size_population
 0
 1
-0.25
+1.0
 0.05
 1
 NIL
