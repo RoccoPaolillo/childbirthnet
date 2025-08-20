@@ -50,10 +50,10 @@ end
 
 
 
-to create-counselcenters                                                                                   ; here better was to extract from the csv, not table nor gis,
-let consul2019 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"                                        ; since the same municipality can have different counselcenters,
-  foreach but-first consul2019 [ x ->                                                                       ; each with separate id [see GitHub issue for question]
-   create-counselcenter 1 [set shape "square"                                                               ; then the agent counsel center gets the cooordinates from the municipality it is associated with
+to create-counselcenters
+let consul2019 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/elenco_consultori_2019FILTERED_used.csv"
+  foreach but-first consul2019 [ x ->
+   create-counselcenter 1 [set shape "square"
       set id item 1 x
       set color cyan ;  item 0 x
       set pro_com item 0 x
@@ -83,7 +83,7 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       set color green
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
-      set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                             ; the total hospitalizations per hospital across movements are computed
+      set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                   ; the total hospitalizations per hospital across movements are computed
       set utility 0
       set pro_com  gis:property-value gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective "PRO_COM"     ; for relocation, the location with the first valid register of birth (to not repeat)
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
@@ -103,8 +103,8 @@ let my-table table:make
 foreach but-first hosptlist [ x ->
   table:put my-table item 0 x  item 1 x
 ]
-  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                        ; each municipality, if included in the table [and it is only once],
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                 ; will produce as many women in their area as the number of hospitalizations
+  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                         ; each municipality, if included in the table [and it is only once],
+    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                  ; will produce as many women in their area as the number of hospitalizations
     gis:create-turtles-inside-polygon this-municipality women (table:get my-table gis:property-value this-municipality "PRO_COM") [  ; women derive their pro_com from the municipality
      set shape "circle"
 
@@ -143,6 +143,11 @@ ifelse any? hospital with  [dist self myself distservices > 45 and dist self mys
     ]
  ]
 
+; resize the population
+foreach gis:feature-list-of tuscany [ this-municipality ->
+ask n-of round(count women with [pro_com = gis:property-value this-municipality "PRO_COM"] * (1 - size_population)) women with [pro_com = gis:property-value this-municipality "PRO_COM"] [die]
+]
+
 end
 
 to options_hospital
@@ -176,7 +181,7 @@ to select_hospital
 let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist myself self distservices ))]
 
   ask hospital [
-
+    ; ranking of the alter friends for each hospital (min = 0, max = 1)
     let ranking_othweight []
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
@@ -188,12 +193,14 @@ let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist mys
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
-  ; the "ranking experience" is max 1 by default
+  ; the "ranking experience" is 1 by default
   table:put rankinglist selectedhospital 1
+
  if show_networks [
   create-link-with one-of hospital with [who = [selectedhospital] of myself]
   ask my-out-links [set color [color] of myself]
   ]
+
  set givenbirth true
  set pregnant false
 
@@ -354,10 +361,10 @@ ticks
 30.0
 
 BUTTON
-38
-13
-101
-46
+76
+10
+139
+43
 setup
 setup
 NIL
@@ -529,10 +536,10 @@ destination_to
 Number
 
 BUTTON
-105
-12
-170
-45
+139
+364
+204
+397
 go
 go
 T
@@ -544,32 +551,6 @@ NIL
 NIL
 NIL
 1
-
-SLIDER
-1692
-546
-1853
-579
-weight_distance_counsel
-weight_distance_counsel
--100
-100
-0.0
-1
-1
-NIL
-HORIZONTAL
-
-MONITOR
-1844
-464
-1977
-509
-capacity counselcenters
-mean [capacity] of counselcenter
-2
-1
-11
 
 MONITOR
 218
@@ -583,10 +564,10 @@ count women with [givenbirth = true]
 11
 
 SLIDER
-36
-262
-188
-295
+28
+220
+180
+253
 social_multiplier
 social_multiplier
 -10
@@ -597,52 +578,11 @@ social_multiplier
 max
 HORIZONTAL
 
-INPUTBOX
-1719
-375
-1801
-435
-weight_socialinfluence
-0.0
-1
-0
-Number
-
 SLIDER
-1721
-584
-1824
-617
-mean_ranking
-mean_ranking
--1
-1
--9.9
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1722
-475
-1825
-508
-sd_ranking
-sd_ranking
-0
-1
-0.5
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-38
-224
-191
-257
+30
+182
+183
+215
 weight_distance_hospital
 weight_distance_hospital
 -10
@@ -654,68 +594,13 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-1726
-446
-1818
-464
-distribution ranking
-10
-0.0
-1
-
-TEXTBOX
-77
-201
-163
-219
+69
+159
+155
+177
 selection hospital
 10
 0.0
-1
-
-TEXTBOX
-1707
-524
-1817
-542
-selection counselcenter
-10
-0.0
-1
-
-PLOT
-1683
-192
-1868
-312
-distribution ranking
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 1 -16777216 true "" ""
-
-BUTTON
-1728
-314
-1828
-347
-distribution ranking
-set-current-plot \"distribution ranking\"\n  clear-plot\n  \n  ; collect n samples\n  let samples []\n  repeat 20177 [\n    set samples lput (normal mean_ranking sd_ranking 1 -1) samples\n  ]\n  \n  ; set axis ranges\n  ; set-plot-x-range -1 1\n   ;set-plot-y-range 0 22177 / 5   ;; rough guess for y max\n  \n  ; plot as histogram\n  set-histogram-num-bars 22177\n  set-plot-x-range -1.01 1.01 \n  histogram samples\n  print sort samples\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
 1
 
 TEXTBOX
@@ -748,68 +633,34 @@ NIL
 TEXTBOX
 1332
 479
-1483
-570
-women, distance counselcenter\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
+1453
+583
+women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
 0.0
 1
 
-BUTTON
-1863
-388
-1943
-421
-friends
-; let friends []\nask links [die]\nask turtles [hide-turtle]\nask one-of women [\nlet friendlist []\nshow-turtle\nset color blue\nlet friends  rnd:weighted-n-of 200 other women [exp(distweight * (dist myself self distservices ))]\nask friends [show-turtle set color green]\nforeach sort friends [ x ->\ncreate-link-with x\nprint (word [who] of self \" - \" dist self x distservices)\n]\n\nprint friends\n]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-16
-141
-108
-174
+8
+99
+100
+132
 distweight
 distweight
 -1
 1
-0.0
+0.6
 0.1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-1863
-424
-1943
-457
-ranking_exptest
-ask women with [givenbirth = true] [show length filter [v -> v = 1] table:values rankinglist]\nprint(word \"givenbirth, ranking > 0: \" count women with [givenbirth = true and (length filter [v -> v = 1] table:values rankinglist) > 1])
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-36
-404
-164
-437
-pop_concentration
+4
+382
+127
+415
+vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
 1
@@ -822,13 +673,13 @@ NIL
 1
 
 SWITCH
-44
-62
-166
-95
+5
+348
+127
+381
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -906,40 +757,13 @@ PENS
 "61+" 1.0 0 -13345367 true "" "plot (distchoicemax hospitals hospital_id 60)"
 
 TEXTBOX
-62
-115
-148
-133
+54
+73
+140
+91
 network formation
 10
 0.0
-1
-
-TEXTBOX
-1705
-128
-1855
-154
-old parameter to reintegrate or delete
-10
-0.0
-1
-
-BUTTON
-18
-336
-100
-369
-resizepop
-foreach gis:feature-list-of tuscany [ this-municipality ->  \nask n-of (count women with [pro_com = gis:property-value this-municipality \"PRO_COM\"] * (1 - resizescale)) women with [pro_com = gis:property-value this-municipality \"PRO_COM\"] [die]\n]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
 1
 
 PLOT
@@ -970,17 +794,6 @@ women: 20177\nhospitals: 24\ncounselcenters: 48
 10
 0.0
 1
-
-INPUTBOX
-104
-322
-175
-382
-resizescale
-0.25
-1
-0
-Number
 
 MONITOR
 821
@@ -1016,10 +829,10 @@ count women
 11
 
 SLIDER
-116
-141
-208
-174
+108
+99
+200
+132
 n_network
 n_network
 0
@@ -1057,6 +870,31 @@ emp_net
 1
 1
 -1000
+
+SLIDER
+19
+280
+191
+313
+size_population
+size_population
+0
+1
+0.25
+0.05
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+83
+320
+190
+338
+1 = full original dataset
+10
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
