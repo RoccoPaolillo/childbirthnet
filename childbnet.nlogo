@@ -1467,48 +1467,20 @@ NetLogo 6.4.0
     <metric>[id] of hospitals 68</metric>
     <metric>[id] of hospitals 67</metric>
     <metric>[id] of hospitals 70</metric>
-    <steppedValueSet variable="social_multiplier" first="0" step="1" last="10"/>
-    <steppedValueSet variable="weight_distance_hospital" first="-10" step="1" last="0"/>
-    <enumeratedValueSet variable="distfriend">
+    <enumeratedValueSet variable="distweight">
+      <value value="0"/>
       <value value="-1"/>
-      <value value="0"/>
-      <value value="1"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="sd_ranking">
-      <value value="0.5"/>
+    <enumeratedValueSet variable="n_network">
+      <value value="50"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="plot_show">
-      <value value="&quot;hospitalizations&quot;"/>
+    <steppedValueSet variable="weight_distance_hospital" first="-10" step="1" last="0"/>
+    <steppedValueSet variable="social_multiplier" first="0" step="1" last="10"/>
+    <enumeratedValueSet variable="size_population">
+      <value value="0.25"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="area_municipality">
-      <value value="48017"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="mean_ranking">
-      <value value="-9.9"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="emp_tgt">
+    <enumeratedValueSet variable="show_networks">
       <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="destination_to">
-      <value value="1797"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="inspectcounselcenter">
-      <value value="20345"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_distance_counsel">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="origin_from">
-      <value value="56"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_socialinfluence">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="hospital_id">
-      <value value="61"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="MUNICIPALITY_name">
-      <value value="&quot;Firenze&quot;"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
