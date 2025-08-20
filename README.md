@@ -1,1 +1,1 @@
-# Opinion dynamics and network formation for childbirth hospital decision
+# Choice model for childbirth hospital decision
