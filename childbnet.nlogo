@@ -361,10 +361,10 @@ ticks
 30.0
 
 BUTTON
-76
-10
-139
-43
+73
+21
+136
+54
 setup
 setup
 NIL
@@ -492,7 +492,7 @@ three actors
 OUTPUT
 1047
 18
-1393
+1498
 387
 10
 
@@ -536,10 +536,10 @@ destination_to
 Number
 
 BUTTON
-139
-364
-204
-397
+71
+428
+136
+461
 go
 go
 T
@@ -553,10 +553,10 @@ NIL
 1
 
 MONITOR
-218
-517
-285
-562
+252
+518
+319
+563
 given birth
 count women with [givenbirth = true]
 17
@@ -633,7 +633,7 @@ NIL
 TEXTBOX
 1332
 479
-1453
+1481
 583
 women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
@@ -656,10 +656,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-4
-382
-127
-415
+42
+385
+165
+418
 vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -673,10 +673,10 @@ NIL
 1
 
 SWITCH
-5
-348
-127
-381
+43
+351
+165
+384
 show_networks
 show_networks
 1
@@ -707,9 +707,9 @@ PENS
 "61+" 1.0 0 -13345367 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicemax hospitals hospital_id 60 / womenwhoselected hospitals hospital_id)]\n"
 
 CHOOSER
-728
+740
 10
-820
+832
 55
 hospital_id
 hospital_id
@@ -717,10 +717,10 @@ hospital_id
 6
 
 BUTTON
-536
-523
-631
-556
+570
+524
+665
+557
 highlight hospital
 ask hospitals hospital_id [set color blue]\nplot-hospitals
 NIL
@@ -796,9 +796,9 @@ women: 20177\nhospitals: 24\ncounselcenters: 48
 1
 
 MONITOR
-821
+833
 10
-909
+921
 55
 actual affluence
 count women with [selectedhospitalemp = [who] of hospitals hospital_id]
@@ -807,9 +807,9 @@ count women with [selectedhospitalemp = [who] of hospitals hospital_id]
 11
 
 MONITOR
-911
+923
 10
-1016
+1028
 55
 simulated affluence
 count women with [selectedhospital = [who] of hospitals hospital_id]
@@ -818,10 +818,10 @@ count women with [selectedhospital = [who] of hospitals hospital_id]
 11
 
 MONITOR
-290
-517
-373
-562
+324
+518
+407
+563
 NIL
 count women
 2
@@ -844,10 +844,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-377
-522
-436
-555
+411
+523
+470
+556
 networks
 ask links [die]\nask women [hide-turtle]\nask counselcenter [hide-turtle]\nifelse emp_net \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
 NIL
@@ -861,10 +861,10 @@ NIL
 1
 
 SWITCH
-440
-522
-530
-555
+474
+523
+564
+556
 emp_net
 emp_net
 1
@@ -887,10 +887,10 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-83
-320
-190
-338
+140
+315
+219
+340
 1 = full original dataset
 10
 0.0
