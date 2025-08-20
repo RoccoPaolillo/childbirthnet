@@ -378,10 +378,10 @@ NIL
 1
 
 BUTTON
-1200
-400
-1294
-433
+1254
+394
+1348
+427
 hide women
 ask women [hide-turtle]
 NIL
@@ -395,10 +395,10 @@ NIL
 1
 
 BUTTON
-1089
-401
-1195
-434
+1143
+395
+1249
+428
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -412,10 +412,10 @@ NIL
 1
 
 BUTTON
-1089
-438
-1196
-471
+1143
+432
+1250
+465
 show counselcenter
 ask counselcenter [set color cyan show-turtle]
 NIL
@@ -429,10 +429,10 @@ NIL
 1
 
 BUTTON
-1201
-437
-1296
-470
+1255
+431
+1350
+464
 show women
 ask women [show-turtle]
 NIL
@@ -446,10 +446,10 @@ NIL
 1
 
 BUTTON
-1300
-399
-1378
-432
+1354
+393
+1432
+426
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -463,10 +463,10 @@ NIL
 1
 
 BUTTON
-1299
-437
-1380
-470
+1353
+431
+1434
+464
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -480,10 +480,10 @@ NIL
 1
 
 TEXTBOX
-1046
-418
-1086
-459
+1100
+412
+1140
+453
 three actors
 10
 0.0
@@ -1467,48 +1467,20 @@ NetLogo 6.4.0
     <metric>[id] of hospitals 68</metric>
     <metric>[id] of hospitals 67</metric>
     <metric>[id] of hospitals 70</metric>
-    <steppedValueSet variable="social_multiplier" first="0" step="1" last="10"/>
-    <steppedValueSet variable="weight_distance_hospital" first="-10" step="1" last="0"/>
-    <enumeratedValueSet variable="distfriend">
+    <enumeratedValueSet variable="distweight">
+      <value value="0"/>
       <value value="-1"/>
-      <value value="0"/>
-      <value value="1"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="sd_ranking">
-      <value value="0.5"/>
+    <enumeratedValueSet variable="n_network">
+      <value value="50"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="plot_show">
-      <value value="&quot;hospitalizations&quot;"/>
+    <steppedValueSet variable="weight_distance_hospital" first="-10" step="1" last="0"/>
+    <steppedValueSet variable="social_multiplier" first="0" step="1" last="10"/>
+    <enumeratedValueSet variable="size_population">
+      <value value="0.25"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="area_municipality">
-      <value value="48017"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="mean_ranking">
-      <value value="-9.9"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="emp_tgt">
+    <enumeratedValueSet variable="show_networks">
       <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="destination_to">
-      <value value="1797"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="inspectcounselcenter">
-      <value value="20345"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_distance_counsel">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="origin_from">
-      <value value="56"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_socialinfluence">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="hospital_id">
-      <value value="61"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="MUNICIPALITY_name">
-      <value value="&quot;Firenze&quot;"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
