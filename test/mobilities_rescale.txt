@@ -1,0 +1,7 @@
+count women with [pro_com = 51022 and selectedhospitalemp = [who] of one-of hospital with [id = "AREA ARETINA NORD AREZZO"]] , 21 , 3
+count women with [pro_com = 48005 and selectedhospitalemp = [who] of one-of hospital with [id = "OSPEDALE SAN JACOPO"]] 1 , 1
+count women with [pro_com = 48010 and selectedhospitalemp = [who] of one-of hospital with [id = "OSPEDALE S. GIUSEPPE"]] 54 , 8
+count women with [pro_com = 48017 and selectedhospitalemp = [who] of one-of hospital with [id = "COMPLESSO OSPEDALIERO CAREGGI - CTO (FI)"]] 1315 , 197
+count women with [pro_com = 48021 and selectedhospitalemp = [who] of one-of hospital with [id = "COMPLESSO OSPEDALIERO CAREGGI - CTO (FI)"]] 8 , 1
+count women with [pro_com = 52022 and selectedhospitalemp = [who] of one-of hospital with [id = "COMPLESSO OSPEDALIERO CAREGGI - CTO (FI)"]] 12 , 2
+count women with [pro_com = 52012 and selectedhospitalemp = [who] of one-of hospital with [id = "S.GIOVANNI DI DIO-TORREGALLI (FI)"]] 1 , 1
