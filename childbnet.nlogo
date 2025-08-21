@@ -35,7 +35,7 @@ to setup
 ]
 
 
-;  ask women [options_hospital]
+  ask women [options_hospital]
   plot-hospitals
   reset-timer
   reset-ticks
@@ -486,9 +486,9 @@ max
 HORIZONTAL
 
 SLIDER
-30
+28
 182
-183
+181
 215
 weight_distance_hospital
 weight_distance_hospital
@@ -779,10 +779,10 @@ emp_net
 -1000
 
 BUTTON
-1391
-393
-1475
-426
+1414
+409
+1498
+442
 emp_mobilities
 ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]\nask women [ask my-out-links [set color [color] of myself]]
 NIL
@@ -1377,17 +1377,26 @@ NetLogo 6.4.0
     <metric>[id] of hospitals 68</metric>
     <metric>[id] of hospitals 67</metric>
     <metric>[id] of hospitals 70</metric>
+    <enumeratedValueSet variable="rescale15%">
+      <value value="false"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="distweight">
       <value value="0"/>
-      <value value="-1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="weight_distance_hospital" first="-10" step="1" last="0"/>
-    <steppedValueSet variable="social_multiplier" first="0" step="1" last="10"/>
-    <enumeratedValueSet variable="size_population">
-      <value value="0.25"/>
+    <enumeratedValueSet variable="weight_distance_hospital">
+      <value value="0"/>
+      <value value="-1"/>
+      <value value="-5"/>
+      <value value="-10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social_multiplier">
+      <value value="0"/>
+      <value value="1"/>
+      <value value="5"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
