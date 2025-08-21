@@ -22,7 +22,7 @@ to setup
   set distservicesnorm csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   create-counselcenters
   create-hospitals
- ; create-womens
+  create-womens
   let sorted-hospitals sort-by [[a b] -> [hospitalizations] of a > [hospitalizations] of b] hospital
 
  output-print (word " Hospital choice  " )
@@ -96,56 +96,42 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
 end
 
 to create-womens
-let hosptlist csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ricoveri_parti_2023.csv"
+let df csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
 
-let my-table table:make
+foreach sort hospital [ x ->
+ foreach but-first df [s ->
+if  item 2 s = [id] of x [
+ let mun gis:find-one-feature tuscany "PRO_COM" item 0 s
 
-foreach but-first hosptlist [ x ->
-  table:put my-table item 0 x  item 1 x
+
+        gis:create-turtles-inside-polygon mun women ifelse-value (rescale15% = true) [item 6 s][item 5 s] [
+
+ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
+        [
+ ifelse any? hospital with [dist self myself distservices > 0 and dist self myself distservices <= 15] [set color yellow]
+         [
+ ifelse any? hospital with [dist self myself distservices > 15 and dist self myself distservices <= 30] [set color orange]
+           [
+ ifelse any? hospital with  [dist self myself distservices > 30 and dist self myself distservices <= 45] [set color brown]
+               [
+ ifelse any? hospital with  [dist self myself distservices > 45 and dist self myself distservices <= 60] [set color violet]
+                  [set color blue]
+               ]
+             ]
+           ]
+           ]
+
+
+      set size 0.2
+      set pregnant false
+      set selcounsel false
+      set givenbirth false
+      set counselstay 0
+      set PRO_COM item 0 s
+      set selectedhospitalemp [who] of x
+  ]
 ]
-  foreach gis:feature-list-of tuscany [ this-municipality ->                                                                         ; each municipality, if included in the table [and it is only once],
-    if member? gis:property-value this-municipality "PRO_COM" table:keys my-table [                                                  ; will produce as many women in their area as the number of hospitalizations
-    gis:create-turtles-inside-polygon this-municipality women (table:get my-table gis:property-value this-municipality "PRO_COM") [  ; women derive their pro_com from the municipality
-     set shape "circle"
-
- ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
-        [
-ifelse any? hospital with [dist self myself distservices > 0 and dist self myself distservices <= 15] [set color yellow]
-        [
-ifelse any? hospital with [dist self myself distservices > 15 and dist self myself distservices <= 30] [set color orange]
-          [
-ifelse any? hospital with  [dist self myself distservices > 30 and dist self myself distservices <= 45] [set color brown]
-              [
-ifelse any? hospital with  [dist self myself distservices > 45 and dist self myself distservices <= 60] [set color violet]
-                [set color blue]
-              ]
-            ]
-          ]
-          ]
-
-
-     set size 0.2
-     set pregnant false
-     set selcounsel false
-     set givenbirth false
-     set counselstay 0
-     set PRO_COM gis:property-value this-municipality "PRO_COM"
-    ]
-  ]
-  ]
-
-  let hospitals2023 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
-
-
- foreach but-first hospitals2023[ i ->
- ask n-of item 5 i women with [pro_com = item 0 i and selectedhospitalemp = 0][
- set selectedhospitalemp [who] of one-of hospital with [id = item 2 i ]
-    ]
- ]
-
-; resize the population
-foreach gis:feature-list-of tuscany [ this-municipality ->
-ask n-of round(count women with [pro_com = gis:property-value this-municipality "PRO_COM"] * (1 - size_population)) women with [pro_com = gis:property-value this-municipality "PRO_COM"] [die]
+]
 ]
 
 end
@@ -282,10 +268,10 @@ ticks
 30.0
 
 BUTTON
-73
-21
-136
-54
+14
+20
+77
+53
 setup
 setup
 NIL
@@ -299,10 +285,10 @@ NIL
 1
 
 BUTTON
-1254
-394
-1348
-427
+1208
+395
+1302
+428
 hide women
 ask women [hide-turtle]
 NIL
@@ -316,10 +302,10 @@ NIL
 1
 
 BUTTON
-1143
-395
-1249
-428
+1097
+396
+1203
+429
 hide counselcenter
 ask counselcenter [ hide-turtle]
 NIL
@@ -333,10 +319,10 @@ NIL
 1
 
 BUTTON
-1143
-432
-1250
-465
+1097
+433
+1204
+466
 show counselcenter
 ask counselcenter [set color cyan show-turtle]
 NIL
@@ -350,10 +336,10 @@ NIL
 1
 
 BUTTON
-1255
-431
-1350
-464
+1209
+432
+1304
+465
 show women
 ask women [show-turtle]
 NIL
@@ -367,10 +353,10 @@ NIL
 1
 
 BUTTON
-1354
-393
-1432
-426
+1308
+394
+1386
+427
 hide hospitals
 ask hospital [hide-turtle]
 NIL
@@ -384,10 +370,10 @@ NIL
 1
 
 BUTTON
-1353
-431
-1434
-464
+1307
+432
+1388
+465
 show hospital
 ask hospital [set color green show-turtle]
 NIL
@@ -401,10 +387,10 @@ NIL
 1
 
 TEXTBOX
-1100
-412
-1140
-453
+1054
+413
+1094
+454
 three actors
 10
 0.0
@@ -457,10 +443,10 @@ destination_to
 Number
 
 BUTTON
-68
-442
-133
-475
+65
+394
+130
+427
 go
 go
 T
@@ -577,10 +563,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-42
-385
-165
-418
+39
+337
+162
+370
 vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -594,10 +580,10 @@ NIL
 1
 
 SWITCH
-43
-351
-165
-384
+40
+303
+162
+336
 show_networks
 show_networks
 0
@@ -635,7 +621,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-6
+4
 
 BUTTON
 570
@@ -792,38 +778,13 @@ emp_net
 1
 -1000
 
-SLIDER
-19
-280
-191
-313
-size_population
-size_population
-0
-1
-1.0
-0.05
-1
-NIL
-HORIZONTAL
-
-TEXTBOX
-140
-315
-219
-340
-1 = full original dataset
-10
-0.0
-1
-
 BUTTON
-59
-497
-148
-530
-testwomen
-let df csv:from-file \"C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv\"\nshow df\n\n foreach gis:feature-list-of tuscany [ this-municipality ->  \n foreach but-first df [s ->\n if  position 0 s = gis:property-value this-municipality \"PRO_COM\"[\n gis:create-turtles-inside-polygon this-municipality women item 5 s [\n set shape \"circle\"\n ]\n ]\n ]\n ]\n \n \n 
+1391
+393
+1475
+426
+emp_mobilities
+ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]\nask women [ask my-out-links [set color [color] of myself]]
 NIL
 1
 T
@@ -833,6 +794,17 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+91
+18
+207
+51
+rescale15%
+rescale15%
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
