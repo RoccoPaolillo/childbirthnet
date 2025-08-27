@@ -167,7 +167,7 @@ to select_hospital
 let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist myself self distservices ))]
 
   ask hospital [
-    ; ranking of the alter friends for each hospital (min = 0, max = 1)
+    ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
     let ranking_othweight []
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
@@ -176,13 +176,31 @@ let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist mys
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
-  ; the "ranking experience" is 1 by default
-  table:put rankinglist selectedhospital 1
+  ; the "ranking experience" is 1 by default 260 here for scaling
+  table:put rankinglist selectedhospital 260
 
- if show_networks [
-  create-link-with one-of hospital with [who = [selectedhospital] of myself]
-  ask my-out-links [set color [color] of myself]
-  ]
+if show_networks [
+    let selectedone one-of hospital with [who = [selectedhospital] of myself]
+ create-link-with selectedone
+ ask my-out-links [
+
+      ifelse dist selectedone myself distservices <= 0 [set color red]
+        [ifelse dist selectedone myself distservices > 0 and dist selectedone myself distservices <= 15  [set color yellow]
+          [ ifelse dist selectedone myself distservices > 15 and dist selectedone myself distservices <= 30 [set color orange]
+            [ifelse dist selectedone myself distservices > 30 and dist selectedone myself distservices <= 45 [set color brown]
+              [ifelse dist selectedone myself distservices > 45 and dist selectedone myself distservices <= 60 [set color violet]
+                [set color blue]
+              ]
+            ]
+          ]
+      ]
+    ]
+
+
+
+    ]
+
+
 
  set givenbirth true
  set pregnant false
@@ -426,7 +444,7 @@ INPUTBOX
 841
 584
 origin_from
-48.0
+50.0
 1
 0
 Number
@@ -437,7 +455,7 @@ INPUTBOX
 928
 584
 destination_to
-1797.0
+14842.0
 1
 0
 Number
@@ -492,9 +510,9 @@ SLIDER
 215
 weight_distance_hospital
 weight_distance_hospital
--10
+-1300
 0
--5.0
+-1.0
 1
 1
 NIL
@@ -556,7 +574,7 @@ distweight
 distweight
 -1
 1
-0.6
+0.0
 0.1
 1
 NIL
@@ -621,7 +639,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-4
+1
 
 BUTTON
 570
@@ -780,11 +798,11 @@ emp_net
 
 BUTTON
 1414
-409
+410
 1498
-442
+443
 emp_mobilities
-ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]\nask women [ask my-out-links [set color [color] of myself]]
+ask women [let selectedoneemp one-of hospital with [who = [selectedhospitalemp] of myself]\ncreate-link-with selectedoneemp\nask my-out-links [\n\n      ifelse dist selectedoneemp myself distservices <= 0 [set color red]\n        [ifelse dist selectedoneemp myself distservices > 0 and dist selectedoneemp myself distservices <= 15  [set color yellow]\n          [ ifelse dist selectedoneemp myself distservices > 15 and dist selectedoneemp myself distservices <= 30 [set color orange]\n            [ifelse dist selectedoneemp myself distservices > 30 and dist selectedoneemp myself distservices <= 45 [set color brown]\n              [ifelse dist selectedoneemp myself distservices > 45 and dist selectedoneemp myself distservices <= 60 [set color violet]\n                [set color blue]\n              ]\n            ]\n          ]\n      ]\n    ]\n\n]
 NIL
 1
 T
@@ -805,6 +823,23 @@ rescale15%
 1
 1
 -1000
+
+BUTTON
+570
+559
+664
+592
+sim_mobilitiies
+ask hospital [print (word who \" sim: \" count women with [selectedhospital = [who] of myself])]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
