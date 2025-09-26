@@ -164,7 +164,7 @@ end
 
 to select_hospital
 
-let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist myself self distservices ))]
+let friends  rnd:weighted-n-of n_network other women [exp(distweight * ((dist myself self distservices ) ^ 2))]
 
   ask hospital [
     ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
@@ -172,7 +172,7 @@ let friends  rnd:weighted-n-of n_network other women [exp(distweight * (dist mys
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_distance_hospital * dist myself self distservices ) + (social_multiplier * (reduce +   ranking_othweight / count friends )))
+    set utility ( (weight_distance_hospital * ((dist myself self distservices ) ^ 2)) + (social_multiplier * (reduce +   ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
