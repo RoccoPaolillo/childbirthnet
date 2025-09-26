@@ -1,0 +1,143 @@
+Excl time: the specific time of subprocedure; Incl: the time of procedures including the subprocedure
+* original: let friends  rnd:weighted-n-of n_network other women [exp(distweight * ((dist myself self distservices ) ^ 2))] 
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                              439864   4861,328   4861,328      0,011
+SELECT_HOSPITAL                       20   5392,527    966,022     48,301
+WOMENWHOSELECTED                     228    200,892    200,892      0,881
+DISTCHOICE                           152    138,333    134,194      0,883
+PLOT-HOSPITALS                        20    538,039    108,938      5,447
+DISTCHOICEZERO                        38     37,373     36,516      0,961
+DISTCHOICEMAX                         38     35,223     34,496      0,908
+GO                                    20   6884,196     10,887      0,544
+
+Sorted by Inclusive Time
+GO                                    20   6884,196     10,887      0,544
+SELECT_HOSPITAL                       20   5392,527    966,022     48,301
+DIST                              439864   4861,328   4861,328      0,011
+PLOT-HOSPITALS                        20    538,039    108,938      5,447
+WOMENWHOSELECTED                     228    200,892    200,892      0,881
+DISTCHOICE                           152    138,333    134,194      0,883
+DISTCHOICEZERO                        38     37,373     36,516      0,961
+DISTCHOICEMAX                         38     35,223     34,496      0,908
+
+Sorted by Number of Calls
+DIST                              439864   4861,328   4861,328      0,011
+WOMENWHOSELECTED                     228    200,892    200,892      0,881
+DISTCHOICE                           152    138,333    134,194      0,883
+DISTCHOICEZERO                        38     37,373     36,516      0,961
+DISTCHOICEMAX                         38     35,223     34,496      0,908
+GO                                    20   6884,196     10,887      0,544
+SELECT_HOSPITAL                       20   5392,527    966,022     48,301
+PLOT-HOSPITALS                        20    538,039    108,938      5,447
+END PROFILING DUMP
+
+* alternative 1: let friends n-of n_network other women
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                               36622    450,442    450,442      0,012
+WOMENWHOSELECTED                     234    208,487    208,487      0,891
+DISTCHOICE                           156    146,143    140,337      0,900
+PLOT-HOSPITALS                        20    531,721     98,590      4,929
+SELECT_HOSPITAL                       20     62,677     54,041      2,702
+GO                                    20   1587,006     52,061      2,603
+DISTCHOICEZERO                        39     42,368     40,889      1,048
+DISTCHOICEMAX                         39     39,055     37,666      0,966
+
+Sorted by Inclusive Time
+GO                                    20   1587,006     52,061      2,603
+PLOT-HOSPITALS                        20    531,721     98,590      4,929
+DIST                               36622    450,442    450,442      0,012
+WOMENWHOSELECTED                     234    208,487    208,487      0,891
+DISTCHOICE                           156    146,143    140,337      0,900
+SELECT_HOSPITAL                       20     62,677     54,041      2,702
+DISTCHOICEZERO                        39     42,368     40,889      1,048
+DISTCHOICEMAX                         39     39,055     37,666      0,966
+
+Sorted by Number of Calls
+DIST                               36622    450,442    450,442      0,012
+WOMENWHOSELECTED                     234    208,487    208,487      0,891
+DISTCHOICE                           156    146,143    140,337      0,900
+DISTCHOICEZERO                        39     42,368     40,889      1,048
+DISTCHOICEMAX                         39     39,055     37,666      0,966
+GO                                    20   1587,006     52,061      2,603
+PLOT-HOSPITALS                        20    531,721     98,590      4,929
+SELECT_HOSPITAL                       20     62,677     54,041      2,702
+END PROFILING DUMP
+
+*  let friends n-of n_network other women with [dist self myself distservices < 50] 
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                              439719   7078,428   7078,428      0,016
+SELECT_HOSPITAL                       20   7447,890    994,859     49,743
+WOMENWHOSELECTED                     186    284,634    284,634      1,530
+DISTCHOICE                           124    182,007    177,882      1,435
+PLOT-HOSPITALS                        20    779,518    160,149      8,007
+GO                                    20   9649,382     85,732      4,287
+DISTCHOICEZERO                        31     56,499     55,455      1,789
+DISTCHOICEMAX                         31     50,381     49,523      1,598
+
+Sorted by Inclusive Time
+GO                                    20   9649,382     85,732      4,287
+SELECT_HOSPITAL                       20   7447,890    994,859     49,743
+DIST                              439719   7078,428   7078,428      0,016
+PLOT-HOSPITALS                        20    779,518    160,149      8,007
+WOMENWHOSELECTED                     186    284,634    284,634      1,530
+DISTCHOICE                           124    182,007    177,882      1,435
+DISTCHOICEZERO                        31     56,499     55,455      1,789
+DISTCHOICEMAX                         31     50,381     49,523      1,598
+
+Sorted by Number of Calls
+DIST                              439719   7078,428   7078,428      0,016
+WOMENWHOSELECTED                     186    284,634    284,634      1,530
+DISTCHOICE                           124    182,007    177,882      1,435
+DISTCHOICEZERO                        31     56,499     55,455      1,789
+DISTCHOICEMAX                         31     50,381     49,523      1,598
+GO                                    20   9649,382     85,732      4,287
+SELECT_HOSPITAL                       20   7447,890    994,859     49,743
+PLOT-HOSPITALS                        20    779,518    160,149      8,007
+END PROFILING DUMP
+
+* let friends n-of n_network other women in-radius 2
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                               35998    623,673    623,673      0,017
+WOMENWHOSELECTED                     120    170,631    170,631      1,422
+PLOT-HOSPITALS                        20    747,189    134,644      6,732
+DISTCHOICE                            80    109,851    109,851      1,373
+GO                                    20   1981,520     86,822      4,341
+SELECT_HOSPITAL                       20     56,130     45,002      2,250
+DISTCHOICEZERO                        20     30,003     30,003      1,500
+DISTCHOICEMAX                         20     29,952     29,952      1,498
+
+Sorted by Inclusive Time
+GO                                    20   1981,520     86,822      4,341
+PLOT-HOSPITALS                        20    747,189    134,644      6,732
+DIST                               35998    623,673    623,673      0,017
+WOMENWHOSELECTED                     120    170,631    170,631      1,422
+DISTCHOICE                            80    109,851    109,851      1,373
+SELECT_HOSPITAL                       20     56,130     45,002      2,250
+DISTCHOICEZERO                        20     30,003     30,003      1,500
+DISTCHOICEMAX                         20     29,952     29,952      1,498
+
+Sorted by Number of Calls
+DIST                               35998    623,673    623,673      0,017
+WOMENWHOSELECTED                     120    170,631    170,631      1,422
+DISTCHOICE                            80    109,851    109,851      1,373
+GO                                    20   1981,520     86,822      4,341
+PLOT-HOSPITALS                        20    747,189    134,644      6,732
+SELECT_HOSPITAL                       20     56,130     45,002      2,250
+DISTCHOICEZERO                        20     30,003     30,003      1,500
+DISTCHOICEMAX                         20     29,952     29,952      1,498
+END PROFILING DUMP
+
+
+

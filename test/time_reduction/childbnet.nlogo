@@ -164,7 +164,10 @@ end
 
 to select_hospital
 
-let friends  rnd:weighted-n-of n_network other women [exp(distweight * ((dist myself self distservices ) ^ 2))]
+;  let friends rnd:weighted-n-of n_network other women [exp(distweight * ((dist myself self distservices ) ^ 2))]
+;  let friends n-of n_network other women
+;  let friends n-of n_network other women with [dist self myself distservices < 50]
+  let friends n-of n_network other women in-radius 2
 
   ask hospital [
     ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
@@ -842,12 +845,29 @@ NIL
 1
 
 BUTTON
-62
-459
-132
-492
+65
+434
+135
+467
 profiler
 profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+28
+475
+106
+508
+dist_vect
+ask womens 5993 [\n\nlet feats gis:feature-list-of tuscany\nlet match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f \"PRO_COM\"] distservices] feats\nshow match\n\n]\n
 NIL
 1
 T
