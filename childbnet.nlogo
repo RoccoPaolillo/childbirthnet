@@ -138,10 +138,22 @@ end
 
 to options_hospital
 
-set rankinglist table:make
-foreach sort hospital [ x ->
-table:put rankinglist [who] of x 0
+let df csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv"
+let listhospitals []
+foreach but-first df [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
+  let key item 0 row                                               ; so I make first a list of the hospitals we have (24)
+  if not member? key listhospitals [
+    set listhospitals lput key listhospitals
+  ]
 ]
+
+set rankinglist table:make
+
+foreach sort listhospitals [ x ->
+let list_effective filter [ [s] -> item 0 s = x ] but-first  df
+table:put rankinglist [who] of one-of hospital with [id = x ] item 1 item 0 list_effective
+]
+
 
 
 end
@@ -852,12 +864,29 @@ NIL
 1
 
 BUTTON
-62
-482
-132
-515
+63
+455
+133
+488
 profiler
 profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+59
+492
+138
+525
+rankingls
+\nlet df csv:from-file \"C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv\"\nlet listhospitals []\nforeach but-first df [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement\n  let key item 0 row                                               ; so I make first a list of the hospitals we have (24)\n  if not member? key listhospitals [\n    set listhospitals lput key listhospitals\n  ]\n]\n\nlet rankinglista table:make\n\nforeach sort listhospitals [ x ->\nlet list_effective filter [ [s] -> item 0 s = x ] but-first  df\ntable:put rankinglista [who] of one-of hospital with [id = x ] item 1 item 0 list_effective\n]\n\nprint rankinglista\n\n; let rankinglista table:make\n; foreach sort listhospitals [ x ->\n;     let list_effective filter [ [s] -> item 0 s = x ] but-first  df\n; table:put rankinglista [who] of one-of hospital with [id = x ] 0\n; ]\n\n
 NIL
 1
 T
