@@ -164,17 +164,9 @@ end
 
 to select_hospital
 
-let distance_threshold_updated distance_threshold
-let friends no-turtles
-
-while [count friends < n_network][
-
-set distance_threshold_updated distance_threshold_updated + 1
-let matchrad filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= distance_threshold_updated] gis:feature-list-of tuscany
+let matchrad filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= distance_threshold] gis:feature-list-of tuscany
 let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
-  set friends n-of (min list n_network (count other women with [member? pro_com listrad])) other women with [member? pro_com listrad]
-
-]
+let friends n-of n_network other women with [ member? pro_com listrad]
 
   ask hospital [
     ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
@@ -471,10 +463,10 @@ destination_to
 Number
 
 BUTTON
-65
-417
-130
-450
+63
+469
+128
+502
 go
 go
 T
@@ -499,10 +491,10 @@ count women with [givenbirth = true]
 11
 
 SLIDER
-28
-243
-180
-276
+26
+295
+178
+328
 social_multiplier
 social_multiplier
 -10
@@ -514,10 +506,10 @@ max
 HORIZONTAL
 
 SLIDER
-28
-205
-181
-238
+26
+257
+179
+290
 weight_distance_hospital
 weight_distance_hospital
 -1300
@@ -529,10 +521,10 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-69
-182
-155
-200
+67
+234
+153
+252
 selection hospital
 10
 0.0
@@ -576,10 +568,10 @@ women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 74
 1
 
 SLIDER
-40
-93
-153
-126
+8
+99
+102
+132
 distance_threshold
 distance_threshold
 0
@@ -591,10 +583,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-39
-360
-162
-393
+37
+412
+160
+445
 vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -608,10 +600,10 @@ NIL
 1
 
 SWITCH
-40
-326
-162
-359
+38
+378
+160
+411
 show_networks
 show_networks
 0
@@ -764,10 +756,10 @@ count women
 11
 
 SLIDER
-40
-129
-152
-162
+117
+98
+209
+131
 n_network
 n_network
 0
@@ -852,10 +844,10 @@ NIL
 1
 
 BUTTON
-62
-482
-132
-515
+60
+534
+130
+567
 profiler
 profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
