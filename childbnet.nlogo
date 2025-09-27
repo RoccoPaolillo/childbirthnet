@@ -164,7 +164,9 @@ end
 
 to select_hospital
 
-let friends  rnd:weighted-n-of n_network other women [exp(distweight * ((dist myself self distservices ) ^ 2))]
+let match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= 260] gis:feature-list-of tuscany
+let listrad map [ f -> gis:property-value f "PRO_COM" ] match
+let friends n-of n_network other women with [ member? pro_com listrad]
 
   ask hospital [
     ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
