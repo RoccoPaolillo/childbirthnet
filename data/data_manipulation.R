@@ -84,9 +84,35 @@ df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALS
 
 # resize mobilities
 
-df_mob <- read.csv("accessi_parto_ospedali_used.csv",sep=",")
+df_mob <- read.csv("accessi_parto_ospedali_used.csv",sep=";")
 # value <= 3 is imposed as 1
-df_mob$res_15 <- ifelse(df_mob$parti > 3, round(df_mob$parti * 0.15), 1 )
+#df_mob$res_15 <- ifelse(df_mob$parti > 3, round(df_mob$parti * 0.15), 1 )
+df_mob$rankinit <- NA
+df_mob[df_mob$presidio == "AREA ARETINA NORD AREZZO",]$rankinit <- 1
+df_mob[df_mob$presidio == "COMPLESSO OSPEDALIERO CAREGGI - CTO (FI)",]$rankinit <- 1
+df_mob[df_mob$presidio == "OSP. RIUNITI DELLA VAL DI CHIANA",]$rankinit <- -1
+df_mob[df_mob$presidio == "NUOVO OSPEDALE BORGO S.LORENZO (FI)",]$rankinit <- -1
+df_mob[df_mob$presidio == "SS. GIACOMO E CRISTOFORO MASSA",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "OSPEDALI PISANI (PI)",]$rankinit <- 1
+df_mob[df_mob$presidio == "S.GIOVANNI DI DIO-TORREGALLI (FI)",]$rankinit <- 1
+df_mob[df_mob$presidio == "CIVILE CECINA (LI)",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "OSPEDALE S. GIUSEPPE",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "OSPEDALE UNICO \"VERSILIA\"",]$rankinit <- 0
+df_mob[df_mob$presidio == "CIVILE ELBANO PORTOFERRAIO (LI)",]$rankinit <- -1
+df_mob[df_mob$presidio == "SERRISTORI FIGLINE V.A. (FI)",]$rankinit <- -1
+df_mob[df_mob$presidio == "OSPEDALE DEL VALDARNO - \"S.MARIA DELLA GRUCCIA\"",]$rankinit <- -1
+df_mob[df_mob$presidio == "LE SCOTTE SIENA",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "MISERICORDIA GROSSETO",]$rankinit <- 0
+df_mob[df_mob$presidio == "OSPEDALE DELL'ALTA VAL D'ELSA POGGIBONSI",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "S.M. ANNUNZIATA BAGNO A RIPOLI",]$rankinit <- 0
+df_mob[df_mob$presidio == "RIUNITI LIVORNO",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "NUOVO OSPEDALE DI PRATO S.STEFANO",]$rankinit <- 1
+df_mob[df_mob$presidio == "OSPEDALE SAN JACOPO",]$rankinit <- 1
+df_mob[df_mob$presidio == "F.LOTTI PONTEDERA (PI)",]$rankinit <- 0.5
+df_mob[df_mob$presidio == "SAN ROSSORE",]$rankinit <- 0 # non classificato come pochi
+df_mob[df_mob$presidio == "OSPEDALE SAN LUCA",]$rankinit <- 0
+df_mob[df_mob$presidio == "S. FRANCESCO BARGA (LU)",]$rankinit <- -1
+
 write.csv(df_mob,"accessi_parto_ospedali_used.csv",row.names = F)
 
 # editing figures
