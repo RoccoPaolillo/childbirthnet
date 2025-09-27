@@ -24,6 +24,7 @@ to setup_normal
     set xval normal mean_dis sd_dis
   ]
 plot-turtle-bars
+plot-gaussian-once mean_dis sd_dis 1000 100
 end
 
 to plot-turtle-bars
@@ -65,6 +66,16 @@ to-report normal [means std-devs]
   if value < -1 [ set value -1 ]
   report value
 end
+
+to plot-gaussian-once [m s n num-bars]
+  let values n-values n [ normal m s ]    ;; lista di n campioni
+  set-current-plot "Distribution"
+  clear-plot
+  set-plot-x-range -1 1                   ;; fissiamo i bordi
+  set-histogram-num-bars num-bars         ;; es. 30
+  histogram values
+  print values
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -99,7 +110,7 @@ INPUTBOX
 92
 109
 mean_dis
--1.0
+-0.5
 1
 0
 Number
@@ -165,7 +176,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "plot-turtle-values"
+"default" 1.0 1 -16777216 true "" ""
 
 SLIDER
 23
@@ -199,10 +210,28 @@ NIL
 NIL
 1
 
+PLOT
+660
+182
+860
+332
+Distribution
+NIL
+NIL
+0.0
+10.0
+0.0
+600.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" ""
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+each bin is how many times a values appears
 
 ## HOW IT WORKS
 
