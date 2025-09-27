@@ -578,13 +578,13 @@ women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 74
 SLIDER
 40
 93
-153
+170
 126
 distance_threshold
 distance_threshold
 0
 260
-0.0
+90.0
 1
 1
 NIL
@@ -766,7 +766,7 @@ count women
 SLIDER
 40
 129
-152
+170
 162
 n_network
 n_network
