@@ -164,9 +164,17 @@ end
 
 to select_hospital
 
-let matchrad filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= distance_threshold] gis:feature-list-of tuscany
+let distance_threshold_updated distance_threshold
+let friends no-turtles
+
+while [count friends < n_network][
+
+set distance_threshold_updated distance_threshold_updated + 1
+let matchrad filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= distance_threshold_updated] gis:feature-list-of tuscany
 let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
-let friends n-of n_network other women with [ member? pro_com listrad]
+  set friends n-of (min list n_network (count other women with [member? pro_com listrad])) other women with [member? pro_com listrad]
+
+]
 
   ask hospital [
     ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
