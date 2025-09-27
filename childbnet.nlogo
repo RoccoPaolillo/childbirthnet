@@ -154,8 +154,6 @@ let list_effective filter [ [s] -> item 0 s = x ] but-first  df
 table:put rankinglist [who] of one-of hospital with [id = x ] item 1 item 0 list_effective
 ]
 
-
-
 end
 
 to go
