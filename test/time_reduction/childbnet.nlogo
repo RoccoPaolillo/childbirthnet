@@ -167,7 +167,13 @@ to select_hospital
 ;  let friends rnd:weighted-n-of n_network other women [exp(distweight * ((dist myself self distservices ) ^ 2))]
 ;  let friends n-of n_network other women
 ;  let friends n-of n_network other women with [dist self myself distservices < 50]
-  let friends n-of n_network other women in-radius 2
+;  let friends n-of n_network other women in-radius 2
+
+; filter column of caller than rows of vectorfeatures
+let match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= 260] gis:feature-list-of tuscany
+let listrad map [ f -> gis:property-value f "PRO_COM" ] match
+let friends n-of n_network other women with [ member? pro_com listrad]
+
 
   ask hospital [
     ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
@@ -260,6 +266,12 @@ end
 to-report womenwhoselected [idd]
   report count women with [selectedhospital = [who] of idd ]
 end
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 220
@@ -862,12 +874,12 @@ NIL
 1
 
 BUTTON
-28
-475
-106
-508
+67
+478
+135
+511
 dist_vect
-ask womens 5993 [\n\nlet feats gis:feature-list-of tuscany\nlet match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f \"PRO_COM\"] distservices] feats\nshow match\n\n]\n
+ask womens 5993 [\n\n; let feats gis:feature-list-of tuscany\nlet match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f \"PRO_COM\"] distservices <= 50] gis:feature-list-of tuscany\nshow match\nlet listrad map [ f -> gis:property-value f \"PRO_COM\" ] match\nshow listrad\nlet womenselectedtest n-of n_network women with [ member? pro_com listrad]\nshow womenselectedtest\n; foreach sort womenselectedtest  [p ->\n; show (word [who] of p \" dist \" dist self p distservices \" pro_com \" [pro_com] of p)]\n\n]\n\n\n
 NIL
 1
 T

@@ -139,5 +139,162 @@ DISTCHOICEZERO                        20     30,003     30,003      1,500
 DISTCHOICEMAX                         20     29,952     29,952      1,498
 END PROFILING DUMP
 
+* let match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= 50] gis:feature-list-of tuscany
+let listrad map [ f -> gis:property-value f "PRO_COM" ] match
+let friends n-of n_network other women with [ member? pro_com listrad]
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                               36204    600,171    600,171      0,017
+SELECT_HOSPITAL                       20    427,169    415,532     20,777
+WOMENWHOSELECTED                     204    304,481    304,481      1,493
+DISTCHOICE                           136    220,469    216,138      1,589
+PLOT-HOSPITALS                        20    721,933    139,619      6,981
+GO                                    20   2600,899     62,727      3,136
+DISTCHOICEZERO                        34     58,045     57,128      1,680
+DISTCHOICEMAX                         34     54,012     53,039      1,560
+
+Sorted by Inclusive Time
+GO                                    20   2600,899     62,727      3,136
+PLOT-HOSPITALS                        20    721,933    139,619      6,981
+DIST                               36204    600,171    600,171      0,017
+SELECT_HOSPITAL                       20    427,169    415,532     20,777
+WOMENWHOSELECTED                     204    304,481    304,481      1,493
+DISTCHOICE                           136    220,469    216,138      1,589
+DISTCHOICEZERO                        34     58,045     57,128      1,680
+DISTCHOICEMAX                         34     54,012     53,039      1,560
+
+Sorted by Number of Calls
+DIST                               36204    600,171    600,171      0,017
+WOMENWHOSELECTED                     204    304,481    304,481      1,493
+DISTCHOICE                           136    220,469    216,138      1,589
+DISTCHOICEZERO                        34     58,045     57,128      1,680
+DISTCHOICEMAX                         34     54,012     53,039      1,560
+GO                                    20   2600,899     62,727      3,136
+PLOT-HOSPITALS                        20    721,933    139,619      6,981
+SELECT_HOSPITAL                       20    427,169    415,532     20,777
+END PROFILING DUMP
+
+* let match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= 100] s:feature-list-of tuscany
+let listrad map [ f -> gis:property-value f "PRO_COM" ] match
+let friends n-of n_network other women with [ member? pro_com listrad] 
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+SELECT_HOSPITAL                       20   1141,320   1131,218     56,561
+DIST                               36703    594,854    594,854      0,016
+WOMENWHOSELECTED                     234    347,827    347,827      1,486
+DISTCHOICE                           156    236,744    227,223      1,457
+PLOT-HOSPITALS                        20    769,120    197,597      9,880
+GO                                    20   3568,698     75,142      3,757
+DISTCHOICEZERO                        39     64,872     62,920      1,613
+DISTCHOICEMAX                         39     59,547     57,791      1,482
+
+Sorted by Inclusive Time
+GO                                    20   3568,698     75,142      3,757
+SELECT_HOSPITAL                       20   1141,320   1131,218     56,561
+PLOT-HOSPITALS                        20    769,120    197,597      9,880
+DIST                               36703    594,854    594,854      0,016
+WOMENWHOSELECTED                     234    347,827    347,827      1,486
+DISTCHOICE                           156    236,744    227,223      1,457
+DISTCHOICEZERO                        39     64,872     62,920      1,613
+DISTCHOICEMAX                         39     59,547     57,791      1,482
+
+Sorted by Number of Calls
+DIST                               36703    594,854    594,854      0,016
+WOMENWHOSELECTED                     234    347,827    347,827      1,486
+DISTCHOICE                           156    236,744    227,223      1,457
+DISTCHOICEZERO                        39     64,872     62,920      1,613
+DISTCHOICEMAX                         39     59,547     57,791      1,482
+GO                                    20   3568,698     75,142      3,757
+SELECT_HOSPITAL                       20   1141,320   1131,218     56,561
+PLOT-HOSPITALS                        20    769,120    197,597      9,880
+END PROFILING DUMP
+* let match filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= 260] s:feature-list-of tuscany
+let listrad map [ f -> gis:property-value f "PRO_COM" ] match
+let friends n-of n_network other women with [ member? pro_com listrad] 
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+SELECT_HOSPITAL                       20    930,138    919,806     45,990
+DIST                               36000    539,688    539,688      0,015
+PLOT-HOSPITALS                        20    690,571    161,216      8,061
+WOMENWHOSELECTED                     120    158,052    158,052      1,317
+DISTCHOICE                            80     98,578     98,578      1,232
+GO                                    20   2829,268     84,611      4,231
+DISTCHOICEMAX                         20     24,990     24,990      1,249
+DISTCHOICEZERO                        20     24,577     24,577      1,229
+
+Sorted by Inclusive Time
+GO                                    20   2829,268     84,611      4,231
+SELECT_HOSPITAL                       20    930,138    919,806     45,990
+PLOT-HOSPITALS                        20    690,571    161,216      8,061
+DIST                               36000    539,688    539,688      0,015
+WOMENWHOSELECTED                     120    158,052    158,052      1,317
+DISTCHOICE                            80     98,578     98,578      1,232
+DISTCHOICEMAX                         20     24,990     24,990      1,249
+DISTCHOICEZERO                        20     24,577     24,577      1,229
+
+Sorted by Number of Calls
+DIST                               36000    539,688    539,688      0,015
+WOMENWHOSELECTED                     120    158,052    158,052      1,317
+DISTCHOICE                            80     98,578     98,578      1,232
+GO                                    20   2829,268     84,611      4,231
+SELECT_HOSPITAL                       20    930,138    919,806     45,990
+PLOT-HOSPITALS                        20    690,571    161,216      8,061
+DISTCHOICEMAX                         20     24,990     24,990      1,249
+DISTCHOICEZERO                        20     24,577     24,577      1,229
+END PROFILING DUMP
+
+
+*********************************************************************************************************
+EXTRA
+*********************************************************************************************************
+report for distance
+to-report matrix-dist [origin dest matrix]
+  let header item 0 matrix
+  let col position  [pro_com] of dest  header
+  if col = false [ report nobody ]
+
+  let rows but-first matrix
+  let row first filter [r -> first r = [pro_com] of origin] rows
+  if row = nobody [ report nobody ]
+
+  report item col row
+end
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+MATRIX-DIST                           20      2,010      2,010      0,101
+
+Sorted by Inclusive Time
+MATRIX-DIST                           20      2,010      2,010      0,101
+
+Sorted by Number of Calls
+MATRIX-DIST                           20      2,010      2,010      0,101
+END PROFILING DUMP
+
+to-report dist [origin destination matrix]
+let destinationpos position [pro_com] of destination item 0 matrix
+report item destinationpos item 0 filter [x -> first x = [pro_com] of origin] matrix
+end
+
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                                  20      1,174      1,174      0,059
+
+Sorted by Inclusive Time
+DIST                                  20      1,174      1,174      0,059
+
+Sorted by Number of Calls
+DIST                                  20      1,174      1,174      0,059
+END PROFILING DUMP
+
 
 
