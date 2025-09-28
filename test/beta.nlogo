@@ -43,6 +43,16 @@ to plot-turtle-bars
   ]
 end
 
+to setup_beta
+  clear-all
+
+  create-turtles n_turtles [
+    set xval beta-random mean_dis sd_dis
+  ]
+plot-turtle-bars
+plot-gaussian-once mean_dis sd_dis 1000 100
+end
+
 to-report beta-random [means std-dev]
   let variances std-dev * std-dev
   let alpha means * ((means * (1 - means)) / variances - 1)
@@ -69,6 +79,16 @@ end
 
 to plot-gaussian-once [m s n num-bars]
   let values n-values n [ normal m s ]    ;; lista di n campioni
+  set-current-plot "Distribution"
+  clear-plot
+  set-plot-x-range -1 1                   ;; fissiamo i bordi
+  set-histogram-num-bars num-bars         ;; es. 30
+  histogram values
+  print values
+end
+
+to plot-beta-random [m s n num-bars]
+  let values n-values n [ beta-random m s ]    ;; lista di n campioni
   set-current-plot "Distribution"
   clear-plot
   set-plot-x-range -1 1                   ;; fissiamo i bordi
@@ -110,7 +130,7 @@ INPUTBOX
 92
 109
 mean_dis
--0.5
+-1.0
 1
 0
 Number
@@ -227,6 +247,23 @@ false
 "" ""
 PENS
 "default" 1.0 1 -16777216 true "" ""
+
+BUTTON
+42
+254
+131
+287
+setup_beta
+setup_beta
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
