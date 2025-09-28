@@ -1,4 +1,4 @@
-extensions [gis table csv rnd profiler]
+extensions [gis table csv rnd profiler time]
 turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
@@ -158,7 +158,7 @@ table:put rankinglist [who] of one-of hospital with [id = x ] item 1 item 0 list
 end
 
 to go
-if not any? women with [givenbirth = false] [stop]
+if not any? women with [givenbirth = false] [report_data "export" stop ]
 
 
   ask one-of women with [pregnant = false and givenbirth = false] [
@@ -287,6 +287,31 @@ to plot-postranking [ m s maxlim minlim n num-bars]
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
   print values
+end
+
+to report_data [filename]
+
+    let header ["who" "pro_com" "selectedhospitalemp" "selectedhospital" ]
+  let rows (list header)
+
+  ;; build rows in a stable order (by who)
+  foreach sort women [ w ->
+    set rows lput
+      (list
+        [who] of w
+        [pro_com] of w
+        [selectedhospitalemp] of w
+        [selectedhospital] of w)
+      rows
+  ]
+
+let stringa remove-item 14 remove-item 11 remove-item 6 remove-item 4 remove-item 2 word substring date-and-time 0 12 substring date-and-time 16 27
+let first6 substring stringa 0 6
+let mid substring stringa 6 9
+let last6  substring stringa (length stringa - 7) length stringa
+let stringappear (word first6 "_"  mid "_" last6)
+
+  csv:to-file (word filename "_" stringappear ".csv") rows
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -605,7 +630,7 @@ distance_threshold
 distance_threshold
 0
 260
-90.0
+91.0
 1
 1
 NIL
@@ -936,6 +961,23 @@ false
 "" ""
 PENS
 "default" 1.0 1 -16777216 true "" ""
+
+BUTTON
+22
+474
+85
+507
+string
+print date-and-time\nlet stringa remove-item 14 remove-item 11 remove-item 6 remove-item 4 remove-item 2 word substring date-and-time 0 12 substring date-and-time 16 27\nlet first6 substring stringa 0 6\nlet mid substring stringa 6 9\nlet last6  substring stringa (length stringa - 7) length stringa\nlet stringappear (word first6 \"_\"  mid \"_\" last6)\nprint stringappear
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
