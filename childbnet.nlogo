@@ -37,6 +37,7 @@ to setup
 
   ask women [options_hospital]
   plot-hospitals
+  plot-postranking updaterank_mean updaterank_sd 1 -1 100 100
   reset-timer
   reset-ticks
 end
@@ -197,7 +198,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" is 1 by default 260 here for scaling
-  table:put rankinglist selectedhospital table:get rankinglist selectedhospital + 5
+  table:put rankinglist selectedhospital table:get rankinglist selectedhospital + normal updaterank_mean updaterank_sd 1 -1
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -276,6 +277,16 @@ end
 
 to-report womenwhoselected [idd]
   report count women with [selectedhospital = [who] of idd ]
+end
+
+to plot-postranking [ m s maxlim minlim n num-bars]
+  let values n-values n [ normal  m s maxlim minlim ]    ;; lista di n campioni
+  set-current-plot "Distribution post ranking"
+  clear-plot
+  set-plot-x-range -1 1                   ;; fissiamo i bordi
+  set-histogram-num-bars num-bars         ;; es. 30
+  histogram values
+  print values
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -481,10 +492,10 @@ destination_to
 Number
 
 BUTTON
-65
-417
-130
-450
+67
+465
+132
+498
 go
 go
 T
@@ -601,10 +612,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-39
-360
-162
-393
+40
+332
+163
+365
 vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -618,10 +629,10 @@ NIL
 1
 
 SWITCH
-40
-326
-162
-359
+41
+298
+163
+331
 show_networks
 show_networks
 0
@@ -862,10 +873,10 @@ NIL
 1
 
 BUTTON
-63
-455
-133
-488
+1025
+539
+1095
+572
 profiler
 profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
@@ -878,22 +889,53 @@ NIL
 NIL
 1
 
-BUTTON
-59
-492
-138
-525
-rankingls
-\nlet df csv:from-file \"C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv\"\nlet listhospitals []\nforeach but-first df [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement\n  let key item 0 row                                               ; so I make first a list of the hospitals we have (24)\n  if not member? key listhospitals [\n    set listhospitals lput key listhospitals\n  ]\n]\n\nlet rankinglista table:make\n\nforeach sort listhospitals [ x ->\nlet list_effective filter [ [s] -> item 0 s = x ] but-first  df\ntable:put rankinglista [who] of one-of hospital with [id = x ] item 1 item 0 list_effective\n]\n\nprint rankinglista\n\n; let rankinglista table:make\n; foreach sort listhospitals [ x ->\n;     let list_effective filter [ [s] -> item 0 s = x ] but-first  df\n; table:put rankinglista [who] of one-of hospital with [id = x ] 0\n; ]\n\n
-NIL
+SLIDER
+40
+379
+182
+412
+updaterank_mean
+updaterank_mean
+-1
 1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
+0.0
+0.1
 1
+NIL
+HORIZONTAL
+
+SLIDER
+39
+415
+182
+448
+updaterank_sd
+updaterank_sd
+-1
+1
+0.3
+0.1
+1
+NIL
+HORIZONTAL
+
+PLOT
+27
+530
+227
+680
+Distribution post ranking
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
