@@ -1,4 +1,4 @@
-extensions [gis table csv rnd profiler time]
+extensions [gis table csv rnd profiler]
 turtles-own [PRO_COM]
 breed [hospital hospitals]
 breed [women womens]
