@@ -305,11 +305,12 @@ to report_data [filename]
       rows
   ]
 
+
 let stringa remove-item 14 remove-item 11 remove-item 6 remove-item 4 remove-item 2 word substring date-and-time 0 12 substring date-and-time 16 27
 let first6 substring stringa 0 6
 let mid substring stringa 6 9
-let last6  substring stringa (length stringa - 7) length stringa
-let stringappear (word first6 "_"  mid "_" last6)
+let last9  substring stringa (length stringa - 9) length stringa
+let stringappear (word first6 "_"  mid "_" last9)
 
   csv:to-file (word filename "_" stringappear ".csv") rows
 end
@@ -630,7 +631,7 @@ distance_threshold
 distance_threshold
 0
 260
-91.0
+90.0
 1
 1
 NIL
@@ -660,7 +661,7 @@ SWITCH
 331
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -961,23 +962,6 @@ false
 "" ""
 PENS
 "default" 1.0 1 -16777216 true "" ""
-
-BUTTON
-22
-474
-85
-507
-string
-print date-and-time\nlet stringa remove-item 14 remove-item 11 remove-item 6 remove-item 4 remove-item 2 word substring date-and-time 0 12 substring date-and-time 16 27\nlet first6 substring stringa 0 6\nlet mid substring stringa 6 9\nlet last6  substring stringa (length stringa - 7) length stringa\nlet stringappear (word first6 \"_\"  mid \"_\" last6)\nprint stringappear
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
