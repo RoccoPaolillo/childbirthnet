@@ -84,7 +84,7 @@ df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALS
 
 # resize mobilities
 
-df_mob <- read.csv("accessi_parto_ospedali_used.csv",sep=";")
+df_mob <- read.csv("accessi_parto_ospedali_used.csv",sep=",")
 # value <= 3 is imposed as 1
 #df_mob$res_15 <- ifelse(df_mob$parti > 3, round(df_mob$parti * 0.15), 1 )
 df_mob$rankinit <- NA
@@ -113,7 +113,13 @@ df_mob[df_mob$presidio == "SAN ROSSORE",]$rankinit <- 0 # non classificato come 
 df_mob[df_mob$presidio == "OSPEDALE SAN LUCA",]$rankinit <- 0
 df_mob[df_mob$presidio == "S. FRANCESCO BARGA (LU)",]$rankinit <- -1
 
-write.csv(df_mob,"accessi_parto_ospedali_used.csv",row.names = F)
+##
+
+ranking_hospitals <- df_mob %>% select("presidio","rankinit")
+ranking_hospitals <- ranking_hospitals[!duplicated(ranking_hospitals), ]
+write.csv(ranking_hospitals,"ranking_hospitals.csv",row.names = F)
+
+#write.csv(df_mob,"accessi_parto_ospedali_used.csv",row.names = F)
 
 # editing figures
 

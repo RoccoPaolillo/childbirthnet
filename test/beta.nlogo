@@ -24,6 +24,7 @@ to setup_normal
     set xval normal mean_dis sd_dis
   ]
 plot-turtle-bars
+plot-gaussian-once mean_dis sd_dis 1000 100
 end
 
 to plot-turtle-bars
@@ -40,6 +41,16 @@ to plot-turtle-bars
       plotxy index xvalordered
       set index index + 1
   ]
+end
+
+to setup_beta
+  clear-all
+
+  create-turtles n_turtles [
+    set xval beta-random mean_dis sd_dis
+  ]
+plot-turtle-bars
+plot-gaussian-once mean_dis sd_dis 1000 100
 end
 
 to-report beta-random [means std-dev]
@@ -64,6 +75,26 @@ to-report normal [means std-devs]
   if value > 1 [ set value 1 ]
   if value < -1 [ set value -1 ]
   report value
+end
+
+to plot-gaussian-once [m s n num-bars]
+  let values n-values n [ normal m s ]    ;; lista di n campioni
+  set-current-plot "Distribution"
+  clear-plot
+  set-plot-x-range -1 1                   ;; fissiamo i bordi
+  set-histogram-num-bars num-bars         ;; es. 30
+  histogram values
+  print values
+end
+
+to plot-beta-random [m s n num-bars]
+  let values n-values n [ beta-random m s ]    ;; lista di n campioni
+  set-current-plot "Distribution"
+  clear-plot
+  set-plot-x-range -1 1                   ;; fissiamo i bordi
+  set-histogram-num-bars num-bars         ;; es. 30
+  histogram values
+  print values
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -165,7 +196,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "plot-turtle-values"
+"default" 1.0 1 -16777216 true "" ""
 
 SLIDER
 23
@@ -199,10 +230,45 @@ NIL
 NIL
 1
 
+PLOT
+660
+182
+860
+332
+Distribution
+NIL
+NIL
+0.0
+10.0
+0.0
+600.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" ""
+
+BUTTON
+42
+254
+131
+287
+setup_beta
+setup_beta
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+each bin is how many times a values appears
 
 ## HOW IT WORKS
 
