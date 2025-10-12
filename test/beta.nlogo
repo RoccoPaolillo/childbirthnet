@@ -101,6 +101,7 @@ to plot-beta-random [m s n num-bars]
   let values n-values n [ beta-random m s ]    ;; lista di n campioni
   set-current-plot "Distribution"
   clear-plot
+  set-plot-x-range 0 1
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
   print values
