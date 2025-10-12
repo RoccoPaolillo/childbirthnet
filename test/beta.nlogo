@@ -85,6 +85,7 @@ to-report normal [means std-devs]
   if value > 1 [ set value 1 ]
   if value < -1 [ set value -1 ]
   report value
+
 end
 
 to plot-gaussian-once [m s n num-bars]
@@ -95,6 +96,8 @@ to plot-gaussian-once [m s n num-bars]
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
   print values
+  print  max values
+  print min values
 end
 
 to plot-beta-random [m s n num-bars]
@@ -142,7 +145,7 @@ INPUTBOX
 92
 109
 mean_dis
-0.8
+0.0
 1
 0
 Number
@@ -153,7 +156,7 @@ INPUTBOX
 166
 109
 sd_dis
-0.1
+0.0
 1
 0
 Number
