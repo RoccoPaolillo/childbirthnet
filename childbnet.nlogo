@@ -18,7 +18,7 @@ to setup
   set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+;  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   set distservicesnorm csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   create-counselcenters
   create-hospitals
@@ -183,7 +183,7 @@ while [count friends < n_network][
 
 set distance_threshold_updated distance_threshold_updated + 1
 ; filters all vectorfeatures for extraction. position procom 0: header of distservices. item 0 filter [], item 0 (procom) of rows whose distance falls within the threshold
-let matchrad filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= distance_threshold_updated] gis:feature-list-of tuscany
+let matchrad filter [f -> item position pro_com item 0 distservicesnorm item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservicesnorm <= distance_threshold_updated] gis:feature-list-of tuscany
 ; list pro_com of matching vectorfeatures
 let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   set friends n-of (min list n_network (count other women with [member? pro_com listrad])) other women with [member? pro_com listrad]
@@ -196,7 +196,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservices ) ^ 2)) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm ) ^ 2)) + (social_multiplier * (reduce + ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
