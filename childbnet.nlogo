@@ -18,7 +18,7 @@ to setup
   set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-;  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   set distservicesnorm csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   create-counselcenters
   create-hospitals
@@ -294,27 +294,30 @@ end
 
 to report_data [filename]
 
-    let header ["who" "pro_com" "selectedhospitalemp" "selectedhospital" ]
+  let param-names  ["rescale15%" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
+  let param-values (list rescale15%  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
+
+  let core-header ["who" "pro_com" "selectedhospitalemp" "selectedhospital"]
+  let header sentence core-header param-names
   let rows (list header)
 
   ;; build rows in a stable order (by who)
   foreach sort women [ w ->
-    set rows lput
-      (list
-        [who] of w
-        [pro_com] of w
-        [selectedhospitalemp] of w
-        [selectedhospital] of w)
-      rows
+    let core-row (list
+      [who] of w
+      [pro_com] of w
+      [selectedhospitalemp] of w
+      [selectedhospital] of w)
+    ;; append metadata + parameters to each row
+    let row sentence core-row (sentence param-values)
+    set rows lput row rows
   ]
 
-
-let stringa remove-item 14 remove-item 11 remove-item 6 remove-item 4 remove-item 2 word substring date-and-time 0 12 substring date-and-time 16 27
-let first6 substring stringa 0 6
-let mid substring stringa 6 9
-let last9  substring stringa (length stringa - 9) length stringa
-let stringappear (word first6 "_"  mid "_" last9)
-
+  let stringa remove-item 14 remove-item 11 remove-item 6 remove-item 4 remove-item 2 word substring date-and-time 0 12 substring date-and-time 16 27
+  let first6 substring stringa 0 6
+  let mid substring stringa 6 9
+  let last9 substring stringa (length stringa - 9) length stringa
+  let stringappear (word first6 "_" mid "_" last9)
   csv:to-file (word filename "_" stringappear ".csv") rows
 end
 @#$#@#$#@
@@ -664,7 +667,7 @@ SWITCH
 351
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -880,7 +883,7 @@ SWITCH
 51
 rescale15%
 rescale15%
-1
+0
 1
 -1000
 

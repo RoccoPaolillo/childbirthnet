@@ -131,4 +131,6 @@ img <- image_read("landscape.jpeg")
 # Write it as an EPS file
 image_write(img, path = "landscape.eps", format = "eps")
 
+# outcome
 
+df <- read.csv("C:/Users/LENOVO/Documents/GitHub/childbirthod/export_011244_519_13ott2025.csv")
