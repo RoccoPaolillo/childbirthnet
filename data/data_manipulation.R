@@ -132,5 +132,15 @@ img <- image_read("landscape.jpeg")
 image_write(img, path = "landscape.eps", format = "eps")
 
 # outcome
+setwd("C:/Users/LENOVO/Documents/GitHub/childbirthod/data_bs/")
 
-df <- read.csv("C:/Users/LENOVO/Documents/GitHub/childbirthod/export_011244_519_13ott2025.csv")
+files <- sort(list.files( pattern = "\\.csv$", full.names = TRUE))
+
+all_data <- do.call(rbind, lapply(seq_along(files), function(i) {
+  x <- read.csv(files[i], stringsAsFactors = FALSE)
+  x$run  <- i
+  x$file <- basename(files[i])
+  x
+}))
+
+write.csv(all_data,file="test_multipleruns.csv",row.names = F)

@@ -105,7 +105,7 @@ if  item 2 s = [id] of x [
  let mun gis:find-one-feature tuscany "PRO_COM" item 0 s
 
 
-        gis:create-turtles-inside-polygon mun women ifelse-value (rescale15% = true) [item 6 s][item 5 s] [
+        gis:create-turtles-inside-polygon mun women ifelse-value (rescale15 = true) [item 6 s][item 5 s] [
 
 ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
         [
@@ -295,7 +295,7 @@ end
 to report_data [filename]
 
   let param-names  ["rescale15%" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
-  let param-values (list rescale15%  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
+  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
 
   let core-header ["who" "pro_com" "selectedhospitalemp" "selectedhospital"]
   let header sentence core-header param-names
@@ -318,7 +318,7 @@ to report_data [filename]
   let mid substring stringa 6 9
   let last9 substring stringa (length stringa - 9) length stringa
   let stringappear (word first6 "_" mid "_" last9)
-  csv:to-file (word filename "_" stringappear ".csv") rows
+  csv:to-file (word "data_bs/" filename "_" stringappear ".csv") rows
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -881,8 +881,8 @@ SWITCH
 18
 207
 51
-rescale15%
-rescale15%
+rescale15
+rescale15
 0
 1
 -1000
@@ -1368,8 +1368,8 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
       <value value="0"/>
-      <value value="-1"/>
-      <value value="-10"/>
+      <value value="-5"/>
+      <value value="-50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
@@ -1379,7 +1379,7 @@ NetLogo 6.4.0
       <value value="150"/>
       <value value="260"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rescale15%">
+    <enumeratedValueSet variable="rescale15">
       <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
@@ -1387,8 +1387,8 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
       <value value="0"/>
-      <value value="1"/>
-      <value value="10"/>
+      <value value="5"/>
+      <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="updaterank_sd">
       <value value="0"/>
@@ -1396,8 +1396,8 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
       <value value="0"/>
-      <value value="1"/>
-      <value value="10"/>
+      <value value="5"/>
+      <value value="50"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
