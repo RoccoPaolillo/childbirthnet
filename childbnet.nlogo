@@ -294,7 +294,7 @@ end
 
 to report_data [filename]
 
-  let param-names  ["rescale15%" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
+  let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
   let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
 
   let core-header ["who" "pro_com" "selectedhospitalemp" "selectedhospital"]
