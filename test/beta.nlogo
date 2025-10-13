@@ -50,23 +50,33 @@ to setup_beta
     set xval beta-random mean_dis sd_dis
   ]
 plot-turtle-bars
-plot-gaussian-once mean_dis sd_dis 1000 100
+plot-beta-random mean_dis sd_dis 1000 100
 end
 
-to-report beta-random [means std-dev]
-  let variances std-dev * std-dev
-  let alpha means * ((means * (1 - means)) / variances - 1)
-  let beta (1 - means) * ((means * (1 - means)) / variances - 1)
-
-  if alpha <= 0 or beta <= 0 [
-    user-message (word "Invalid alpha/beta parameters: mean=" means ", std-dev=" std-dev)
-    report -1 + 2 * means ; means ; fallback to mean
+to-report beta-random [mu sd]
+  ;; validate inputs
+  if not (mu > 0 and mu < 1) [
+    user-message (word "beta-random: mean must be in (0,1). Got " mu)
+    report mu
+  ]
+  let var sd * sd
+  let maxvar (mu * (1 - mu))
+  if not (var > 0 and var < maxvar) [
+    user-message (word "beta-random: sd^2 must be in (0," maxvar ") for mean=" mu ", sd=" sd)
+    report mu
   ]
 
-  let x random-gamma alpha 1
-  let y random-gamma beta 1
+  ;; convert mean/sd -> shapes a,b
+  let k (maxvar / var) - 1
+  let a mu * k
+  let b (1 - mu) * k
 
-  report -1 + 2 * ( x / (x + y))
+  ;; sample via Gamma(a,1) and Gamma(b,1)
+  let x random-gamma a 1
+  let y random-gamma b 1
+  if x + y = 0 [ report mu ]  ;; ultra-defensive, should not happen
+
+  report x / (x + y)          ;; in (0,1)
 end
 
 to-report normal [means std-devs]
@@ -75,6 +85,7 @@ to-report normal [means std-devs]
   if value > 1 [ set value 1 ]
   if value < -1 [ set value -1 ]
   report value
+
 end
 
 to plot-gaussian-once [m s n num-bars]
@@ -85,16 +96,20 @@ to plot-gaussian-once [m s n num-bars]
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
   print values
+  print  max values
+  print min values
 end
 
 to plot-beta-random [m s n num-bars]
   let values n-values n [ beta-random m s ]    ;; lista di n campioni
   set-current-plot "Distribution"
   clear-plot
-  set-plot-x-range -1 1                   ;; fissiamo i bordi
+  set-plot-x-range 0 1
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
   print values
+  print  max values
+  print min values
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -130,7 +145,7 @@ INPUTBOX
 92
 109
 mean_dis
--1.0
+0.0
 1
 0
 Number
@@ -141,7 +156,7 @@ INPUTBOX
 166
 109
 sd_dis
-0.1
+0.0
 1
 0
 Number

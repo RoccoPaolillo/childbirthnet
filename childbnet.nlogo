@@ -18,7 +18,7 @@ to setup
   set tuscany gis:load-dataset "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/output/comuni_consultori_2019.shp"
   gis:set-world-envelope (gis:envelope-union-of (gis:envelope-of tuscany))
   displaymap
-  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
+;  set distservices csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/matrice_distanze_consultori.csv"
   set distservicesnorm csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/normalized_distance.csv"
   create-counselcenters
   create-hospitals
@@ -178,10 +178,13 @@ to select_hospital
 let distance_threshold_updated distance_threshold
 let friends no-turtles
 
+; loop to find friends for social influence
 while [count friends < n_network][
 
 set distance_threshold_updated distance_threshold_updated + 1
-let matchrad filter [f -> item position pro_com item 0 distservices item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservices <= distance_threshold_updated] gis:feature-list-of tuscany
+; filters all vectorfeatures for extraction. position procom 0: header of distservices. item 0 filter [], item 0 (procom) of rows whose distance falls within the threshold
+let matchrad filter [f -> item position pro_com item 0 distservicesnorm item 0 filter [x -> first x = gis:property-value f "PRO_COM"] distservicesnorm <= distance_threshold_updated] gis:feature-list-of tuscany
+; list pro_com of matching vectorfeatures
 let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   set friends n-of (min list n_network (count other women with [member? pro_com listrad])) other women with [member? pro_com listrad]
 
@@ -193,7 +196,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_distance_hospital * ((dist myself self distservices ) ^ 2)) + (social_multiplier * (reduce +   ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm ) ^ 2)) + (social_multiplier * (reduce + ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
@@ -518,10 +521,10 @@ destination_to
 Number
 
 BUTTON
-67
-465
-132
-498
+76
+475
+141
+508
 go
 go
 T
@@ -546,10 +549,10 @@ count women with [givenbirth = true]
 11
 
 SLIDER
-28
-243
-180
-276
+33
+260
+186
+293
 social_multiplier
 social_multiplier
 -10
@@ -561,25 +564,25 @@ max
 HORIZONTAL
 
 SLIDER
-28
-205
-181
-238
+32
+186
+185
+219
 weight_distance_hospital
 weight_distance_hospital
 -1300
 0
--1.0
+0.0
 1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-69
-182
-155
-200
+73
+163
+159
+181
 selection hospital
 10
 0.0
@@ -623,10 +626,10 @@ women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 74
 1
 
 SLIDER
-40
-93
-170
-126
+36
+80
+166
+113
 distance_threshold
 distance_threshold
 0
@@ -638,10 +641,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-40
-332
-163
-365
+42
+352
+165
+385
 vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -655,13 +658,13 @@ NIL
 1
 
 SWITCH
-41
-298
-163
-331
+43
+318
+165
+351
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -696,7 +699,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-1
+20
 
 BUTTON
 570
@@ -739,10 +742,10 @@ PENS
 "61+" 1.0 0 -13345367 true "" "plot (distchoicemax hospitals hospital_id 60)"
 
 TEXTBOX
-54
-73
-140
-91
+50
+60
+136
+78
 network formation
 10
 0.0
@@ -811,10 +814,10 @@ count women
 11
 
 SLIDER
-40
-129
-170
-162
+36
+116
+166
+149
 n_network
 n_network
 0
@@ -916,10 +919,10 @@ NIL
 1
 
 SLIDER
-40
-379
-182
-412
+42
+399
+184
+432
 updaterank_mean
 updaterank_mean
 -1
@@ -931,10 +934,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-39
-415
-182
-448
+41
+435
+184
+468
 updaterank_sd
 updaterank_sd
 -1
@@ -962,6 +965,21 @@ false
 "" ""
 PENS
 "default" 1.0 1 -16777216 true "" ""
+
+SLIDER
+32
+221
+185
+254
+weight_ownranking
+weight_ownranking
+-20
+20
+-20.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
