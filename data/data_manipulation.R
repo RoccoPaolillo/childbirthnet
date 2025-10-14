@@ -1,5 +1,7 @@
 library(dplyr)
 library(readxl)
+library(readr)
+library(tidyr)
 
 setwd("C:/Users/LENOVO/Documents/GitHub/childbirthod/data/")
 
@@ -81,6 +83,22 @@ df_normalized[ , !(names(distcounsel) %in% cols_to_exclude)] <- lapply(
 
 write.csv(df_normalized, file = "normalized_distance.csv",row.names = F)
 df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALSE)
+
+# to put all distances into one vector and identify median
+
+dfvect <- distcounsel[,-1]
+if (!is.numeric(dfvect[[1]])) {
+  rn <- dfvect[[1]]
+  df <- dfvect[-1]
+} else rn <- NULL
+
+# keep only numeric columns and coerce
+num <- as.data.frame(lapply(dfvect, function(x) as.numeric(as.character(x))),
+                     stringsAsFactors = FALSE)
+
+# 1) ALL values flattened into one vector (including diagonal)
+v_all <- as.numeric(as.matrix(num))
+
 
 # resize mobilities
 
