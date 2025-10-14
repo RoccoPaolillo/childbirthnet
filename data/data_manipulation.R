@@ -150,7 +150,7 @@ img <- image_read("landscape.jpeg")
 image_write(img, path = "landscape.eps", format = "eps")
 
 # outcome
-setwd("C:/Users/LENOVO/Documents/GitHub/childbirthod/data_bs/")
+setwd("C:/Users/LENOVO/Documents/GitHub/childbirthod/experiments/genova_firstrun")
 
 files <- sort(list.files( pattern = "\\.csv$", full.names = TRUE))
 
@@ -161,4 +161,24 @@ all_data <- do.call(rbind, lapply(seq_along(files), function(i) {
   x
 }))
 
-write.csv(all_data,file="test_multipleruns.csv",row.names = F)
+# to check that "who" of women always alignt with one pair pro_com, selectedhospitalemp
+who_with_conflicts <- all_data %>%
+  group_by(who) %>%
+  summarise(
+    n_pairs = n_distinct(pro_com, selectedhospitalemp),
+    pairs   = paste0(
+      unique(paste0("(", pro_com, ",", selectedhospitalemp, ")")), 
+      collapse = "; "
+    ),
+    .groups = "drop"
+  ) %>%
+  filter(n_pairs > 1)
+
+who_with_conflicts
+
+map_hosp <- read.csv("C:/Users/LENOVO/Documents/GitHub/childbirthod/data/mapping_hospitals.csv",sep=";")
+
+all_data <- merge(all_data,map_hosp, by = c())
+
+
+write.csv(all_data,file="dataset_gefirstrun.csv",row.names = F)
