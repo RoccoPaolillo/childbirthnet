@@ -1,5 +1,7 @@
 library(dplyr)
 library(readxl)
+library(readr)
+library(tidyr)
 
 setwd("C:/Users/LENOVO/Documents/GitHub/childbirthod/data/")
 
@@ -81,6 +83,36 @@ df_normalized[ , !(names(distcounsel) %in% cols_to_exclude)] <- lapply(
 
 write.csv(df_normalized, file = "normalized_distance.csv",row.names = F)
 df_normalized <- read.csv("normalized_distance.csv",sep =",", check.names = FALSE)
+
+# values diagonal
+
+if (!is.numeric(distcounsel[[1]])) {
+  rn <- distcounsel[[1]]         # etichette
+  df <- distcounsel[-1]          # rimuovi la colonna etichette
+} else {
+  rn <- NULL
+}
+
+# Tieni solo colonne numeriche vere (elimina eventuali non numeriche residue)
+num <- distcounsel[sapply(distcounsel, function(x) suppressWarnings(all(!is.na(as.numeric(x)))))]
+M <- as.matrix(sapply(num, as.numeric))
+colnames(M) <- colnames(num)
+
+# Se abbiamo etichette, assegna rownames solo se la lunghezza combacia
+if (!is.null(rn)) {
+  stopifnot(length(rn) == nrow(M))
+  rownames(M) <- rn
+} else {
+  # se non abbiamo rn, ma la matrice è quadrata, possiamo usare i nomi colonna
+  if (nrow(M) == ncol(M)) rownames(M) <- colnames(M)
+}
+
+diag_vals <- diag(M)
+
+# Valori sopra la diagonale (i<j)
+vals_upper <- M[upper.tri(M, diag = FALSE)]
+
+
 
 # resize mobilities
 
