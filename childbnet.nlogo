@@ -210,7 +210,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservices) ^ 2 )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
@@ -593,7 +593,7 @@ weight_distance_hospital
 weight_distance_hospital
 -1300
 0
--1.0
+0.0
 1
 1
 NIL
@@ -1008,7 +1008,7 @@ BUTTON
 505
 599
 rankhospital
-let rankhosp csv:from-file \"C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv\"\nprint rankhosp\n\n foreach sort hospital [ x ->\nlet list_effective filter [ [s] -> item 0 s = [id] of x ] but-first rankhosp\nprint (word [id] of x \" \"  item 1 item 0 list_effective)\n]
+ask hospitals 50 [\n\nshow mean [ table:get rankinglist [who] of myself ] of (women with [ table:has-key? rankinglist [who] of myself ])\n\n]
 NIL
 1
 T
