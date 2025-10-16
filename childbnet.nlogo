@@ -296,6 +296,10 @@ to-report womenwhoselected [idd]
   report count women with [selectedhospital = [who] of idd ]
 end
 
+to-report rankupdate [idd]
+  report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])
+end
+
 to plot-postranking [ m s maxlim minlim n num-bars]
   let values n-values n [ normal  m s maxlim minlim ]    ;; lista di n campioni
   set-current-plot "Distribution post ranking"
@@ -1008,7 +1012,7 @@ BUTTON
 505
 599
 rankhospital
-ask hospitals 50 [\n\nshow mean [ table:get rankinglist [who] of myself ] of (women with [ table:has-key? rankinglist [who] of myself ])\n\n]
+ask hospitals 71 [\n\nshow mean [ table:get rankinglist [who] of myself ] of (women with [ table:has-key? rankinglist [who] of myself ])\n\n]
 NIL
 1
 T
