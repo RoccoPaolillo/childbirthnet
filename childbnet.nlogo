@@ -1402,41 +1402,224 @@ NetLogo 6.4.0
   <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
+    <metric>distchoicezero hospitals 50</metric>
+    <metric>distchoicezero hospitals 61</metric>
+    <metric>distchoicezero hospitals 58</metric>
+    <metric>distchoicezero hospitals 60</metric>
+    <metric>distchoicezero hospitals 48</metric>
+    <metric>distchoicezero hospitals 63</metric>
+    <metric>distchoicezero hospitals 53</metric>
+    <metric>distchoicezero hospitals 64</metric>
+    <metric>distchoicezero hospitals 69</metric>
+    <metric>distchoicezero hospitals 56</metric>
+    <metric>distchoicezero hospitals 66</metric>
+    <metric>distchoicezero hospitals 51</metric>
+    <metric>distchoicezero hospitals 59</metric>
+    <metric>distchoicezero hospitals 65</metric>
+    <metric>distchoicezero hospitals 57</metric>
+    <metric>distchoicezero hospitals 62</metric>
+    <metric>distchoicezero hospitals 55</metric>
+    <metric>distchoicezero hospitals 49</metric>
+    <metric>distchoicezero hospitals 52</metric>
+    <metric>distchoicezero hospitals 54</metric>
+    <metric>distchoicezero hospitals 71</metric>
+    <metric>distchoicezero hospitals 68</metric>
+    <metric>distchoicezero hospitals 67</metric>
+    <metric>distchoicezero hospitals 70</metric>
+    <metric>distchoice hospitals 50 0 15</metric>
+    <metric>distchoice hospitals 61 0 15</metric>
+    <metric>distchoice hospitals 58 0 15</metric>
+    <metric>distchoice hospitals 60 0 15</metric>
+    <metric>distchoice hospitals 48 0 15</metric>
+    <metric>distchoice hospitals 63 0 15</metric>
+    <metric>distchoice hospitals 53 0 15</metric>
+    <metric>distchoice hospitals 64 0 15</metric>
+    <metric>distchoice hospitals 69 0 15</metric>
+    <metric>distchoice hospitals 56 0 15</metric>
+    <metric>distchoice hospitals 66 0 15</metric>
+    <metric>distchoice hospitals 51 0 15</metric>
+    <metric>distchoice hospitals 59 0 15</metric>
+    <metric>distchoice hospitals 65 0 15</metric>
+    <metric>distchoice hospitals 57 0 15</metric>
+    <metric>distchoice hospitals 62 0 15</metric>
+    <metric>distchoice hospitals 55 0 15</metric>
+    <metric>distchoice hospitals 49 0 15</metric>
+    <metric>distchoice hospitals 52 0 15</metric>
+    <metric>distchoice hospitals 54 0 15</metric>
+    <metric>distchoice hospitals 71 0 15</metric>
+    <metric>distchoice hospitals 68 0 15</metric>
+    <metric>distchoice hospitals 67 0 15</metric>
+    <metric>distchoice hospitals 70 0 15</metric>
+    <metric>distchoice hospitals 50 15 30</metric>
+    <metric>distchoice hospitals 61 15 30</metric>
+    <metric>distchoice hospitals 58 15 30</metric>
+    <metric>distchoice hospitals 60 15 30</metric>
+    <metric>distchoice hospitals 48 15 30</metric>
+    <metric>distchoice hospitals 63 15 30</metric>
+    <metric>distchoice hospitals 53 15 30</metric>
+    <metric>distchoice hospitals 64 15 30</metric>
+    <metric>distchoice hospitals 69 15 30</metric>
+    <metric>distchoice hospitals 56 15 30</metric>
+    <metric>distchoice hospitals 66 15 30</metric>
+    <metric>distchoice hospitals 51 15 30</metric>
+    <metric>distchoice hospitals 59 15 30</metric>
+    <metric>distchoice hospitals 65 15 30</metric>
+    <metric>distchoice hospitals 57 15 30</metric>
+    <metric>distchoice hospitals 62 15 30</metric>
+    <metric>distchoice hospitals 55 15 30</metric>
+    <metric>distchoice hospitals 49 15 30</metric>
+    <metric>distchoice hospitals 52 15 30</metric>
+    <metric>distchoice hospitals 54 15 30</metric>
+    <metric>distchoice hospitals 71 15 30</metric>
+    <metric>distchoice hospitals 68 15 30</metric>
+    <metric>distchoice hospitals 67 15 30</metric>
+    <metric>distchoice hospitals 70 15 30</metric>
+    <metric>distchoice hospitals 50 30 45</metric>
+    <metric>distchoice hospitals 61 30 45</metric>
+    <metric>distchoice hospitals 58 30 45</metric>
+    <metric>distchoice hospitals 60 30 45</metric>
+    <metric>distchoice hospitals 48 30 45</metric>
+    <metric>distchoice hospitals 63 30 45</metric>
+    <metric>distchoice hospitals 53 30 45</metric>
+    <metric>distchoice hospitals 64 30 45</metric>
+    <metric>distchoice hospitals 69 30 45</metric>
+    <metric>distchoice hospitals 56 30 45</metric>
+    <metric>distchoice hospitals 66 30 45</metric>
+    <metric>distchoice hospitals 51 30 45</metric>
+    <metric>distchoice hospitals 59 30 45</metric>
+    <metric>distchoice hospitals 65 30 45</metric>
+    <metric>distchoice hospitals 57 30 45</metric>
+    <metric>distchoice hospitals 62 30 45</metric>
+    <metric>distchoice hospitals 55 30 45</metric>
+    <metric>distchoice hospitals 49 30 45</metric>
+    <metric>distchoice hospitals 52 30 45</metric>
+    <metric>distchoice hospitals 54 30 45</metric>
+    <metric>distchoice hospitals 71 30 45</metric>
+    <metric>distchoice hospitals 68 30 45</metric>
+    <metric>distchoice hospitals 67 30 45</metric>
+    <metric>distchoice hospitals 70 30 45</metric>
+    <metric>distchoice hospitals 50 45 60</metric>
+    <metric>distchoice hospitals 61 45 60</metric>
+    <metric>distchoice hospitals 58 45 60</metric>
+    <metric>distchoice hospitals 60 45 60</metric>
+    <metric>distchoice hospitals 48 45 60</metric>
+    <metric>distchoice hospitals 63 45 60</metric>
+    <metric>distchoice hospitals 53 45 60</metric>
+    <metric>distchoice hospitals 64 45 60</metric>
+    <metric>distchoice hospitals 69 45 60</metric>
+    <metric>distchoice hospitals 56 45 60</metric>
+    <metric>distchoice hospitals 66 45 60</metric>
+    <metric>distchoice hospitals 51 45 60</metric>
+    <metric>distchoice hospitals 59 45 60</metric>
+    <metric>distchoice hospitals 65 45 60</metric>
+    <metric>distchoice hospitals 57 45 60</metric>
+    <metric>distchoice hospitals 62 45 60</metric>
+    <metric>distchoice hospitals 55 45 60</metric>
+    <metric>distchoice hospitals 49 45 60</metric>
+    <metric>distchoice hospitals 52 45 60</metric>
+    <metric>distchoice hospitals 54 45 60</metric>
+    <metric>distchoice hospitals 71 45 60</metric>
+    <metric>distchoice hospitals 68 45 60</metric>
+    <metric>distchoice hospitals 67 45 60</metric>
+    <metric>distchoice hospitals 70 45 60</metric>
+    <metric>distchoicemax hospitals 50 60</metric>
+    <metric>distchoicemax hospitals 61 60</metric>
+    <metric>distchoicemax hospitals 58 60</metric>
+    <metric>distchoicemax hospitals 60 60</metric>
+    <metric>distchoicemax hospitals 48 60</metric>
+    <metric>distchoicemax hospitals 63 60</metric>
+    <metric>distchoicemax hospitals 53 60</metric>
+    <metric>distchoicemax hospitals 64 60</metric>
+    <metric>distchoicemax hospitals 69 60</metric>
+    <metric>distchoicemax hospitals 56 60</metric>
+    <metric>distchoicemax hospitals 66 60</metric>
+    <metric>distchoicemax hospitals 51 60</metric>
+    <metric>distchoicemax hospitals 59 60</metric>
+    <metric>distchoicemax hospitals 65 60</metric>
+    <metric>distchoicemax hospitals 57 60</metric>
+    <metric>distchoicemax hospitals 62 60</metric>
+    <metric>distchoicemax hospitals 55 60</metric>
+    <metric>distchoicemax hospitals 49 60</metric>
+    <metric>distchoicemax hospitals 52 60</metric>
+    <metric>distchoicemax hospitals 54 60</metric>
+    <metric>distchoicemax hospitals 71 60</metric>
+    <metric>distchoicemax hospitals 68 60</metric>
+    <metric>distchoicemax hospitals 67 60</metric>
+    <metric>distchoicemax hospitals 70 60</metric>
+    <metric>womenwhoselected hospitals 50</metric>
+    <metric>womenwhoselected hospitals 61</metric>
+    <metric>womenwhoselected hospitals 58</metric>
+    <metric>womenwhoselected hospitals 60</metric>
+    <metric>womenwhoselected hospitals 48</metric>
+    <metric>womenwhoselected hospitals 63</metric>
+    <metric>womenwhoselected hospitals 53</metric>
+    <metric>womenwhoselected hospitals 64</metric>
+    <metric>womenwhoselected hospitals 69</metric>
+    <metric>womenwhoselected hospitals 56</metric>
+    <metric>womenwhoselected hospitals 66</metric>
+    <metric>womenwhoselected hospitals 51</metric>
+    <metric>womenwhoselected hospitals 59</metric>
+    <metric>womenwhoselected hospitals 65</metric>
+    <metric>womenwhoselected hospitals 57</metric>
+    <metric>womenwhoselected hospitals 62</metric>
+    <metric>womenwhoselected hospitals 55</metric>
+    <metric>womenwhoselected hospitals 49</metric>
+    <metric>womenwhoselected hospitals 52</metric>
+    <metric>womenwhoselected hospitals 54</metric>
+    <metric>womenwhoselected hospitals 71</metric>
+    <metric>womenwhoselected hospitals 68</metric>
+    <metric>womenwhoselected hospitals 67</metric>
+    <metric>womenwhoselected hospitals 70</metric>
+    <metric>rankupdate hospitals 50</metric>
+    <metric>rankupdate hospitals 61</metric>
+    <metric>rankupdate hospitals 58</metric>
+    <metric>rankupdate hospitals 60</metric>
+    <metric>rankupdate hospitals 48</metric>
+    <metric>rankupdate hospitals 63</metric>
+    <metric>rankupdate hospitals 53</metric>
+    <metric>rankupdate hospitals 64</metric>
+    <metric>rankupdate hospitals 69</metric>
+    <metric>rankupdate hospitals 56</metric>
+    <metric>rankupdate hospitals 66</metric>
+    <metric>rankupdate hospitals 51</metric>
+    <metric>rankupdate hospitals 59</metric>
+    <metric>rankupdate hospitals 65</metric>
+    <metric>rankupdate hospitals 57</metric>
+    <metric>rankupdate hospitals 62</metric>
+    <metric>rankupdate hospitals 55</metric>
+    <metric>rankupdate hospitals 49</metric>
+    <metric>rankupdate hospitals 52</metric>
+    <metric>rankupdate hospitals 54</metric>
+    <metric>rankupdate hospitals 71</metric>
+    <metric>rankupdate hospitals 68</metric>
+    <metric>rankupdate hospitals 67</metric>
+    <metric>rankupdate hospitals 70</metric>
     <enumeratedValueSet variable="updaterank_mean">
       <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
-      <value value="0"/>
       <value value="-10"/>
-      <value value="-50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="distance_threshold">
       <value value="0"/>
-      <value value="86"/>
-      <value value="260"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="rescale15">
-      <value value="false"/>
+      <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
-      <value value="0"/>
       <value value="10"/>
-      <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="updaterank_sd">
-      <value value="0"/>
-      <value value="0.25"/>
+      <value value="0.5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
       <value value="0"/>
-      <value value="10"/>
-      <value value="50"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
