@@ -165,7 +165,14 @@ foreach but-first df [ row ->                           ; here to avoid duplicat
 set rankinglist table:make
 
   foreach sort listhospitals [x ->
-    table:put rankinglist x nobody
+    table:put rankinglist [who] of one-of hospital with [id = x ] nobody
+  ]
+
+  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(10 * ([ownranking] of one-of hospital with [id = h])) +  exp(10 * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
+
+  foreach sort knownhosp [y ->
+    let list_effective filter [ [s] -> item 0 s = y ] but-first  df
+    table:put rankinglist [who] of one-of hospital with [id = y] item 1 item 0 list_effective
   ]
 
 ; foreach sort listhospitals [ x ->
@@ -1008,23 +1015,6 @@ weight_ownranking
 1
 NIL
 HORIZONTAL
-
-BUTTON
-410
-566
-505
-599
-rankhospital
-ask hospitals 71 [\n\nshow mean [ table:get rankinglist [who] of myself ] of (women with [ table:has-key? rankinglist [who] of myself ])\n\n]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
