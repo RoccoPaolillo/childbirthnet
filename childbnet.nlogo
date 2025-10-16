@@ -1598,7 +1598,14 @@ NetLogo 6.4.0
       <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
-      <value value="-10"/>
+      <value value="0"/>
+      <value value="-1"/>
+      <value value="-4"/>
+      <value value="-8"/>
+      <value value="-12"/>
+      <value value="-16"/>
+      <value value="-20"/>
+      <value value="-24"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
@@ -1613,13 +1620,27 @@ NetLogo 6.4.0
       <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
-      <value value="10"/>
+      <value value="0"/>
+      <value value="1"/>
+      <value value="4"/>
+      <value value="8"/>
+      <value value="12"/>
+      <value value="16"/>
+      <value value="20"/>
+      <value value="24"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="updaterank_sd">
-      <value value="0.5"/>
+      <value value="0.25"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
       <value value="0"/>
+      <value value="1"/>
+      <value value="4"/>
+      <value value="8"/>
+      <value value="12"/>
+      <value value="16"/>
+      <value value="20"/>
+      <value value="24"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
