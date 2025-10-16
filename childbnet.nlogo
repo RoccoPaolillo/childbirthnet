@@ -215,7 +215,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-  table:put rankinglist selectedhospital max list -1 (min list 1 table:get rankinglist selectedhospital + normal updaterank_mean updaterank_sd 1 -1)
+  table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal updaterank_mean updaterank_sd 1 -1))))
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
