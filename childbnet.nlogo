@@ -172,7 +172,7 @@ set rankinglist table:make
 
   foreach sort knownhosp [y ->
     let list_effective filter [ [s] -> item 0 s = y ] but-first  df
-    table:put rankinglist [who] of one-of hospital with [id = y] item 1 item 0 list_effective
+    table:put rankinglist [who] of one-of hospital with [id = y] normal item 1 item 0 list_effective 0.25 1 -1
   ]
 
 ; foreach sort listhospitals [ x ->
