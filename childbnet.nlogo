@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
 
 
@@ -69,6 +69,8 @@ end
 
 to create-hospitals
 let hospitals2023 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
+let rankhosp csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv"
+
 let listhospitals []
 foreach but-first hospitals2023 [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
   let key item 2 row                                               ; so I make first a list of the hospitals we have (24)
@@ -81,7 +83,6 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     create-hospital 1 [
       set id x
       set capacity 20
-      set color green
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                   ; the total hospitalizations per hospital across movements are computed
@@ -90,10 +91,23 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
       set ycor item 1 loc
+      let effective_rank filter [ [s] -> item 0 s = x ] but-first rankhosp
+      set ownranking item 1 item 0 effective_rank
+      set color (ifelse-value
+        ownranking = -1 [magenta]
+        ownranking = -0.5 [blue]
+        ownranking = 0 [green]
+        ownranking = 0.5 [pink]
+        [cyan]
 
+
+      )
 
     ]
   ]
+
+
+
 end
 
 to create-womens
@@ -196,12 +210,12 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm ) ^ 2)) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-  table:put rankinglist selectedhospital max list -1 (min list 1 table:get rankinglist selectedhospital + normal updaterank_mean updaterank_sd 1 -1)
+  table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal updaterank_mean updaterank_sd 1 -1))))
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -282,6 +296,10 @@ to-report womenwhoselected [idd]
   report count women with [selectedhospital = [who] of idd ]
 end
 
+to-report rankupdate [idd]
+  report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])
+end
+
 to plot-postranking [ m s maxlim minlim n num-bars]
   let values n-values n [ normal  m s maxlim minlim ]    ;; lista di n campioni
   set-current-plot "Distribution post ranking"
@@ -297,7 +315,7 @@ to report_data [filename]
   let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
   let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
 
-  let core-header ["who" "pro_com" "selectedhospitalemp" "selectedhospital"]
+  let core-header ["who" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
   let header sentence core-header param-names
   let rows (list header)
 
@@ -307,7 +325,11 @@ to report_data [filename]
       [who] of w
       [pro_com] of w
       [selectedhospitalemp] of w
-      [selectedhospital] of w)
+      [id] of one-of hospital with [who = [selectedhospitalemp] of w]
+      [selectedhospital] of w
+      [id] of one-of hospital with [who = [selectedhospital] of w]
+      [rankinglist] of w
+    )
     ;; append metadata + parameters to each row
     let row sentence core-row (sentence param-values)
     set rows lput row rows
@@ -456,7 +478,7 @@ BUTTON
 1388
 465
 show hospital
-ask hospital [set color green show-turtle]
+ask hospital [set color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
 NIL
 1
 T
@@ -490,7 +512,7 @@ BUTTON
 1009
 554
 testdistances
-print dist turtle origin_from turtle destination_to distservices
+print dist turtle origin_from turtle destination_to distservicesnorm
 NIL
 1
 T
@@ -507,7 +529,7 @@ INPUTBOX
 841
 584
 origin_from
-50.0
+19008.0
 1
 0
 Number
@@ -518,7 +540,7 @@ INPUTBOX
 928
 584
 destination_to
-14842.0
+5916.0
 1
 0
 Number
@@ -575,7 +597,7 @@ weight_distance_hospital
 weight_distance_hospital
 -1300
 0
--16.0
+0.0
 1
 1
 NIL
@@ -702,7 +724,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-20
+0
 
 BUTTON
 570
@@ -930,32 +952,32 @@ updaterank_mean
 updaterank_mean
 -1
 1
-0.6
+0.0
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-41
+40
 435
-184
+183
 468
 updaterank_sd
 updaterank_sd
 -1
 1
-0.5
-0.1
+0.2
+0.05
 1
 NIL
 HORIZONTAL
 
 PLOT
-27
-530
-227
-680
+17
+520
+217
+670
 Distribution post ranking
 NIL
 NIL
@@ -977,12 +999,29 @@ SLIDER
 weight_ownranking
 weight_ownranking
 -20
-20
+50
 0.0
 1
 1
 NIL
 HORIZONTAL
+
+BUTTON
+410
+566
+505
+599
+rankhospital
+ask hospitals 71 [\n\nshow mean [ table:get rankinglist [who] of myself ] of (women with [ table:has-key? rankinglist [who] of myself ])\n\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1363,41 +1402,245 @@ NetLogo 6.4.0
   <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
+    <metric>distchoicezero hospitals 50</metric>
+    <metric>distchoicezero hospitals 61</metric>
+    <metric>distchoicezero hospitals 58</metric>
+    <metric>distchoicezero hospitals 60</metric>
+    <metric>distchoicezero hospitals 48</metric>
+    <metric>distchoicezero hospitals 63</metric>
+    <metric>distchoicezero hospitals 53</metric>
+    <metric>distchoicezero hospitals 64</metric>
+    <metric>distchoicezero hospitals 69</metric>
+    <metric>distchoicezero hospitals 56</metric>
+    <metric>distchoicezero hospitals 66</metric>
+    <metric>distchoicezero hospitals 51</metric>
+    <metric>distchoicezero hospitals 59</metric>
+    <metric>distchoicezero hospitals 65</metric>
+    <metric>distchoicezero hospitals 57</metric>
+    <metric>distchoicezero hospitals 62</metric>
+    <metric>distchoicezero hospitals 55</metric>
+    <metric>distchoicezero hospitals 49</metric>
+    <metric>distchoicezero hospitals 52</metric>
+    <metric>distchoicezero hospitals 54</metric>
+    <metric>distchoicezero hospitals 71</metric>
+    <metric>distchoicezero hospitals 68</metric>
+    <metric>distchoicezero hospitals 67</metric>
+    <metric>distchoicezero hospitals 70</metric>
+    <metric>distchoice hospitals 50 0 15</metric>
+    <metric>distchoice hospitals 61 0 15</metric>
+    <metric>distchoice hospitals 58 0 15</metric>
+    <metric>distchoice hospitals 60 0 15</metric>
+    <metric>distchoice hospitals 48 0 15</metric>
+    <metric>distchoice hospitals 63 0 15</metric>
+    <metric>distchoice hospitals 53 0 15</metric>
+    <metric>distchoice hospitals 64 0 15</metric>
+    <metric>distchoice hospitals 69 0 15</metric>
+    <metric>distchoice hospitals 56 0 15</metric>
+    <metric>distchoice hospitals 66 0 15</metric>
+    <metric>distchoice hospitals 51 0 15</metric>
+    <metric>distchoice hospitals 59 0 15</metric>
+    <metric>distchoice hospitals 65 0 15</metric>
+    <metric>distchoice hospitals 57 0 15</metric>
+    <metric>distchoice hospitals 62 0 15</metric>
+    <metric>distchoice hospitals 55 0 15</metric>
+    <metric>distchoice hospitals 49 0 15</metric>
+    <metric>distchoice hospitals 52 0 15</metric>
+    <metric>distchoice hospitals 54 0 15</metric>
+    <metric>distchoice hospitals 71 0 15</metric>
+    <metric>distchoice hospitals 68 0 15</metric>
+    <metric>distchoice hospitals 67 0 15</metric>
+    <metric>distchoice hospitals 70 0 15</metric>
+    <metric>distchoice hospitals 50 15 30</metric>
+    <metric>distchoice hospitals 61 15 30</metric>
+    <metric>distchoice hospitals 58 15 30</metric>
+    <metric>distchoice hospitals 60 15 30</metric>
+    <metric>distchoice hospitals 48 15 30</metric>
+    <metric>distchoice hospitals 63 15 30</metric>
+    <metric>distchoice hospitals 53 15 30</metric>
+    <metric>distchoice hospitals 64 15 30</metric>
+    <metric>distchoice hospitals 69 15 30</metric>
+    <metric>distchoice hospitals 56 15 30</metric>
+    <metric>distchoice hospitals 66 15 30</metric>
+    <metric>distchoice hospitals 51 15 30</metric>
+    <metric>distchoice hospitals 59 15 30</metric>
+    <metric>distchoice hospitals 65 15 30</metric>
+    <metric>distchoice hospitals 57 15 30</metric>
+    <metric>distchoice hospitals 62 15 30</metric>
+    <metric>distchoice hospitals 55 15 30</metric>
+    <metric>distchoice hospitals 49 15 30</metric>
+    <metric>distchoice hospitals 52 15 30</metric>
+    <metric>distchoice hospitals 54 15 30</metric>
+    <metric>distchoice hospitals 71 15 30</metric>
+    <metric>distchoice hospitals 68 15 30</metric>
+    <metric>distchoice hospitals 67 15 30</metric>
+    <metric>distchoice hospitals 70 15 30</metric>
+    <metric>distchoice hospitals 50 30 45</metric>
+    <metric>distchoice hospitals 61 30 45</metric>
+    <metric>distchoice hospitals 58 30 45</metric>
+    <metric>distchoice hospitals 60 30 45</metric>
+    <metric>distchoice hospitals 48 30 45</metric>
+    <metric>distchoice hospitals 63 30 45</metric>
+    <metric>distchoice hospitals 53 30 45</metric>
+    <metric>distchoice hospitals 64 30 45</metric>
+    <metric>distchoice hospitals 69 30 45</metric>
+    <metric>distchoice hospitals 56 30 45</metric>
+    <metric>distchoice hospitals 66 30 45</metric>
+    <metric>distchoice hospitals 51 30 45</metric>
+    <metric>distchoice hospitals 59 30 45</metric>
+    <metric>distchoice hospitals 65 30 45</metric>
+    <metric>distchoice hospitals 57 30 45</metric>
+    <metric>distchoice hospitals 62 30 45</metric>
+    <metric>distchoice hospitals 55 30 45</metric>
+    <metric>distchoice hospitals 49 30 45</metric>
+    <metric>distchoice hospitals 52 30 45</metric>
+    <metric>distchoice hospitals 54 30 45</metric>
+    <metric>distchoice hospitals 71 30 45</metric>
+    <metric>distchoice hospitals 68 30 45</metric>
+    <metric>distchoice hospitals 67 30 45</metric>
+    <metric>distchoice hospitals 70 30 45</metric>
+    <metric>distchoice hospitals 50 45 60</metric>
+    <metric>distchoice hospitals 61 45 60</metric>
+    <metric>distchoice hospitals 58 45 60</metric>
+    <metric>distchoice hospitals 60 45 60</metric>
+    <metric>distchoice hospitals 48 45 60</metric>
+    <metric>distchoice hospitals 63 45 60</metric>
+    <metric>distchoice hospitals 53 45 60</metric>
+    <metric>distchoice hospitals 64 45 60</metric>
+    <metric>distchoice hospitals 69 45 60</metric>
+    <metric>distchoice hospitals 56 45 60</metric>
+    <metric>distchoice hospitals 66 45 60</metric>
+    <metric>distchoice hospitals 51 45 60</metric>
+    <metric>distchoice hospitals 59 45 60</metric>
+    <metric>distchoice hospitals 65 45 60</metric>
+    <metric>distchoice hospitals 57 45 60</metric>
+    <metric>distchoice hospitals 62 45 60</metric>
+    <metric>distchoice hospitals 55 45 60</metric>
+    <metric>distchoice hospitals 49 45 60</metric>
+    <metric>distchoice hospitals 52 45 60</metric>
+    <metric>distchoice hospitals 54 45 60</metric>
+    <metric>distchoice hospitals 71 45 60</metric>
+    <metric>distchoice hospitals 68 45 60</metric>
+    <metric>distchoice hospitals 67 45 60</metric>
+    <metric>distchoice hospitals 70 45 60</metric>
+    <metric>distchoicemax hospitals 50 60</metric>
+    <metric>distchoicemax hospitals 61 60</metric>
+    <metric>distchoicemax hospitals 58 60</metric>
+    <metric>distchoicemax hospitals 60 60</metric>
+    <metric>distchoicemax hospitals 48 60</metric>
+    <metric>distchoicemax hospitals 63 60</metric>
+    <metric>distchoicemax hospitals 53 60</metric>
+    <metric>distchoicemax hospitals 64 60</metric>
+    <metric>distchoicemax hospitals 69 60</metric>
+    <metric>distchoicemax hospitals 56 60</metric>
+    <metric>distchoicemax hospitals 66 60</metric>
+    <metric>distchoicemax hospitals 51 60</metric>
+    <metric>distchoicemax hospitals 59 60</metric>
+    <metric>distchoicemax hospitals 65 60</metric>
+    <metric>distchoicemax hospitals 57 60</metric>
+    <metric>distchoicemax hospitals 62 60</metric>
+    <metric>distchoicemax hospitals 55 60</metric>
+    <metric>distchoicemax hospitals 49 60</metric>
+    <metric>distchoicemax hospitals 52 60</metric>
+    <metric>distchoicemax hospitals 54 60</metric>
+    <metric>distchoicemax hospitals 71 60</metric>
+    <metric>distchoicemax hospitals 68 60</metric>
+    <metric>distchoicemax hospitals 67 60</metric>
+    <metric>distchoicemax hospitals 70 60</metric>
+    <metric>womenwhoselected hospitals 50</metric>
+    <metric>womenwhoselected hospitals 61</metric>
+    <metric>womenwhoselected hospitals 58</metric>
+    <metric>womenwhoselected hospitals 60</metric>
+    <metric>womenwhoselected hospitals 48</metric>
+    <metric>womenwhoselected hospitals 63</metric>
+    <metric>womenwhoselected hospitals 53</metric>
+    <metric>womenwhoselected hospitals 64</metric>
+    <metric>womenwhoselected hospitals 69</metric>
+    <metric>womenwhoselected hospitals 56</metric>
+    <metric>womenwhoselected hospitals 66</metric>
+    <metric>womenwhoselected hospitals 51</metric>
+    <metric>womenwhoselected hospitals 59</metric>
+    <metric>womenwhoselected hospitals 65</metric>
+    <metric>womenwhoselected hospitals 57</metric>
+    <metric>womenwhoselected hospitals 62</metric>
+    <metric>womenwhoselected hospitals 55</metric>
+    <metric>womenwhoselected hospitals 49</metric>
+    <metric>womenwhoselected hospitals 52</metric>
+    <metric>womenwhoselected hospitals 54</metric>
+    <metric>womenwhoselected hospitals 71</metric>
+    <metric>womenwhoselected hospitals 68</metric>
+    <metric>womenwhoselected hospitals 67</metric>
+    <metric>womenwhoselected hospitals 70</metric>
+    <metric>rankupdate hospitals 50</metric>
+    <metric>rankupdate hospitals 61</metric>
+    <metric>rankupdate hospitals 58</metric>
+    <metric>rankupdate hospitals 60</metric>
+    <metric>rankupdate hospitals 48</metric>
+    <metric>rankupdate hospitals 63</metric>
+    <metric>rankupdate hospitals 53</metric>
+    <metric>rankupdate hospitals 64</metric>
+    <metric>rankupdate hospitals 69</metric>
+    <metric>rankupdate hospitals 56</metric>
+    <metric>rankupdate hospitals 66</metric>
+    <metric>rankupdate hospitals 51</metric>
+    <metric>rankupdate hospitals 59</metric>
+    <metric>rankupdate hospitals 65</metric>
+    <metric>rankupdate hospitals 57</metric>
+    <metric>rankupdate hospitals 62</metric>
+    <metric>rankupdate hospitals 55</metric>
+    <metric>rankupdate hospitals 49</metric>
+    <metric>rankupdate hospitals 52</metric>
+    <metric>rankupdate hospitals 54</metric>
+    <metric>rankupdate hospitals 71</metric>
+    <metric>rankupdate hospitals 68</metric>
+    <metric>rankupdate hospitals 67</metric>
+    <metric>rankupdate hospitals 70</metric>
     <enumeratedValueSet variable="updaterank_mean">
       <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
       <value value="0"/>
-      <value value="-10"/>
-      <value value="-50"/>
+      <value value="-1"/>
+      <value value="-4"/>
+      <value value="-8"/>
+      <value value="-12"/>
+      <value value="-16"/>
+      <value value="-20"/>
+      <value value="-24"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="distance_threshold">
       <value value="0"/>
-      <value value="86"/>
-      <value value="260"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="rescale15">
-      <value value="false"/>
+      <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
       <value value="0"/>
-      <value value="10"/>
-      <value value="50"/>
+      <value value="1"/>
+      <value value="4"/>
+      <value value="8"/>
+      <value value="12"/>
+      <value value="16"/>
+      <value value="20"/>
+      <value value="24"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="updaterank_sd">
-      <value value="0"/>
       <value value="0.25"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
       <value value="0"/>
-      <value value="10"/>
-      <value value="50"/>
+      <value value="1"/>
+      <value value="4"/>
+      <value value="8"/>
+      <value value="12"/>
+      <value value="16"/>
+      <value value="20"/>
+      <value value="24"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
