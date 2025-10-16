@@ -210,7 +210,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservices) ^ 2 )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservices)  )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
@@ -593,7 +593,7 @@ weight_distance_hospital
 weight_distance_hospital
 -1300
 0
--1.0
+-100.0
 1
 1
 NIL
