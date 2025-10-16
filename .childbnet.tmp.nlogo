@@ -311,6 +311,7 @@ to plot-postranking [ m s maxlim minlim n num-bars]
   set-plot-x-range -1 1                   ;; fissiamo i bordi
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
+  ;print values
 end
 
 to report_data [filename]
