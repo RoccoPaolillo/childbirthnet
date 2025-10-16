@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
 
 
@@ -69,6 +69,8 @@ end
 
 to create-hospitals
 let hospitals2023 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/accessi_parto_ospedali_used.csv"
+let rankhosp csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv"
+
 let listhospitals []
 foreach but-first hospitals2023 [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
   let key item 2 row                                               ; so I make first a list of the hospitals we have (24)
@@ -81,7 +83,6 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
     create-hospital 1 [
       set id x
       set capacity 20
-      set color green
     set shape "triangle"
       let list_effective filter [ [s] -> item 2 s = x ] but-first hospitals2023              ; it filters the movement rows in the dataset [here sublists] where it is mentioned
       set hospitalizations reduce + map [ [s] -> item 5 s ] list_effective                   ; the total hospitalizations per hospital across movements are computed
@@ -90,10 +91,23 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 4 item 0 list_effective
       set xcor item 0 loc
       set ycor item 1 loc
+      let effective_rank filter [ [s] -> item 0 s = x ] but-first rankhosp
+      set ownranking item 1 item 0 effective_rank
+      set color (ifelse-value
+        ownranking = -1 [magenta]
+        ownranking = -0.5 [blue]
+        ownranking = 0 [green]
+        ownranking = 0.5 [pink]
+        [cyan]
 
+
+      )
 
     ]
   ]
+
+
+
 end
 
 to create-womens
@@ -196,7 +210,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     foreach sort friends [ z ->
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
    ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm ) ^ 2)) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) ^ 2 )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
   ]
 
   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
@@ -297,7 +311,7 @@ to report_data [filename]
   let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
   let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
 
-  let core-header ["who" "pro_com" "selectedhospitalemp" "selectedhospital"]
+  let core-header ["who" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
   let header sentence core-header param-names
   let rows (list header)
 
@@ -307,7 +321,11 @@ to report_data [filename]
       [who] of w
       [pro_com] of w
       [selectedhospitalemp] of w
-      [selectedhospital] of w)
+      [id] of one-of hospital with [who = [selectedhospitalemp] of w]
+      [selectedhospital] of w
+      [id] of one-of hospital with [who = [selectedhospital] of w]
+      [rankinglist] of w
+    )
     ;; append metadata + parameters to each row
     let row sentence core-row (sentence param-values)
     set rows lput row rows
@@ -490,7 +508,7 @@ BUTTON
 1009
 554
 testdistances
-print dist turtle origin_from turtle destination_to distservices
+print dist turtle origin_from turtle destination_to distservicesnorm
 NIL
 1
 T
@@ -507,7 +525,7 @@ INPUTBOX
 841
 584
 origin_from
-50.0
+19008.0
 1
 0
 Number
@@ -518,7 +536,7 @@ INPUTBOX
 928
 584
 destination_to
-14842.0
+5916.0
 1
 0
 Number
@@ -575,7 +593,7 @@ weight_distance_hospital
 weight_distance_hospital
 -1300
 0
--16.0
+0.0
 1
 1
 NIL
@@ -702,7 +720,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-20
+0
 
 BUTTON
 570
@@ -930,32 +948,32 @@ updaterank_mean
 updaterank_mean
 -1
 1
-0.6
+0.0
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-41
+40
 435
-184
+183
 468
 updaterank_sd
 updaterank_sd
 -1
 1
-0.5
-0.1
+0.25
+0.05
 1
 NIL
 HORIZONTAL
 
 PLOT
-27
-530
-227
-680
+17
+520
+217
+670
 Distribution post ranking
 NIL
 NIL
@@ -977,12 +995,29 @@ SLIDER
 weight_ownranking
 weight_ownranking
 -20
-20
-0.0
+50
+50.0
 1
 1
 NIL
 HORIZONTAL
+
+BUTTON
+410
+566
+505
+599
+rankhospital
+let rankhosp csv:from-file \"C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv\"\nprint rankhosp\n\n foreach sort hospital [ x ->\nlet list_effective filter [ [s] -> item 0 s = [id] of x ] but-first rankhosp\nprint (word [id] of x \" \"  item 1 item 0 list_effective)\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
