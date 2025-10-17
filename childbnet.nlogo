@@ -166,7 +166,7 @@ foreach but-first df [ row ->                           ; here to avoid duplicat
 set rankinglist table:make
 
 ; each woman has a rank for 5 hospitals, extracted based on reputation + distance (closer)
-  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(0 * ([ownranking] of one-of hospital with [id = h])) *  exp(10 * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
+  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(options_rank * ([ownranking] of one-of hospital with [id = h])) *  exp(options_dist * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
 
   ; the hospitals are taken into memory for discussion
   foreach sort knownhosp [y ->
@@ -568,10 +568,10 @@ destination_to
 Number
 
 BUTTON
-249
-612
-314
-645
+83
+446
+148
+479
 go
 go
 T
@@ -596,10 +596,10 @@ count women with [givenbirth = true]
 11
 
 SLIDER
-44
-313
-197
-346
+36
+323
+189
+356
 social_multiplier
 social_multiplier
 -10
@@ -611,10 +611,10 @@ max
 HORIZONTAL
 
 SLIDER
-45
-241
-198
-274
+37
+251
+190
+284
 weight_distance_hospital
 weight_distance_hospital
 -200
@@ -626,10 +626,10 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-86
-221
-172
-239
+78
+231
+164
+249
 selection hospital
 10
 0.0
@@ -663,10 +663,10 @@ NIL
 1
 
 TEXTBOX
-1332
-479
-1481
-583
+1327
+478
+1476
+582
 women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
 0.0
@@ -674,9 +674,9 @@ women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 74
 
 SLIDER
 49
-138
+150
 179
-171
+183
 distance_threshold
 distance_threshold
 0
@@ -790,9 +790,9 @@ PENS
 
 TEXTBOX
 69
-116
+128
 155
-134
+146
 network formation
 10
 0.0
@@ -862,9 +862,9 @@ count women
 
 SLIDER
 49
-174
+186
 179
-207
+219
 n_network
 n_network
 0
@@ -887,10 +887,10 @@ emp_net
 -1000
 
 BUTTON
-1414
-410
-1498
-443
+1401
+397
+1485
+430
 emp_mobilities
 ask women [let selectedoneemp one-of hospital with [who = [selectedhospitalemp] of myself]\ncreate-link-with selectedoneemp\nask my-out-links [\n\n      ifelse dist selectedoneemp myself distservices <= 0 [set color red]\n        [ifelse dist selectedoneemp myself distservices > 0 and dist selectedoneemp myself distservices <= 15  [set color yellow]\n          [ ifelse dist selectedoneemp myself distservices > 15 and dist selectedoneemp myself distservices <= 30 [set color orange]\n            [ifelse dist selectedoneemp myself distservices > 30 and dist selectedoneemp myself distservices <= 45 [set color brown]\n              [ifelse dist selectedoneemp myself distservices > 45 and dist selectedoneemp myself distservices <= 60 [set color violet]\n                [set color blue]\n              ]\n            ]\n          ]\n      ]\n    ]\n\n]
 NIL
@@ -949,25 +949,25 @@ NIL
 1
 
 SLIDER
-17
-474
-112
-507
+14
+394
+109
+427
 uptrnk_mean
 uptrnk_mean
 -1
 1
-0.5
+0.0
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-115
-474
-211
-507
+112
+394
+208
+427
 uptrnk_sd
 uptrnk_sd
 -1
@@ -979,10 +979,10 @@ NIL
 HORIZONTAL
 
 PLOT
-17
-520
-217
-670
+13
+490
+213
+640
 Distribution post ranking
 NIL
 NIL
@@ -997,10 +997,10 @@ PENS
 "default" 1.0 1 -16777216 true "" ""
 
 SLIDER
-45
-277
-198
-310
+37
+287
+190
+320
 weight_ownranking
 weight_ownranking
 -20
@@ -1046,11 +1046,51 @@ NIL
 1
 
 TEXTBOX
-72
-453
-177
-471
+69
+373
+174
+391
 rank post-experience
+10
+0.0
+1
+
+SLIDER
+18
+85
+112
+118
+options_rank
+options_rank
+0
+10
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+114
+85
+206
+118
+options_dist
+options_dist
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+69
+65
+177
+83
+agents' hospital ranks
 10
 0.0
 1
