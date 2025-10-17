@@ -500,7 +500,7 @@ BUTTON
 1388
 465
 show hospital
-ask hospital [set color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
+ask hospital [\nset size 1\nset color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
 NIL
 1
 T
@@ -746,7 +746,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-0
+21
 
 BUTTON
 605
@@ -754,7 +754,7 @@ BUTTON
 700
 557
 highlight hospital
-ask hospitals hospital_id [set color blue]\nplot-hospitals
+ask hospitals hospital_id [set  size 2]\nplot-hospitals
 NIL
 1
 T
