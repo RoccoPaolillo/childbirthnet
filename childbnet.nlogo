@@ -393,10 +393,10 @@ ticks
 30.0
 
 BUTTON
-14
-20
-77
-53
+15
+19
+78
+52
 setup
 setup
 NIL
