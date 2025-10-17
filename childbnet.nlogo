@@ -222,9 +222,9 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   foreach sort hospitaltoselect [t ->
     if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
   ]
-  print (word who " list " hospitallist)
-  print (word "my list " rankinglist)
-  ask hospitaltoselect [print (word who " call " myself)]
+;  print (word who " list " hospitallist)
+;  print (word "my list " rankinglist)
+;  ask hospitaltoselect [print (word who " call " myself)]
 
   ask hospitaltoselect [
     let ranking_othweight []
@@ -236,10 +236,10 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
-    print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
-    print (word [who] of z " dist " weightfriend " me " [who] of myself " tot " totweightfriend " rankinglist " ranking_othweight)
+;    print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
+;    print (word [who] of z " dist " weightfriend " me " [who] of myself " tot " totweightfriend " rankinglist " ranking_othweight)
     ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + (social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
 
   ]
 
@@ -581,7 +581,7 @@ BUTTON
 508
 go
 go
-NIL
+T
 1
 T
 OBSERVER
@@ -626,7 +626,7 @@ weight_distance_hospital
 weight_distance_hospital
 -200
 0
-0.0
+-17.0
 1
 1
 NIL
@@ -1029,7 +1029,7 @@ weight_ownranking
 weight_ownranking
 -20
 50
-4.0
+5.0
 1
 1
 NIL
