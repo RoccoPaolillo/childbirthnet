@@ -222,17 +222,24 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   foreach sort hospitaltoselect [t ->
     if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
   ]
-;  print (word who " list " hospitallist)
-;  print (word "my list " rankinglist)
-;  ask hospitaltoselect [print (word who " call " myself)]
+  print (word who " list " hospitallist)
+  print (word "my list " rankinglist)
+  ask hospitaltoselect [print (word who " call " myself)]
 
   ask hospitaltoselect [
     let ranking_othweight []
+    let totweightfriend []
     foreach sort friends with [table:has-key? rankinglist [who] of myself] [ z ->
-    set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
-    ;print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
+      ; weight of friend: 1 - distance to woman
+    let weightfriend (1 - dist myself z distservicesnorm)
+      ; denominator in weighted average
+    set totweightfriend lput weightfriend totweightfriend
+      ; numerator weighted average (rank of hospital by friend * weight of friend)
+    set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
+    print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
+    print (word [who] of z " dist " weightfriend " me " [who] of myself " tot " totweightfriend " rankinglist " ranking_othweight)
     ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + (social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)))
 
   ]
 
@@ -530,9 +537,9 @@ OUTPUT
 
 BUTTON
 937
-521
+522
 1009
-554
+555
 testdistances
 print dist turtle origin_from turtle destination_to distservicesnorm
 NIL
@@ -551,7 +558,7 @@ INPUTBOX
 841
 584
 origin_from
-19008.0
+1961.0
 1
 0
 Number
@@ -562,7 +569,7 @@ INPUTBOX
 928
 584
 destination_to
-5916.0
+10161.0
 1
 0
 Number
@@ -574,7 +581,7 @@ BUTTON
 508
 go
 go
-T
+NIL
 1
 T
 OBSERVER
@@ -619,7 +626,7 @@ weight_distance_hospital
 weight_distance_hospital
 -200
 0
--8.0
+0.0
 1
 1
 NIL
@@ -1022,7 +1029,7 @@ weight_ownranking
 weight_ownranking
 -20
 50
-15.0
+4.0
 1
 1
 NIL
