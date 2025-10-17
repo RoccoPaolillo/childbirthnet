@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp timeatbirth]
 
 
 
@@ -145,6 +145,7 @@ ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
       set counselstay 0
       set PRO_COM item 0 s
       set selectedhospitalemp [who] of x
+      set timeatbirth 0
   ]
 ]
 ]
@@ -265,6 +266,7 @@ if show_networks [
 
  set givenbirth true
  set pregnant false
+ set timeatbirth ticks
 
 end
 
@@ -337,7 +339,7 @@ to report_data [filename]
   let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
   let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks uptrnk_mean uptrnk_sd emp_net)
 
-  let core-header ["who" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
+  let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
   let header sentence core-header param-names
   let rows (list header)
 
@@ -345,6 +347,7 @@ to report_data [filename]
   foreach sort women [ w ->
     let core-row (list
       [who] of w
+      [timeatbirth] of w
       [pro_com] of w
       [selectedhospitalemp] of w
       [id] of one-of hospital with [who = [selectedhospitalemp] of w]
@@ -746,7 +749,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-21
+6
 
 BUTTON
 605
@@ -1474,6 +1477,7 @@ NetLogo 6.4.0
   <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
+    <metric>[who] of women with [givenbirth true]</metric>
     <metric>distchoicezero hospitals 50</metric>
     <metric>distchoicezero hospitals 61</metric>
     <metric>distchoicezero hospitals 58</metric>
@@ -1671,13 +1675,6 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
       <value value="0"/>
-      <value value="-1"/>
-      <value value="-4"/>
-      <value value="-8"/>
-      <value value="-12"/>
-      <value value="-16"/>
-      <value value="-20"/>
-      <value value="-24"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
@@ -1693,26 +1690,12 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
       <value value="0"/>
-      <value value="1"/>
-      <value value="4"/>
-      <value value="8"/>
-      <value value="12"/>
-      <value value="16"/>
-      <value value="20"/>
-      <value value="24"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="updaterank_sd">
-      <value value="0.25"/>
+      <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
       <value value="0"/>
-      <value value="1"/>
-      <value value="4"/>
-      <value value="8"/>
-      <value value="12"/>
-      <value value="16"/>
-      <value value="20"/>
-      <value value="24"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
