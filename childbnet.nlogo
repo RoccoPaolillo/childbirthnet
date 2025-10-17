@@ -165,21 +165,14 @@ foreach but-first df [ row ->                           ; here to avoid duplicat
 
 set rankinglist table:make
 
- ; foreach sort listhospitals [x ->
- ;   table:put rankinglist [who] of one-of hospital with [id = x ] nobody
- ; ]
-
+; each woman has a rank for 5 hospitals, extracted based on reputation + distance (closer)
   let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(10 * ([ownranking] of one-of hospital with [id = h])) +  exp(10 * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
 
+  ; the hospitals are taken into memory for discussion
   foreach sort knownhosp [y ->
     let list_effective filter [ [s] -> item 0 s = y ] but-first  df
     table:put rankinglist [who] of one-of hospital with [id = y] normal item 1 item 0 list_effective 0.25 1 -1
   ]
-
-; foreach sort listhospitals [ x ->
-; let list_effective filter [ [s] -> item 0 s = x ] but-first  df
-; table:put rankinglist [who] of one-of hospital with [id = x ] nobody ; item 1 item 0 list_effective
-; ]
 
 end
 
