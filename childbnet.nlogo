@@ -62,6 +62,7 @@ let consul2019 csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data
     let loc gis:location-of gis:random-point-inside gis:find-one-feature tuscany "PRO_COM" item 0 x
     set xcor item 0 loc
     set ycor item 1 loc
+    hide-turtle
 ]
   ]
 end
@@ -164,10 +165,14 @@ foreach but-first df [ row ->                           ; here to avoid duplicat
 
 set rankinglist table:make
 
-foreach sort listhospitals [ x ->
-let list_effective filter [ [s] -> item 0 s = x ] but-first  df
-table:put rankinglist [who] of one-of hospital with [id = x ] item 1 item 0 list_effective
-]
+; each woman has a rank for 5 hospitals, extracted based on reputation + distance (closer)
+  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(10 * ([ownranking] of one-of hospital with [id = h])) +  exp(10 * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
+
+  ; the hospitals are taken into memory for discussion
+  foreach sort knownhosp [y ->
+    let list_effective filter [ [s] -> item 0 s = y ] but-first  df
+    table:put rankinglist [who] of one-of hospital with [id = y] normal item 1 item 0 list_effective 0.25 1 -1
+  ]
 
 end
 
@@ -204,18 +209,36 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
 ]
 
-  ask hospital [
-    ; ranking of the alter friends for each hospital (min = 0, max = 260) for scaling
+  let hospitallist remove-duplicates reduce sentence [ table:keys rankinglist ] of friends
+  let hospitaltoselect hospital with [member? who hospitallist]
+  ; if not hospital in the own list, add with value 0 (effect random)
+  foreach sort hospitaltoselect [t ->
+    if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
+  ]
+;  print (word who " list " hospitallist)
+;  print (word "my list " rankinglist)
+;  ask hospitaltoselect [print (word who " call " myself)]
+
+  ask hospitaltoselect [
     let ranking_othweight []
-    foreach sort friends [ z ->
-    set ranking_othweight lput (table:get [rankinglist] of z [who] of self) ranking_othweight
-   ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + (social_multiplier * (reduce + ranking_othweight / count friends )))
+    let totweightfriend []
+    foreach sort friends with [table:has-key? rankinglist [who] of myself] [ z ->
+      ; weight of friend: 1 - distance to woman
+    let weightfriend (1 - dist myself z distservicesnorm)
+      ; denominator in weighted average
+    set totweightfriend lput weightfriend totweightfriend
+      ; numerator weighted average (rank of hospital by friend * weight of friend)
+    set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
+;    print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
+;    print (word [who] of z " dist " weightfriend " me " [who] of myself " tot " totweightfriend " rankinglist " ranking_othweight)
+    ]
+    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
+
   ]
 
-  set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
+   set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-  table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal updaterank_mean updaterank_sd 1 -1))))
+   table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal updaterank_mean updaterank_sd 1 -1))))
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -307,7 +330,6 @@ to plot-postranking [ m s maxlim minlim n num-bars]
   set-plot-x-range -1 1                   ;; fissiamo i bordi
   set-histogram-num-bars num-bars         ;; es. 30
   histogram values
-  print values
 end
 
 to report_data [filename]
@@ -508,9 +530,9 @@ OUTPUT
 
 BUTTON
 937
-521
+522
 1009
-554
+555
 testdistances
 print dist turtle origin_from turtle destination_to distservicesnorm
 NIL
@@ -529,7 +551,7 @@ INPUTBOX
 841
 584
 origin_from
-19008.0
+1961.0
 1
 0
 Number
@@ -540,15 +562,15 @@ INPUTBOX
 928
 584
 destination_to
-5916.0
+10161.0
 1
 0
 Number
 
 BUTTON
-76
+75
 475
-141
+140
 508
 go
 go
@@ -582,7 +604,7 @@ social_multiplier
 social_multiplier
 -10
 10
-0.0
+10.0
 1
 1
 max
@@ -590,14 +612,14 @@ HORIZONTAL
 
 SLIDER
 32
-186
-185
-219
+183
+189
+216
 weight_distance_hospital
 weight_distance_hospital
--1300
+-200
 0
-0.0
+-17.0
 1
 1
 NIL
@@ -847,7 +869,7 @@ n_network
 n_network
 0
 100
-50.0
+46.0
 1
 1
 NIL
@@ -905,7 +927,7 @@ SWITCH
 51
 rescale15
 rescale15
-0
+1
 1
 -1000
 
@@ -1000,28 +1022,11 @@ weight_ownranking
 weight_ownranking
 -20
 50
-0.0
+5.0
 1
 1
 NIL
 HORIZONTAL
-
-BUTTON
-410
-566
-505
-599
-rankhospital
-ask hospitals 71 [\n\nshow mean [ table:get rankinglist [who] of myself ] of (women with [ table:has-key? rankinglist [who] of myself ])\n\n]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
