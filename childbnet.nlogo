@@ -325,6 +325,10 @@ to-report rankupdate [idd]
   report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])
 end
 
+to-report womendiscuss [idd]
+ report count women with [table:has-key? rankinglist [who] of idd]
+end
+
 to plot-postranking [ m s maxlim minlim n num-bars]
   let values n-values n [ normal  m s maxlim minlim ]    ;; lista di n campioni
   set-current-plot "Distribution post ranking"
@@ -1669,32 +1673,74 @@ NetLogo 6.4.0
     <metric>rankupdate hospitals 68</metric>
     <metric>rankupdate hospitals 67</metric>
     <metric>rankupdate hospitals 70</metric>
-    <enumeratedValueSet variable="updaterank_mean">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_distance_hospital">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="show_networks">
+    <metric>womendiscuss hospitals 50</metric>
+    <metric>womendiscuss hospitals 61</metric>
+    <metric>womendiscuss hospitals 58</metric>
+    <metric>womendiscuss hospitals 60</metric>
+    <metric>womendiscuss hospitals 48</metric>
+    <metric>womendiscuss hospitals 63</metric>
+    <metric>womendiscuss hospitals 53</metric>
+    <metric>womendiscuss hospitals 64</metric>
+    <metric>womendiscuss hospitals 69</metric>
+    <metric>womendiscuss hospitals 56</metric>
+    <metric>womendiscuss hospitals 66</metric>
+    <metric>womendiscuss hospitals 51</metric>
+    <metric>womendiscuss hospitals 59</metric>
+    <metric>womendiscuss hospitals 65</metric>
+    <metric>womendiscuss hospitals 57</metric>
+    <metric>womendiscuss hospitals 62</metric>
+    <metric>womendiscuss hospitals 55</metric>
+    <metric>womendiscuss hospitals 49</metric>
+    <metric>womendiscuss hospitals 52</metric>
+    <metric>womendiscuss hospitals 54</metric>
+    <metric>womendiscuss hospitals 71</metric>
+    <metric>womendiscuss hospitals 68</metric>
+    <metric>womendiscuss hospitals 67</metric>
+    <metric>womendiscuss hospitals 70</metric>
+    <enumeratedValueSet variable="rescale15">
       <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="options_rank">
+      <value value="0"/>
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="options_dist">
+      <value value="0"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="distance_threshold">
       <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rescale15">
-      <value value="true"/>
+      <value value="260"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="weight_distance_hospital">
+      <value value="0"/>
+      <value value="-1"/>
+      <value value="-5"/>
+      <value value="-10"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
       <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="updaterank_sd">
-      <value value="0"/>
+      <value value="1"/>
+      <value value="5"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
       <value value="0"/>
+      <value value="1"/>
+      <value value="5"/>
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uptrnk_mean">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uptrnk_sd">
+      <value value="0.25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="show_networks">
+      <value value="false"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
