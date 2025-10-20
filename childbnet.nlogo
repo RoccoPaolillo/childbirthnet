@@ -1680,35 +1680,23 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="options_rank">
       <value value="0"/>
-      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="options_dist">
-      <value value="0"/>
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="distance_threshold">
-      <value value="0"/>
       <value value="260"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
-      <value value="0"/>
-      <value value="-1"/>
-      <value value="-5"/>
       <value value="-10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
       <value value="0"/>
-      <value value="1"/>
-      <value value="5"/>
-      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
-      <value value="0"/>
-      <value value="1"/>
-      <value value="5"/>
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="uptrnk_mean">
