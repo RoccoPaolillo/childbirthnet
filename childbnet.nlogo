@@ -322,11 +322,13 @@ to-report womenwhoselected [idd]
 end
 
 to-report rankupdate [idd]
-  report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])
+  if any? women with [ table:has-key? rankinglist [who] of idd ] [
+    report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])]
 end
 
 to-report womendiscuss [idd]
- report count women with [table:has-key? rankinglist [who] of idd]
+  if any? women with [ table:has-key? rankinglist [who] of idd ] [
+    report count women with [table:has-key? rankinglist [who] of idd]]
 end
 
 to plot-postranking [ m s maxlim minlim n num-bars]
@@ -718,7 +720,7 @@ SWITCH
 591
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -1673,30 +1675,6 @@ NetLogo 6.4.0
     <metric>rankupdate hospitals 68</metric>
     <metric>rankupdate hospitals 67</metric>
     <metric>rankupdate hospitals 70</metric>
-    <metric>womendiscuss hospitals 50</metric>
-    <metric>womendiscuss hospitals 61</metric>
-    <metric>womendiscuss hospitals 58</metric>
-    <metric>womendiscuss hospitals 60</metric>
-    <metric>womendiscuss hospitals 48</metric>
-    <metric>womendiscuss hospitals 63</metric>
-    <metric>womendiscuss hospitals 53</metric>
-    <metric>womendiscuss hospitals 64</metric>
-    <metric>womendiscuss hospitals 69</metric>
-    <metric>womendiscuss hospitals 56</metric>
-    <metric>womendiscuss hospitals 66</metric>
-    <metric>womendiscuss hospitals 51</metric>
-    <metric>womendiscuss hospitals 59</metric>
-    <metric>womendiscuss hospitals 65</metric>
-    <metric>womendiscuss hospitals 57</metric>
-    <metric>womendiscuss hospitals 62</metric>
-    <metric>womendiscuss hospitals 55</metric>
-    <metric>womendiscuss hospitals 49</metric>
-    <metric>womendiscuss hospitals 52</metric>
-    <metric>womendiscuss hospitals 54</metric>
-    <metric>womendiscuss hospitals 71</metric>
-    <metric>womendiscuss hospitals 68</metric>
-    <metric>womendiscuss hospitals 67</metric>
-    <metric>womendiscuss hospitals 70</metric>
     <enumeratedValueSet variable="rescale15">
       <value value="false"/>
     </enumeratedValueSet>
