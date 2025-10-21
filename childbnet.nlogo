@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp xval]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp timeatbirth]
 
 
 
@@ -37,7 +37,7 @@ to setup
 
   ask women [options_hospital]
   plot-hospitals
-  plot-postranking updaterank_mean updaterank_sd 1 -1 100 100
+  plot-postranking uptrnk_mean uptrnk_sd 1 -1 100 100
   reset-timer
   reset-ticks
 end
@@ -145,6 +145,7 @@ ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
       set counselstay 0
       set PRO_COM item 0 s
       set selectedhospitalemp [who] of x
+      set timeatbirth 0
   ]
 ]
 ]
@@ -166,7 +167,7 @@ foreach but-first df [ row ->                           ; here to avoid duplicat
 set rankinglist table:make
 
 ; each woman has a rank for 5 hospitals, extracted based on reputation + distance (closer)
-  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(10 * ([ownranking] of one-of hospital with [id = h])) +  exp(10 * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
+  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(options_rank * ([ownranking] of one-of hospital with [id = h])) *  exp(options_dist * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
 
   ; the hospitals are taken into memory for discussion
   foreach sort knownhosp [y ->
@@ -238,7 +239,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-   table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal updaterank_mean updaterank_sd 1 -1))))
+   table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal uptrnk_mean uptrnk_sd 1 -1))))
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -265,6 +266,7 @@ if show_networks [
 
  set givenbirth true
  set pregnant false
+ set timeatbirth ticks
 
 end
 
@@ -320,7 +322,13 @@ to-report womenwhoselected [idd]
 end
 
 to-report rankupdate [idd]
-  report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])
+  if any? women with [ table:has-key? rankinglist [who] of idd ] [
+    report mean [ table:get rankinglist [who] of idd ] of (women with [ table:has-key? rankinglist [who] of idd ])]
+end
+
+to-report womendiscuss [idd]
+  if any? women with [ table:has-key? rankinglist [who] of idd ] [
+    report count women with [table:has-key? rankinglist [who] of idd]]
 end
 
 to plot-postranking [ m s maxlim minlim n num-bars]
@@ -335,9 +343,9 @@ end
 to report_data [filename]
 
   let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
-  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks updaterank_mean updaterank_sd emp_net)
+  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks uptrnk_mean uptrnk_sd emp_net)
 
-  let core-header ["who" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
+  let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
   let header sentence core-header param-names
   let rows (list header)
 
@@ -345,6 +353,7 @@ to report_data [filename]
   foreach sort women [ w ->
     let core-row (list
       [who] of w
+      [timeatbirth] of w
       [pro_com] of w
       [selectedhospitalemp] of w
       [id] of one-of hospital with [who = [selectedhospitalemp] of w]
@@ -393,10 +402,10 @@ ticks
 30.0
 
 BUTTON
-14
-20
-77
-53
+15
+19
+78
+52
 setup
 setup
 NIL
@@ -500,7 +509,7 @@ BUTTON
 1388
 465
 show hospital
-ask hospital [set color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
+ask hospital [\nset size 1\nset color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
 NIL
 1
 T
@@ -568,10 +577,10 @@ destination_to
 Number
 
 BUTTON
-75
-475
-140
-508
+83
+446
+148
+479
 go
 go
 T
@@ -596,10 +605,10 @@ count women with [givenbirth = true]
 11
 
 SLIDER
-33
-260
-186
-293
+36
+323
+189
+356
 social_multiplier
 social_multiplier
 -10
@@ -611,25 +620,25 @@ max
 HORIZONTAL
 
 SLIDER
-32
-183
-189
-216
+37
+251
+190
+284
 weight_distance_hospital
 weight_distance_hospital
 -200
 0
--17.0
+-10.0
 1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-73
-163
-159
-181
+78
+231
+164
+249
 selection hospital
 10
 0.0
@@ -663,20 +672,20 @@ NIL
 1
 
 TEXTBOX
-1332
-479
-1481
-583
+1327
+478
+1476
+582
 women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 7489, 37.11%\n(15-30) 2379, 11.7%\n(30-45) 213, 1.05%\n(45-60) 7, 0.03%\n(+ 60) 1, 0.004%
 10
 0.0
 1
 
 SLIDER
-36
-80
-166
-113
+49
+150
+179
+183
 distance_threshold
 distance_threshold
 0
@@ -688,10 +697,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-42
-352
-165
-385
+582
+594
+702
+627
 vis_pop_concentration
 ask women [hide-turtle]\nask counselcenter [hide-turtle]\nforeach gis:feature-list-of tuscany [ this-municipality ->  \nlet n-women   count women with [ pro_com = gis:property-value this-municipality \"PRO_COM\" ]\nlet tot       count women\nlet p (n-women / tot)\nlet col scale-color red p 1 0\ngis:set-drawing-color col\ngis:fill this-municipality col\nprint(word gis:property-value this-municipality \"PRO_COM\" \" : \" \ncount women with [pro_com = gis:property-value this-municipality \"PRO_COM\"])\n]
 NIL
@@ -705,13 +714,13 @@ NIL
 1
 
 SWITCH
-43
-318
-165
-351
+478
+558
+600
+591
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -746,15 +755,15 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-0
+6
 
 BUTTON
-570
+605
 524
-665
+700
 557
 highlight hospital
-ask hospitals hospital_id [set color blue]\nplot-hospitals
+ask hospitals hospital_id [set  size 2]\nplot-hospitals
 NIL
 1
 T
@@ -789,10 +798,10 @@ PENS
 "61+" 1.0 0 -13345367 true "" "plot (distchoicemax hospitals hospital_id 60)"
 
 TEXTBOX
-50
-60
-136
-78
+69
+128
+155
+146
 network formation
 10
 0.0
@@ -852,7 +861,7 @@ count women with [selectedhospital = [who] of hospitals hospital_id]
 MONITOR
 324
 518
-407
+421
 563
 NIL
 count women
@@ -861,10 +870,10 @@ count women
 11
 
 SLIDER
-36
-116
-166
-149
+49
+186
+179
+219
 n_network
 n_network
 0
@@ -875,27 +884,10 @@ n_network
 NIL
 HORIZONTAL
 
-BUTTON
-411
-523
-470
-556
-networks
-ask links [die]\nask women [hide-turtle]\nask counselcenter [hide-turtle]\nifelse emp_net \n[ask women [create-link-with one-of hospital with [who = [selectedhospitalemp] of myself]]]\n[ask women [create-link-with one-of hospital with [who = [selectedhospital] of myself]]]\nask women [ask my-out-links [set color [color] of myself]]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SWITCH
-474
+509
 523
-564
+599
 556
 emp_net
 emp_net
@@ -904,10 +896,10 @@ emp_net
 -1000
 
 BUTTON
-1414
-410
-1498
-443
+1401
+397
+1485
+430
 emp_mobilities
 ask women [let selectedoneemp one-of hospital with [who = [selectedhospitalemp] of myself]\ncreate-link-with selectedoneemp\nask my-out-links [\n\n      ifelse dist selectedoneemp myself distservices <= 0 [set color red]\n        [ifelse dist selectedoneemp myself distservices > 0 and dist selectedoneemp myself distservices <= 15  [set color yellow]\n          [ ifelse dist selectedoneemp myself distservices > 15 and dist selectedoneemp myself distservices <= 30 [set color orange]\n            [ifelse dist selectedoneemp myself distservices > 30 and dist selectedoneemp myself distservices <= 45 [set color brown]\n              [ifelse dist selectedoneemp myself distservices > 45 and dist selectedoneemp myself distservices <= 60 [set color violet]\n                [set color blue]\n              ]\n            ]\n          ]\n      ]\n    ]\n\n]
 NIL
@@ -932,10 +924,10 @@ rescale15
 -1000
 
 BUTTON
-570
-559
-664
-592
+607
+558
+701
+591
 sim_mobilitiies
 ask hospital [print (word who \" sim: \" count women with [selectedhospital = [who] of myself])]
 NIL
@@ -966,12 +958,12 @@ NIL
 1
 
 SLIDER
-42
-399
-184
-432
-updaterank_mean
-updaterank_mean
+14
+394
+109
+427
+uptrnk_mean
+uptrnk_mean
 -1
 1
 0.0
@@ -981,25 +973,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-40
-435
-183
-468
-updaterank_sd
-updaterank_sd
+112
+394
+208
+427
+uptrnk_sd
+uptrnk_sd
 -1
 1
-0.2
+0.25
 0.05
 1
 NIL
 HORIZONTAL
 
 PLOT
-17
-520
-217
-670
+13
+490
+213
+640
 Distribution post ranking
 NIL
 NIL
@@ -1014,10 +1006,10 @@ PENS
 "default" 1.0 1 -16777216 true "" ""
 
 SLIDER
-32
-221
-185
-254
+37
+287
+190
+320
 weight_ownranking
 weight_ownranking
 -20
@@ -1027,6 +1019,90 @@ weight_ownranking
 1
 NIL
 HORIZONTAL
+
+BUTTON
+254
+570
+315
+603
+netrank
+ask women [create-links-with hospital with [member? who table:keys [rankinglist] of myself]\n\n ask my-out-links [\n\n      ifelse dist myself other-end distservices <= 0 [set color red]\n        [ifelse dist myself other-end  distservices > 0 and dist myself other-end  distservices <= 15  [set color yellow]\n          [ ifelse dist myself other-end  distservices > 15 and dist myself other-end  distservices <= 30 [set color orange]\n            [ifelse dist myself other-end  distservices > 30 and dist myself other-end  distservices <= 45 [set color brown]\n              [ifelse dist myself other-end  distservices > 45 and dist myself other-end  distservices <= 60 [set color violet]\n                [set color blue]\n              ]\n            ]\n          ]\n      ]\n    ]\n\n\n\n\n]\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+324
+571
+420
+604
+hospitals_ranked
+ask hospital [\nif any? women with [table:has-key? rankinglist [who] of myself] [\nlet rankers women with [table:has-key? rankinglist [who] of myself]\nlet distrankedby []\n\nforeach sort rankers [ w ->\nset distrankedby lput dist self w distservices distrankedby\n]\n\n\nprint(word who \" id: \" id \" rank: \" ownranking \" avg distrankers: \" mean distrankedby \" rankedby: \" count rankers )\n\n\n]\n]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+69
+373
+174
+391
+rank post-experience
+10
+0.0
+1
+
+SLIDER
+18
+85
+112
+118
+options_rank
+options_rank
+0
+10
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+114
+85
+206
+118
+options_dist
+options_dist
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+69
+65
+177
+83
+agents' hospital ranks
+10
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1599,53 +1675,38 @@ NetLogo 6.4.0
     <metric>rankupdate hospitals 68</metric>
     <metric>rankupdate hospitals 67</metric>
     <metric>rankupdate hospitals 70</metric>
-    <enumeratedValueSet variable="updaterank_mean">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_distance_hospital">
-      <value value="0"/>
-      <value value="-1"/>
-      <value value="-4"/>
-      <value value="-8"/>
-      <value value="-12"/>
-      <value value="-16"/>
-      <value value="-20"/>
-      <value value="-24"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="show_networks">
+    <enumeratedValueSet variable="rescale15">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="distance_threshold">
+    <enumeratedValueSet variable="options_rank">
       <value value="0"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rescale15">
-      <value value="true"/>
+    <enumeratedValueSet variable="options_dist">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="distance_threshold">
+      <value value="260"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="weight_distance_hospital">
+      <value value="-10"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="weight_ownranking">
       <value value="0"/>
-      <value value="1"/>
-      <value value="4"/>
-      <value value="8"/>
-      <value value="12"/>
-      <value value="16"/>
-      <value value="20"/>
-      <value value="24"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="updaterank_sd">
-      <value value="0.25"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uptrnk_mean">
       <value value="0"/>
-      <value value="1"/>
-      <value value="4"/>
-      <value value="8"/>
-      <value value="12"/>
-      <value value="16"/>
-      <value value="20"/>
-      <value value="24"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uptrnk_sd">
+      <value value="0.25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="show_networks">
+      <value value="false"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
