@@ -208,9 +208,6 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   foreach sort hospitaltoselect [t ->
     if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
   ]
-;  print (word who " list " hospitallist)
-;  print (word "my list " rankinglist)
-;  ask hospitaltoselect [print (word who " call " myself)]
 
   ask hospitaltoselect [
     let ranking_othweight []
@@ -222,8 +219,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
-;    print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
-;    print (word [who] of z " dist " weightfriend " me " [who] of myself " tot " totweightfriend " rankinglist " ranking_othweight)
+
     ]
     set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
 
@@ -231,7 +227,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital)
+  ; print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
   table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] 0.25 1 -1
 
 if show_networks [
@@ -251,11 +247,7 @@ if show_networks [
       ]
     ]
 
-
-
     ]
-
-
 
  set givenbirth true
  set pregnant false
@@ -267,11 +259,11 @@ to communicate_experience
 
   if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
     let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
-      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital)
+    ; print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital) ; TEST
 
     if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
       table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
-       print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  )]
+    ;  print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  )] ; TEST
 
     ]
 
