@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking avg_ownraking]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp timeatbirth]
 
 
@@ -178,6 +178,15 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
    communicate_experience
   ]
 
+ ask hospital [
+  let h who
+  ;; collect all opinions that women recorded for THIS hospital
+  let vals [ table:get rankinglist h ] of women
+
+    set avg_ownraking mean vals
+
+]
+
 
   plot-hospitals
 
@@ -227,7 +236,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-;   print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
+;  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
   table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] 0.25 1 -1
 ;   print(word who " selected: " selectedhospital " postOD: " table:get rankinglist selectedhospital) ; TEST post updating
 
@@ -726,29 +735,6 @@ show_networks
 1
 -1000
 
-PLOT
-727
-367
-1036
-517
-Mobility hospital origin (proportion)
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-true
-"" ""
-PENS
-"0" 1.0 0 -2674135 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicezero hospitals hospital_id / womenwhoselected hospitals hospital_id)]\n"
-"1-15" 1.0 0 -1184463 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 0 15 / womenwhoselected hospitals hospital_id)]\n"
-"16-30" 1.0 0 -955883 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 15 30 / womenwhoselected hospitals hospital_id)]\n"
-"31-45" 1.0 0 -6459832 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 30 45 / womenwhoselected hospitals hospital_id)]\n"
-"46-60" 1.0 0 -8630108 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 45 60 / womenwhoselected hospitals hospital_id)]\n"
-"61+" 1.0 0 -13345367 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicemax hospitals hospital_id 60 / womenwhoselected hospitals hospital_id)]\n"
-
 CHOOSER
 740
 10
@@ -757,7 +743,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-6
+0
 
 BUTTON
 605
@@ -777,10 +763,10 @@ NIL
 1
 
 PLOT
-729
-213
-1037
-363
+728
+214
+1036
+364
 Mobility hospital origin (raw numbers)
 NIL
 NIL
@@ -921,7 +907,7 @@ SWITCH
 51
 rescale15
 rescale15
-1
+0
 1
 -1000
 
@@ -1105,6 +1091,25 @@ agents' hospital ranks
 10
 0.0
 1
+
+PLOT
+727
+367
+1037
+517
+Ranking hospital
+NIL
+NIL
+0.0
+10.0
+-1.0
+1.0
+true
+true
+"" ""
+PENS
+"PNE" 1.0 0 -2674135 true "" "plot ([ownranking] of one-of hospital with [who = hospital_id])"
+"avg_simul" 1.0 0 -13345367 true "" "plot ([avg_ownraking] of one-of hospital with [who = hospital_id])"
 
 @#$#@#$#@
 ## WHAT IS IT?
