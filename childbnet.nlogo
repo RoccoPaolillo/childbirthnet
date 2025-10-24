@@ -221,14 +221,15 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
 
     ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
+    set utility ( (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
 
   ]
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-  ; print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
+;   print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
   table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] 0.25 1 -1
+;   print(word who " selected: " selectedhospital " postOD: " table:get rankinglist selectedhospital) ; TEST post updating
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -259,21 +260,16 @@ to communicate_experience
 
   if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
     let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
-    ; print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital) ; TEST
+;      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital) ; TEST
 
     if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
       table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
-    ;  print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  )] ; TEST
+;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  ) ; TEST
 
     ]
-
+  ]
 
 end
-
-
-
-
-
 
 
 to plot-hospitals
@@ -589,7 +585,7 @@ BUTTON
 479
 go
 go
-NIL
+T
 1
 T
 OBSERVER
