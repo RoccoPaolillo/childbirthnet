@@ -155,25 +155,13 @@ end
 
 to options_hospital
 
-let df csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv"
-let listhospitals []
-foreach but-first df [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
-  let key item 0 row                                               ; so I make first a list of the hospitals we have (24)
-  if not member? key listhospitals [
-    set listhospitals lput key listhospitals
-  ]
-]
-
 set rankinglist table:make
 
-; each woman has a rank for 5 hospitals, extracted based on reputation + distance (closer)
-  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(options_rank * ([ownranking] of one-of hospital with [id = h])) *  exp(options_dist * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
+; let knownhosp rnd:weighted-n-of 5 hospital   [ exp( options_dist * (1 - (dist self self distservicesnorm)) ) ]
 
-  ; the hospitals are taken into memory for discussion
-  foreach sort knownhosp [y ->
-    let list_effective filter [ [s] -> item 0 s = y ] but-first  df
-    table:put rankinglist [who] of one-of hospital with [id = y] normal item 1 item 0 list_effective 0.25 1 -1
-  ]
+foreach sort hospital [y ->
+    table:put rankinglist [who] of y precision ((random-float 2) - 1) 3
+]
 
 end
 
@@ -185,6 +173,10 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
    set pregnant true
    if selectedhospital = 0 [select_hospital]
       ]
+
+  ask women with [givenbirth = true][
+   communicate_experience
+  ]
 
 
   plot-hospitals
@@ -269,6 +261,27 @@ if show_networks [
  set timeatbirth ticks
 
 end
+
+to communicate_experience
+
+  if any? other women with [pro_com = [pro_com] of myself] [
+    let alter one-of other women with [pro_com = [pro_com] of myself]
+      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital)
+
+    if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
+      table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
+       print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  )]
+
+    ]
+
+
+end
+
+
+
+
+
+
 
 to plot-hospitals
 
@@ -543,7 +556,7 @@ BUTTON
 1009
 555
 testdistances
-print dist turtle origin_from turtle destination_to distservicesnorm
+print dist turtle origin_from turtle destination_to distservicesnorm 
 NIL
 1
 T
@@ -560,7 +573,7 @@ INPUTBOX
 841
 584
 origin_from
-1961.0
+6194.0
 1
 0
 Number
@@ -571,7 +584,7 @@ INPUTBOX
 928
 584
 destination_to
-10161.0
+5585.0
 1
 0
 Number
@@ -720,7 +733,7 @@ SWITCH
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
