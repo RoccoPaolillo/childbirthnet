@@ -231,7 +231,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-   table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal uptrnk_mean uptrnk_sd 1 -1))))
+  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital)
+  table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] 0.25 1 -1
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -264,8 +265,8 @@ end
 
 to communicate_experience
 
-  if any? other women with [pro_com = [pro_com] of myself] [
-    let alter one-of other women with [pro_com = [pro_com] of myself]
+  if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
+    let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
       print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital)
 
     if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
@@ -596,7 +597,7 @@ BUTTON
 479
 go
 go
-T
+NIL
 1
 T
 OBSERVER
