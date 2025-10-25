@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking avg_ownraking]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp timeatbirth]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth ]
 
 
 
@@ -156,9 +156,14 @@ end
 to options_hospital
 
 set rankinglist table:make
+set distancehosp table:make
 
 foreach sort hospital [y ->
     table:put rankinglist [who] of y precision ((random-float 2) - 1) 3
+]
+
+foreach sort hospital [y ->
+table:put distancehosp [who] of y dist self y distservicesnorm
 ]
 
 end
@@ -216,6 +221,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   ]
 
   ask hospitaltoselect [
+    let distancefrom table:get [distancehosp] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
     foreach sort friends with [table:has-key? rankinglist [who] of myself] [ z ->
@@ -227,8 +233,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
 
     ]
-    set utility ( (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
-
+    set utility ( (weight_distance_hospital * (distancefrom * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
+;    print (word self " distancefrom: " distancefrom " myself: " myself)
   ]
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
@@ -591,7 +597,7 @@ BUTTON
 386
 go
 go
-T
+NIL
 1
 T
 OBSERVER
@@ -636,7 +642,7 @@ weight_distance_hospital
 weight_distance_hospital
 -200
 0
-0.0
+-29.0
 1
 1
 NIL
@@ -728,7 +734,7 @@ SWITCH
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -904,7 +910,7 @@ SWITCH
 51
 rescale15
 rescale15
-0
+1
 1
 -1000
 
