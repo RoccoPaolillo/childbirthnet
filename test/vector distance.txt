@@ -145,4 +145,35 @@ SELECT_HOSPITAL                       20   1258,369    473,452     23,673
 NORMAL                                20      0,198      0,198      0,010
 PLOT-HOSPITALS                        20      0,039      0,039      0,002
 END PROFILING DUMP
- 
+
+---------------------
+
+original no space vector isolating plots
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+SELECT_HOSPITAL                       20   1407,343   1117,208     55,860
+DIST                               24480    271,868    271,868      0,011
+GO                                    20   1632,244    115,101      5,755
+COMMUNICATE_EXPERIENCE               210    109,746    109,746      0,523
+NORMAL                                20      0,320      0,320      0,016
+PLOT-HOSPITALS                        20      0,054      0,054      0,003
+
+Sorted by Inclusive Time
+GO                                    20   1632,244    115,101      5,755
+SELECT_HOSPITAL                       20   1407,343   1117,208     55,860
+DIST                               24480    271,868    271,868      0,011
+COMMUNICATE_EXPERIENCE               210    109,746    109,746      0,523
+NORMAL                                20      0,320      0,320      0,016
+PLOT-HOSPITALS                        20      0,054      0,054      0,003
+
+Sorted by Number of Calls
+DIST                               24480    271,868    271,868      0,011
+COMMUNICATE_EXPERIENCE               210    109,746    109,746      0,523
+GO                                    20   1632,244    115,101      5,755
+SELECT_HOSPITAL                       20   1407,343   1117,208     55,860
+NORMAL                                20      0,320      0,320      0,016
+PLOT-HOSPITALS                        20      0,054      0,054      0,003
+END PROFILING DUMP
+
