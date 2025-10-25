@@ -271,8 +271,8 @@ to communicate_experience
     foreach sort alter [ f ->
 ;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
 
-    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= 2 [
-      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
+    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= lat_acceptance [
+      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (weight_od * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
 ;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
 
     ]
@@ -589,10 +589,10 @@ destination_to
 Number
 
 BUTTON
-82
-353
-147
-386
+84
+459
+149
+492
 go
 go
 T
@@ -609,7 +609,7 @@ MONITOR
 252
 518
 320
-564
+563
 given birth
 count women with [givenbirth = true]
 17
@@ -1013,10 +1013,10 @@ plot_mobil
 -1000
 
 BUTTON
-76
-395
-160
-428
+75
+501
+159
+534
 report_ranking
  ask hospital [\n let h who\n let vals [ table:get rankinglist h ] of women with [pro_com = 48017]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
 NIL
@@ -1027,6 +1027,46 @@ NIL
 NIL
 NIL
 NIL
+1
+
+SLIDER
+55
+371
+173
+404
+lat_acceptance
+lat_acceptance
+0
+2
+2.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+55
+407
+173
+440
+weight_od
+weight_od
+0
+1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+55
+348
+175
+366
+deffuant opinion dynamic
+10
+0.0
 1
 
 @#$#@#$#@
