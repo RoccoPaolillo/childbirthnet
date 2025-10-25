@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking avg_ownraking]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp timeatbirth]
 
 
@@ -37,7 +37,7 @@ to setup
 
   ask women [options_hospital]
   plot-hospitals
-  plot-postranking uptrnk_mean uptrnk_sd 1 -1 100 100
+
   reset-timer
   reset-ticks
 end
@@ -155,25 +155,11 @@ end
 
 to options_hospital
 
-let df csv:from-file "C:/Users/LENOVO/Documents/GitHub/childbirthod/data/ranking_hospitals.csv"
-let listhospitals []
-foreach but-first df [ row ->                           ; here to avoid duplicates in the hospital, since they appeared for each movement
-  let key item 0 row                                               ; so I make first a list of the hospitals we have (24)
-  if not member? key listhospitals [
-    set listhospitals lput key listhospitals
-  ]
-]
-
 set rankinglist table:make
 
-; each woman has a rank for 5 hospitals, extracted based on reputation + distance (closer)
-  let knownhosp rnd:weighted-n-of-list 5 listhospitals  [h -> ( exp(options_rank * ([ownranking] of one-of hospital with [id = h])) *  exp(options_dist * (1 - dist self one-of hospital with [id = h] distservicesnorm)))]
-
-  ; the hospitals are taken into memory for discussion
-  foreach sort knownhosp [y ->
-    let list_effective filter [ [s] -> item 0 s = y ] but-first  df
-    table:put rankinglist [who] of one-of hospital with [id = y] normal item 1 item 0 list_effective 0.25 1 -1
-  ]
+foreach sort hospital [y ->
+    table:put rankinglist [who] of y precision ((random-float 2) - 1) 3
+]
 
 end
 
@@ -185,6 +171,18 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
    set pregnant true
    if selectedhospital = 0 [select_hospital]
       ]
+
+  ask women with [givenbirth = true][
+   communicate_experience
+  ]
+
+if avgrank [
+ ask hospital [
+ let h who
+ let vals [ table:get rankinglist h ] of women
+ set avg_ownraking mean vals
+ ]
+  ]
 
 
   plot-hospitals
@@ -216,9 +214,6 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   foreach sort hospitaltoselect [t ->
     if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
   ]
-;  print (word who " list " hospitallist)
-;  print (word "my list " rankinglist)
-;  ask hospitaltoselect [print (word who " call " myself)]
 
   ask hospitaltoselect [
     let ranking_othweight []
@@ -230,16 +225,17 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
-;    print (word [who] of z " rk " [rankinglist] of z " myself " [who] of self)
-;    print (word [who] of z " dist " weightfriend " me " [who] of myself " tot " totweightfriend " rankinglist " ranking_othweight)
+
     ]
-    set utility ( (weight_ownranking * table:get [rankinglist] of myself [who] of self) + (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
+    set utility ( (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
 
   ]
 
    set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
   ; the "ranking experience" clamped to not go below -1 or above +1
-   table:put rankinglist selectedhospital (max list -1 (min list 1 ((table:get rankinglist selectedhospital) + (normal uptrnk_mean uptrnk_sd 1 -1))))
+;  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
+  table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
+;  print(word who " selected: " selectedhospital " postOD: " table:get rankinglist selectedhospital) ; TEST post updating
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -258,17 +254,29 @@ if show_networks [
       ]
     ]
 
-
-
     ]
-
-
 
  set givenbirth true
  set pregnant false
  set timeatbirth ticks
 
 end
+
+to communicate_experience
+
+  if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
+    let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
+;      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital) ; TEST
+
+    if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
+      table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
+;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  ) ; TEST
+
+    ]
+  ]
+
+end
+
 
 to plot-hospitals
 
@@ -342,8 +350,8 @@ end
 
 to report_data [filename]
 
-  let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital" "weight_ownranking"  "social_multiplier" "show_networks" "updaterank_mean" "updaterank_sd"  "emp_net" ]
-  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital weight_ownranking  social_multiplier  show_networks uptrnk_mean uptrnk_sd emp_net)
+  let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital"  "social_multiplier" "show_networks" "updaterank_sd"  "emp_net" ]
+  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital social_multiplier  show_networks  uptrnk_sd emp_net)
 
   let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
   let header sentence core-header param-names
@@ -543,7 +551,7 @@ BUTTON
 1009
 555
 testdistances
-print dist turtle origin_from turtle destination_to distservicesnorm
+print dist turtle origin_from turtle destination_to distservicesnorm 
 NIL
 1
 T
@@ -555,32 +563,32 @@ NIL
 1
 
 INPUTBOX
-765
-524
-841
-584
+766
+526
+842
+586
 origin_from
-1961.0
+6194.0
 1
 0
 Number
 
 INPUTBOX
-843
-524
-928
-584
+844
+526
+929
+586
 destination_to
-10161.0
+5585.0
 1
 0
 Number
 
 BUTTON
-83
-446
-148
-479
+82
+353
+147
+386
 go
 go
 T
@@ -606,9 +614,9 @@ count women with [givenbirth = true]
 
 SLIDER
 36
-323
+230
 189
-356
+263
 social_multiplier
 social_multiplier
 -10
@@ -620,25 +628,25 @@ max
 HORIZONTAL
 
 SLIDER
-37
-251
-190
-284
+36
+194
+189
+227
 weight_distance_hospital
 weight_distance_hospital
 -200
 0
--10.0
+0.0
 1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-78
-231
-164
-249
+77
+174
+163
+192
 selection hospital
 10
 0.0
@@ -655,10 +663,10 @@ women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 
 1
 
 BUTTON
-938
-556
-1008
-589
+939
+558
+1009
+591
 hide links
 ask links [die]
 NIL
@@ -682,10 +690,10 @@ women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 74
 1
 
 SLIDER
-49
-150
-179
-183
+48
+93
+178
+126
 distance_threshold
 distance_threshold
 0
@@ -724,29 +732,6 @@ show_networks
 1
 -1000
 
-PLOT
-727
-367
-1036
-517
-Mobility hospital origin (proportion)
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-true
-"" ""
-PENS
-"0" 1.0 0 -2674135 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicezero hospitals hospital_id / womenwhoselected hospitals hospital_id)]\n"
-"1-15" 1.0 0 -1184463 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 0 15 / womenwhoselected hospitals hospital_id)]\n"
-"16-30" 1.0 0 -955883 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 15 30 / womenwhoselected hospitals hospital_id)]\n"
-"31-45" 1.0 0 -6459832 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 30 45 / womenwhoselected hospitals hospital_id)]\n"
-"46-60" 1.0 0 -8630108 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoice hospitals hospital_id 45 60 / womenwhoselected hospitals hospital_id)]\n"
-"61+" 1.0 0 -13345367 true "" "if womenwhoselected hospitals hospital_id > 0 [ plot (distchoicemax hospitals hospital_id 60 / womenwhoselected hospitals hospital_id)]\n"
-
 CHOOSER
 740
 10
@@ -755,7 +740,7 @@ CHOOSER
 hospital_id
 hospital_id
 50 61 58 60 48 63 53 64 69 56 66 51 59 65 57 62 55 49 52 54 71 68 67 70
-6
+0
 
 BUTTON
 605
@@ -775,10 +760,10 @@ NIL
 1
 
 PLOT
-729
-213
-1037
-363
+728
+214
+1036
+364
 Mobility hospital origin (raw numbers)
 NIL
 NIL
@@ -798,10 +783,10 @@ PENS
 "61+" 1.0 0 -13345367 true "" "plot (distchoicemax hospitals hospital_id 60)"
 
 TEXTBOX
-69
-128
-155
-146
+68
+71
+154
+89
 network formation
 10
 0.0
@@ -870,15 +855,15 @@ count women
 11
 
 SLIDER
-49
-186
-179
-219
+48
+129
+178
+162
 n_network
 n_network
 0
 100
-46.0
+50.0
 1
 1
 NIL
@@ -919,7 +904,7 @@ SWITCH
 51
 rescale15
 rescale15
-1
+0
 1
 -1000
 
@@ -941,10 +926,10 @@ NIL
 1
 
 BUTTON
-1025
-539
-1095
-572
+1026
+541
+1096
+574
 profiler
 profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
@@ -958,28 +943,13 @@ NIL
 1
 
 SLIDER
-14
-394
-109
-427
-uptrnk_mean
-uptrnk_mean
--1
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-112
-394
-208
-427
+67
+298
+163
+331
 uptrnk_sd
 uptrnk_sd
--1
+0
 1
 0.25
 0.05
@@ -987,122 +957,45 @@ uptrnk_sd
 NIL
 HORIZONTAL
 
-PLOT
-13
-490
-213
-640
-Distribution post ranking
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 1 -16777216 true "" ""
-
-SLIDER
-37
-287
-190
-320
-weight_ownranking
-weight_ownranking
--20
-50
-5.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-254
-570
-315
-603
-netrank
-ask women [create-links-with hospital with [member? who table:keys [rankinglist] of myself]\n\n ask my-out-links [\n\n      ifelse dist myself other-end distservices <= 0 [set color red]\n        [ifelse dist myself other-end  distservices > 0 and dist myself other-end  distservices <= 15  [set color yellow]\n          [ ifelse dist myself other-end  distservices > 15 and dist myself other-end  distservices <= 30 [set color orange]\n            [ifelse dist myself other-end  distservices > 30 and dist myself other-end  distservices <= 45 [set color brown]\n              [ifelse dist myself other-end  distservices > 45 and dist myself other-end  distservices <= 60 [set color violet]\n                [set color blue]\n              ]\n            ]\n          ]\n      ]\n    ]\n\n\n\n\n]\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-324
-571
-420
-604
-hospitals_ranked
-ask hospital [\nif any? women with [table:has-key? rankinglist [who] of myself] [\nlet rankers women with [table:has-key? rankinglist [who] of myself]\nlet distrankedby []\n\nforeach sort rankers [ w ->\nset distrankedby lput dist self w distservices distrankedby\n]\n\n\nprint(word who \" id: \" id \" rank: \" ownranking \" avg distrankers: \" mean distrankedby \" rankedby: \" count rankers )\n\n\n]\n]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 TEXTBOX
-69
-373
-174
-391
+64
+281
+169
+299
 rank post-experience
 10
 0.0
 1
 
-SLIDER
-18
-85
-112
-118
-options_rank
-options_rank
-0
-10
-0.0
-1
-1
+PLOT
+727
+367
+1037
+517
+Ranking hospital
 NIL
-HORIZONTAL
-
-SLIDER
-114
-85
-206
-118
-options_dist
-options_dist
-0
-10
+NIL
+0.0
 10.0
-1
-1
-NIL
-HORIZONTAL
+-1.0
+1.0
+true
+true
+"" ""
+PENS
+"PNE" 1.0 0 -2674135 true "" "plot ([ownranking] of one-of hospital with [who = hospital_id])"
+"avg_simul" 1.0 0 -13345367 true "" "plot ([avg_ownraking] of one-of hospital with [who = hospital_id])"
 
-TEXTBOX
-69
-65
-177
-83
-agents' hospital ranks
-10
-0.0
+SWITCH
+945
+482
+1035
+515
+avgrank
+avgrank
 1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
