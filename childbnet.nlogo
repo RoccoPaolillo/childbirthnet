@@ -5,7 +5,7 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking avg_ownraking]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp pneranking rankbywomen]
 women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth ]
 
 
@@ -93,12 +93,12 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       set xcor item 0 loc
       set ycor item 1 loc
       let effective_rank filter [ [s] -> item 0 s = x ] but-first rankhosp
-      set ownranking item 1 item 0 effective_rank
+      set pneranking item 1 item 0 effective_rank
       set color (ifelse-value
-        ownranking = -1 [magenta]
-        ownranking = -0.5 [blue]
-        ownranking = 0 [green]
-        ownranking = 0.5 [pink]
+        pneranking = -1 [magenta]
+        pneranking = -0.5 [blue]
+        pneranking = 0 [green]
+        pneranking = 0.5 [pink]
         [cyan]
 
 
@@ -186,7 +186,7 @@ if avgrank [
  ask hospital [
  let h who
  let vals [ table:get rankinglist h ] of women
- set avg_ownraking mean vals
+ set rankbywomen mean vals
  ]
   ]
 
@@ -235,7 +235,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
    set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" clamped to not go below -1 or above +1
 ;  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
-  table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
+  table:put rankinglist selectedhospital normal [pneranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
 ;  print(word who " selected: " selectedhospital " postOD: " table:get rankinglist selectedhospital) ; TEST post updating
 
 if show_networks [
@@ -265,15 +265,18 @@ end
 
 to communicate_experience
 
-  if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
-    let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
-      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital  " ticks: " ticks) ; TEST
+  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false] [
+    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]) other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]
 
-    if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
-      table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
-      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital " ticks: " ticks ) ; TEST
+    foreach sort alter [ f ->
+;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
+
+    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= 2 [
+      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
+;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
 
     ]
+  ]
   ]
 
 end
@@ -513,12 +516,12 @@ NIL
 1
 
 BUTTON
-1307
-432
-1388
-465
+1306
+433
+1387
+466
 show hospital
-ask hospital [\nset size 1\nset color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
+ask hospital [\nset size 1\nset color (ifelse-value\n        pneranking = -1 [magenta]\n        pneranking = -0.5 [blue]\n        pneranking = 0 [green]\n        pneranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
 NIL
 1
 T
@@ -605,8 +608,8 @@ NIL
 MONITOR
 252
 518
-319
-563
+320
+564
 given birth
 count women with [givenbirth = true]
 17
@@ -637,7 +640,7 @@ weight_distance_hospital
 weight_distance_hospital
 -200
 0
--29.0
+-10.0
 1
 1
 NIL
@@ -729,7 +732,7 @@ SWITCH
 591
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -932,7 +935,7 @@ BUTTON
 1096
 574
 profiler
-profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
+profiler:start         ;; start profiling\nrepeat 100 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
 1
 T
@@ -984,8 +987,8 @@ true
 true
 "" ""
 PENS
-"PNE" 1.0 0 -2674135 true "" "plot ([ownranking] of one-of hospital with [who = hospital_id])"
-"avg_simul" 1.0 0 -13345367 true "" "plot ([avg_ownraking] of one-of hospital with [who = hospital_id])"
+"PNE" 1.0 0 -2674135 true "" "plot ([pneranking] of one-of hospital with [who = hospital_id])"
+"avg_simul" 1.0 0 -13345367 true "" "plot ([rankbywomen] of one-of hospital with [who = hospital_id])"
 
 SWITCH
 945
@@ -1008,6 +1011,23 @@ plot_mobil
 1
 1
 -1000
+
+BUTTON
+76
+395
+160
+428
+report_ranking
+ ask hospital [\n let h who\n let vals [ table:get rankinglist h ] of women with [pro_com = 48017]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
