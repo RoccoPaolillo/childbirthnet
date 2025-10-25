@@ -279,7 +279,7 @@ end
 
 
 to plot-hospitals
-
+if plot_mobil [
 set-current-plot "Selection hospital"
 clear-plot
 set-current-plot-pen "actual"
@@ -297,7 +297,7 @@ let xsim [ dist self hospitals hospital_id distservices] of womenselecthospsim
 set-plot-x-range 0 200
 
 histogram xsim
-
+  ]
 end
 
 to-report dist [origin destination matrix]
@@ -775,12 +775,12 @@ true
 true
 "" ""
 PENS
-"0" 1.0 0 -2674135 true "" "plot (distchoicezero hospitals hospital_id)"
-"1-15" 1.0 0 -1184463 true "" "plot (distchoice hospitals hospital_id 0 15)"
-"16-30" 1.0 0 -955883 true "" "plot (distchoice hospitals hospital_id 15 30 )"
-"31-45" 1.0 0 -6459832 true "" "plot (distchoice hospitals hospital_id 30 45)"
-"46-60" 1.0 0 -8630108 true "" "plot (distchoice hospitals hospital_id 45 60)"
-"61+" 1.0 0 -13345367 true "" "plot (distchoicemax hospitals hospital_id 60)"
+"0" 1.0 0 -2674135 true "" "if plot_mobil [plot (distchoicezero hospitals hospital_id)]"
+"1-15" 1.0 0 -1184463 true "" "if plot_mobil [plot (distchoice hospitals hospital_id 0 15)]"
+"16-30" 1.0 0 -955883 true "" "if plot_mobil [plot (distchoice hospitals hospital_id 15 30 )]"
+"31-45" 1.0 0 -6459832 true "" "if plot_mobil [plot (distchoice hospitals hospital_id 30 45)]"
+"46-60" 1.0 0 -8630108 true "" "if plot_mobil [plot (distchoice hospitals hospital_id 45 60)]"
+"61+" 1.0 0 -13345367 true "" "if plot_mobil [plot (distchoicemax hospitals hospital_id 60)]"
 
 TEXTBOX
 68
@@ -993,6 +993,17 @@ SWITCH
 515
 avgrank
 avgrank
+1
+1
+-1000
+
+SWITCH
+944
+176
+1037
+209
+plot_mobil
+plot_mobil
 1
 1
 -1000

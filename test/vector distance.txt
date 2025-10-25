@@ -75,3 +75,74 @@ DISTCHOICEZERO                        20     30,368     29,624      1,481
 DISTCHOICEMAX                         20     23,047     22,365      1,118
 NORMAL                                20      0,201      0,201      0,010
 END PROFILING DUMP
+
+----
+
+original distance report
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+SELECT_HOSPITAL                       20   1249,727    970,116     48,506
+DIST                               82240    840,690    840,690      0,010
+PLOT-HOSPITALS                        20    691,528    112,698      5,635
+COMMUNICATE_EXPERIENCE               210    105,009    105,009      0,500
+DISTCHOICE                            80     77,063     77,063      0,963
+GO                                    20   2691,829     72,564      3,628
+DISTCHOICEZERO                        20     32,478     32,478      1,624
+DISTCHOICEMAX                         20     23,003     23,003      1,150
+NORMAL                                20      0,354      0,354      0,018
+
+Sorted by Inclusive Time
+GO                                    20   2691,829     72,564      3,628
+SELECT_HOSPITAL                       20   1249,727    970,116     48,506
+DIST                               82240    840,690    840,690      0,010
+PLOT-HOSPITALS                        20    691,528    112,698      5,635
+COMMUNICATE_EXPERIENCE               210    105,009    105,009      0,500
+DISTCHOICE                            80     77,063     77,063      0,963
+DISTCHOICEZERO                        20     32,478     32,478      1,624
+DISTCHOICEMAX                         20     23,003     23,003      1,150
+NORMAL                                20      0,354      0,354      0,018
+
+Sorted by Number of Calls
+DIST                               82240    840,690    840,690      0,010
+COMMUNICATE_EXPERIENCE               210    105,009    105,009      0,500
+DISTCHOICE                            80     77,063     77,063      0,963
+GO                                    20   2691,829     72,564      3,628
+SELECT_HOSPITAL                       20   1249,727    970,116     48,506
+PLOT-HOSPITALS                        20    691,528    112,698      5,635
+DISTCHOICEZERO                        20     32,478     32,478      1,624
+DISTCHOICEMAX                         20     23,003     23,003      1,150
+NORMAL                                20      0,354      0,354      0,018
+END PROFILING DUMP
+
+----------
+isolating plots vector-distanc
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+SELECT_HOSPITAL                       20   1258,369    473,452     23,673
+DIST                               24052    257,422    257,422      0,011
+COMMUNICATE_EXPERIENCE               210     84,073     84,073      0,400
+GO                                    20   1422,675     80,194      4,010
+NORMAL                                20      0,198      0,198      0,010
+PLOT-HOSPITALS                        20      0,039      0,039      0,002
+
+Sorted by Inclusive Time
+GO                                    20   1422,675     80,194      4,010
+SELECT_HOSPITAL                       20   1258,369    473,452     23,673
+DIST                               24052    257,422    257,422      0,011
+COMMUNICATE_EXPERIENCE               210     84,073     84,073      0,400
+NORMAL                                20      0,198      0,198      0,010
+PLOT-HOSPITALS                        20      0,039      0,039      0,002
+
+Sorted by Number of Calls
+DIST                               24052    257,422    257,422      0,011
+COMMUNICATE_EXPERIENCE               210     84,073     84,073      0,400
+GO                                    20   1422,675     80,194      4,010
+SELECT_HOSPITAL                       20   1258,369    473,452     23,673
+NORMAL                                20      0,198      0,198      0,010
+PLOT-HOSPITALS                        20      0,039      0,039      0,002
+END PROFILING DUMP
+ 
