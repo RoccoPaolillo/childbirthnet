@@ -177,8 +177,9 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
    if selectedhospital = 0 [select_hospital]
       ]
 
-  ask women with [givenbirth = true][
+  if ticks > 0 and ticks mod 80 = 0 [ ask women with [givenbirth = true][
    communicate_experience
+  ]
   ]
 
 if avgrank [
@@ -266,11 +267,11 @@ to communicate_experience
 
   if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
     let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
-;      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital) ; TEST
+      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital  " ticks: " ticks) ; TEST
 
     if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
       table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
-;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  ) ; TEST
+      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital " ticks: " ticks ) ; TEST
 
     ]
   ]
