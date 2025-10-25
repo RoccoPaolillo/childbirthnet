@@ -213,14 +213,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
 ]
 
-  let hospitallist remove-duplicates reduce sentence [ table:keys rankinglist ] of friends
-  let hospitaltoselect hospital with [member? who hospitallist]
-  ; if not hospital in the own list, add with value 0 (effect random)
-  foreach sort hospitaltoselect [t ->
-    if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
-  ]
 
-  ask hospitaltoselect [
+  ask hospital [
     let distancefrom table:get [distancehosp] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
@@ -237,7 +231,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 ;    print (word self " distancefrom: " distancefrom " myself: " myself)
   ]
 
-   set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
+   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" clamped to not go below -1 or above +1
 ;  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
   table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
@@ -597,7 +591,7 @@ BUTTON
 386
 go
 go
-NIL
+T
 1
 T
 OBSERVER

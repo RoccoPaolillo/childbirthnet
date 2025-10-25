@@ -1,0 +1,77 @@
+vector - n-of 5 hospital
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                               63035    707,962    707,962      0,011
+SELECT_HOSPITAL                       20    912,271    588,904     29,445
+GO                                    20   2800,772    397,612     19,881
+PLOT-HOSPITALS                        20    752,463    107,797      5,390
+COMMUNICATE_EXPERIENCE               210     98,631     98,631      0,470
+DISTCHOICE                            80     89,535     87,982      1,100
+DISTCHOICEZERO                        20     35,820     35,576      1,779
+DISTCHOICEMAX                         20     24,934     24,644      1,232
+NORMAL                                20      0,249      0,249      0,012
+
+Sorted by Inclusive Time
+GO                                    20   2800,772    397,612     19,881
+SELECT_HOSPITAL                       20    912,271    588,904     29,445
+PLOT-HOSPITALS                        20    752,463    107,797      5,390
+DIST                               63035    707,962    707,962      0,011
+COMMUNICATE_EXPERIENCE               210     98,631     98,631      0,470
+DISTCHOICE                            80     89,535     87,982      1,100
+DISTCHOICEZERO                        20     35,820     35,576      1,779
+DISTCHOICEMAX                         20     24,934     24,644      1,232
+NORMAL                                20      0,249      0,249      0,012
+
+Sorted by Number of Calls
+DIST                               63035    707,962    707,962      0,011
+COMMUNICATE_EXPERIENCE               210     98,631     98,631      0,470
+DISTCHOICE                            80     89,535     87,982      1,100
+GO                                    20   2800,772    397,612     19,881
+SELECT_HOSPITAL                       20    912,271    588,904     29,445
+PLOT-HOSPITALS                        20    752,463    107,797      5,390
+DISTCHOICEZERO                        20     35,820     35,576      1,779
+DISTCHOICEMAX                         20     24,934     24,644      1,232
+NORMAL                                20      0,249      0,249      0,012
+END PROFILING DUMP
+
+-------------------------
+
+vector - all hospital
+
+BEGIN PROFILING DUMP
+Sorted by Exclusive Time
+Name                               Calls Incl T(ms) Excl T(ms) Excl/calls
+DIST                               82137    938,389    938,389      0,011
+SELECT_HOSPITAL                       20   1315,302    481,750     24,088
+COMMUNICATE_EXPERIENCE               210     95,839     95,839      0,456
+PLOT-HOSPITALS                        20    737,739     91,167      4,558
+DISTCHOICE                            80     84,188     81,249      1,016
+GO                                    20   2865,792     77,773      3,889
+DISTCHOICEZERO                        20     30,368     29,624      1,481
+DISTCHOICEMAX                         20     23,047     22,365      1,118
+NORMAL                                20      0,201      0,201      0,010
+
+Sorted by Inclusive Time
+GO                                    20   2865,792     77,773      3,889
+SELECT_HOSPITAL                       20   1315,302    481,750     24,088
+DIST                               82137    938,389    938,389      0,011
+PLOT-HOSPITALS                        20    737,739     91,167      4,558
+COMMUNICATE_EXPERIENCE               210     95,839     95,839      0,456
+DISTCHOICE                            80     84,188     81,249      1,016
+DISTCHOICEZERO                        20     30,368     29,624      1,481
+DISTCHOICEMAX                         20     23,047     22,365      1,118
+NORMAL                                20      0,201      0,201      0,010
+
+Sorted by Number of Calls
+DIST                               82137    938,389    938,389      0,011
+COMMUNICATE_EXPERIENCE               210     95,839     95,839      0,456
+DISTCHOICE                            80     84,188     81,249      1,016
+GO                                    20   2865,792     77,773      3,889
+SELECT_HOSPITAL                       20   1315,302    481,750     24,088
+PLOT-HOSPITALS                        20    737,739     91,167      4,558
+DISTCHOICEZERO                        20     30,368     29,624      1,481
+DISTCHOICEMAX                         20     23,047     22,365      1,118
+NORMAL                                20      0,201      0,201      0,010
+END PROFILING DUMP
