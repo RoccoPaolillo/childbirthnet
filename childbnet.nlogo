@@ -221,7 +221,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     let distancefrom table:get [distancehosp] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
-    foreach sort friends with [table:has-key? rankinglist [who] of myself] [ z ->
+    foreach sort friends [ z ->
       ; weight of friend: 1 - distance to woman
       let weightfriend ifelse-value ([selectedhospital] of z = [who] of myself) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
       ; denominator in weighted average
@@ -742,7 +742,7 @@ SWITCH
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -1158,54 +1158,40 @@ convergence od
 @#$#@#$#@
 ## WHAT IS IT?
 
-Hospital choice based on social multiplier of formed networks. Actors of the simulation are women, counselcenters and hospitals. Random utility models applied for the selection hospitals.
+The model simulates the effect of social influence and distance on the selection of childbirth hospitals and diffusion of ranking of hospitals, and how the two affect each other. From the dynamics modeling perspective, the work combines discrete choice model and opinion dynamics.
 
-## NOTES ON HOSPITALS
-
-* San Rossore: private
-* Serristore Figlini: not a maternity department
+The model is initialized with geo-data on Tuscany, main actors are women and hospital. Agent-types include also counsel-centers, not used. A normalized matrix distance reports time to travel between municipalities of agents.
 
 ## HOW IT WORKS
 
-In this version, in each cycle one woman is set to be pregnant and search for an hospital. The woman selects n_network other agents based on the distance in space modeled with discrete choice probability. At time 0, each agent holds 0 as ranking for each hospital. When the agent selects an hospital, the assessment is based on the distance (closer has higher probability) and ranking of the hospital from the agent in their network. By default, the ranking of the hospital where an agent has given birth is 1. The social multiplier includes the average of agents in the network that have experience of the hospital, weighted by a parameter modeling the effect of social influence. When an agent has selected the hospital, givenbirth is set to true. The simulation ends when no women with givenbirth false are available.
-
-The utility is computed as ((-weightdistance * distance) + (weightsocialinfluence * (rankingalter/sumalter))
-sumalter refers to the number of other people in the network of the caller agent.
-
-This strategy is aimed at explaining mechanisms and inequalities in hospital selection through the interaction of distance and social influence, leveraging the modeling of cascade effects and relative weights between distance and social influence in the decisional process.
-
-Initialized with data from Tuscany, results are bounded to spatial inequalities in the distribution of services and proximity of services.  
+At time 0, every woman is given a vector of the distance to each hospital and a random distribution of ranking for each hospital between -1 and +1.
+At each step, one woman becomes pregnant and has to select one hospital where to give birth. The selection follows a random utility model, where a utility is attributed to each hospital. The deterministic effect over the random selection of one hospital is due by two elements: a weighted effect of distance and a weighted effect of social influence, which implements the social multiplier. For the social multiplier, the agent selects 50 agents to ask suggestion. Networks vary by the distance from the caller. The social multiplies weights the average mean between alter who have had direct experience of giving birth to that hospital, or opinion based on indirect communication. The relative weights between direct experience or indirect communication are complementary.
+After selection, the selector updates their ranking of that selected hospital derived from PNE official quantitative indicators provided by region Tuscany.
+Once a woman has given birth, they influence the 1% of their municipality, communicating their experience of that hospital to other women who have not given birth in that hospital. Both women who have given birth elsewhere or women who still have to give birth can be influenced. The success of communication follows a Deffuant model, where the other agent holds a latitude of acceptance and a convergence rate. If the absolute distance between ranking of proposer and alter follows below the latitude of acceptance, the social influence mechanism occurs. This consists to add to the own ranking the difference between the ranking of the proposer and the own ranking, weighted by the confluence rate.
+Note that when next agents become pregnant, the effect of opinion dynamic can influence the rank communicated from communication of experience for those who did not give birth in that hospital and those who did, based on the composition of networks used for the social multiplier. 
 
 
 ## HOW TO USE IT
 
-SETUP
-Color of women show the minimum distance to reach one hospital
 
-* show_networks: to show mobilities through networks during the simulation
-* distweight: weight of distance for network selection in the word of mouth
-(-1 preference for closer people; 0 random; 1 preference for further people)
-* n_network: number of people in the network
-The network is an agentset from which the average rating is computed
-* weight_distance_hospital: the weight of distance to hospital selection (negative value since the less distance is better)
-* social_multiplier: weight of social influence in the hospital selection
-* resizepop: to scale down to *resizescale* input value (in decimal).
-* popconcentration: to show the concentration of women in that municipality compared to the whole region
+* distance_threshold: the distance within which 50 random alter are selected to ask suggestion for the social multiplier in the selection of hospitals by the caller
+* n_network: the size of network size for the social multiplier of caller
+* weight_distance_hospital: the weight of distance in the selection of hospitals by the caller (negative weight)
+* social_multiplier: weight of social influence in the selection of hospitals by the caller
+* weight_experience [0,1]: within the weighted average used in the social multiplier, the weight given to those who have had experience of that hospital. The weight given to those who have received communication of the experience by others is computed as complementary (1 - weight_experience)
+* uptrnk_sd: standard deviation for the distribution of ranking of selected hospital by the caller, centered in the PNE data on quantitative performance of hospital
+
+* Deffuant opinion dynamic, for those who have given birth (**_birthtrue) or still not pregnant (**_notbirth):
+** eps: latitude of acceptance
+** mu: parameter of convergence
 
 
 ## THINGS TO NOTICE
 
-The three plots show results for the individual hospital to select (hospital_id)
-* Selection hospital: the number of women who selected the hospital distributed by distance on x-axis. Red line the actual data, blue line the simulation results
-* Mobility hospital origin (raw numbers): the number of women in the simulation that select hospital id, signaling the distance from the hospital
-* Mobility hospital origin (proportion): the proportion of women that selected the hospital in the simulation by distance
-
-* networks button: to show all networks mobolities from empirical data (emp_net set to on) or from the simulation
-
-# NOTE 
-
-Effect of concentration of the population and distribution of services reflecting the concentration. In fact, slow mobility from further zones (Val di Chiana to Grosset).
-
+* report_ranking: for each hospital, it reports the PNE value, the average mean by agents out of the simulation and standard deviation. If rank_by_procom is set to 0, it reports data on the entire population; otherwise: specify the pro_com of municipality
+* Selection hospital: if plot_mobil activated, for hospital_id hospital, it reports the number of agents who have selected that hospital by distance and comparing with real selection from empirical data
+* Mobility hospital origin: if plot_mobil activated, for hospital_id hospital, it reports the number of agents who selected that hospital by the origin of agents
+ 
 ## CREDITS AND REFERENCES
 
 Rocco Paolillo
