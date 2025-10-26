@@ -997,7 +997,7 @@ SWITCH
 515
 avgrank
 avgrank
-0
+1
 1
 -1000
 
@@ -1078,7 +1078,7 @@ weight_experience
 weight_experience
 0
 1
-1.0
+0.0
 0.1
 1
 NIL
