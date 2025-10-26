@@ -221,7 +221,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     let totweightfriend []
     foreach sort friends with [table:has-key? rankinglist [who] of myself] [ z ->
       ; weight of friend: 1 - distance to woman
-    let weightfriend (1 - dist myself z distservicesnorm)
+      let weightfriend ifelse-value ([selectedhospital] of z = [who] of myself) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
       ; denominator in weighted average
     set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
@@ -589,10 +589,10 @@ destination_to
 Number
 
 BUTTON
-84
-459
-149
-492
+80
+494
+145
+527
 go
 go
 T
@@ -732,7 +732,7 @@ SWITCH
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -947,25 +947,25 @@ NIL
 1
 
 SLIDER
-67
-298
-163
-331
+63
+333
+159
+366
 uptrnk_sd
 uptrnk_sd
 0
 1
-0.25
+0.0
 0.05
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-64
-281
-169
-299
+60
+316
+165
+334
 rank post-experience
 10
 0.0
@@ -997,7 +997,7 @@ SWITCH
 515
 avgrank
 avgrank
-1
+0
 1
 -1000
 
@@ -1013,12 +1013,12 @@ plot_mobil
 -1000
 
 BUTTON
-75
-501
-159
-534
+21
+551
+105
+584
 report_ranking
- ask hospital [\n let h who\n let vals [ table:get rankinglist h ] of women with [pro_com = 48017]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
+ ask hospital [\n let h who\n let vals ifelse-value (rank_by_procom = 0) [[ table:get rankinglist h ] of women] [ [ table:get rankinglist h ] of women with [pro_com = rank_by_procom] ]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
 NIL
 1
 T
@@ -1030,10 +1030,10 @@ NIL
 1
 
 SLIDER
-55
-371
-173
-404
+51
+406
+169
+439
 lat_acceptance
 lat_acceptance
 0
@@ -1045,29 +1045,55 @@ NIL
 HORIZONTAL
 
 SLIDER
-55
-407
-173
-440
+51
+442
+169
+475
 weight_od
 weight_od
 0
 1
-0.5
+1.0
 0.1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-55
-348
-175
-366
+51
+383
+171
+401
 deffuant opinion dynamic
 10
 0.0
 1
+
+SLIDER
+49
+268
+169
+301
+weight_experience
+weight_experience
+0
+1
+1.0
+0.1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+111
+537
+203
+597
+rank_by_procom
+53011.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
