@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp pneranking rankbywomen]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth ]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth mu_convergence eps_acceptance]
 
 
 
@@ -146,6 +146,8 @@ ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
       set PRO_COM item 0 s
       set selectedhospitalemp [who] of x
       set timeatbirth 0
+      set mu_convergence 0
+      set eps_acceptance 0
   ]
 ]
 ]
@@ -265,14 +267,22 @@ end
 
 to communicate_experience
 
-  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false] [
-    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]) other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]
+;  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false] [
+;    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]) other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]
+
+  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself] [   ; and pregnant = false and givenbirth = false
+    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself]) other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself]
+
+    ask alter [
+      set eps_acceptance ifelse-value (givenbirth = true)[eps_birthtrue][eps_notbirth]
+      set mu_convergence ifelse-value (givenbirth = true)[mu_birthtrue][ mu_notbirth]
+    ]
 
     foreach sort alter [ f ->
 ;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
 
-    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= lat_acceptance [
-      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (convergence_od * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
+    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= eps_acceptance [
+      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (mu_convergence * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
 ;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
 
     ]
@@ -589,10 +599,10 @@ destination_to
 Number
 
 BUTTON
-80
-494
-145
-527
+81
+532
+146
+565
 go
 go
 T
@@ -732,7 +742,7 @@ SWITCH
 591
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -931,9 +941,9 @@ NIL
 
 BUTTON
 1026
-541
+540
 1096
-574
+573
 profiler
 profiler:start         ;; start profiling\nrepeat 100 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
@@ -1013,10 +1023,10 @@ plot_mobil
 -1000
 
 BUTTON
-21
-551
-105
+28
 584
+112
+617
 report_ranking
  ask hospital [\n let h who\n let vals ifelse-value (rank_by_procom = 0) [[ table:get rankinglist h ] of women] [ [ table:get rankinglist h ] of women with [pro_com = rank_by_procom] ]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
 NIL
@@ -1030,27 +1040,52 @@ NIL
 1
 
 SLIDER
-51
-406
-169
-439
-lat_acceptance
-lat_acceptance
+12
+421
+108
+454
+eps_birthtrue
+eps_birthtrue
 0
 2
-2.0
+0.0
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
+112
+485
+206
+518
+mu_notbirth
+mu_notbirth
+0
+1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
 51
-442
+380
+171
+398
+deffuant opinion dynamic
+10
+0.0
+1
+
+SLIDER
+47
+268
 169
-475
-convergence_od
-convergence_od
+301
+weight_experience
+weight_experience
 0
 1
 1.0
@@ -1059,41 +1094,66 @@ convergence_od
 NIL
 HORIZONTAL
 
-TEXTBOX
-51
-383
-171
-401
-deffuant opinion dynamic
-10
-0.0
-1
-
-SLIDER
-49
-268
-169
-301
-weight_experience
-weight_experience
-0
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
 INPUTBOX
-111
-537
-203
-597
+118
+570
+210
+630
 rank_by_procom
 53011.0
 1
 0
 Number
+
+SLIDER
+10
+486
+106
+519
+mu_birthtrue
+mu_birthtrue
+0
+1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+116
+420
+211
+453
+eps_notbirth
+eps_notbirth
+0
+2
+2.0
+0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+61
+400
+154
+418
+latitude_acceptance
+10
+0.0
+1
+
+TEXTBOX
+71
+463
+149
+481
+convergence od
+10
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
