@@ -272,7 +272,7 @@ to communicate_experience
 ;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
 
     if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= lat_acceptance [
-      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (weight_od * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
+      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (convergence_od * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
 ;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
 
     ]
@@ -1049,8 +1049,8 @@ SLIDER
 442
 169
 475
-weight_od
-weight_od
+convergence_od
+convergence_od
 0
 1
 1.0
