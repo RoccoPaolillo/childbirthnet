@@ -5,8 +5,8 @@ breed [women womens]
 breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
-hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp ownranking avg_ownraking]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist selectedhospital selectedhospitalemp timeatbirth]
+hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp pneranking rankbywomen]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth mu_convergence eps_acceptance]
 
 
 
@@ -93,12 +93,12 @@ foreach but-first hospitals2023 [ row ->                           ; here to avo
       set xcor item 0 loc
       set ycor item 1 loc
       let effective_rank filter [ [s] -> item 0 s = x ] but-first rankhosp
-      set ownranking item 1 item 0 effective_rank
+      set pneranking item 1 item 0 effective_rank
       set color (ifelse-value
-        ownranking = -1 [magenta]
-        ownranking = -0.5 [blue]
-        ownranking = 0 [green]
-        ownranking = 0.5 [pink]
+        pneranking = -1 [magenta]
+        pneranking = -0.5 [blue]
+        pneranking = 0 [green]
+        pneranking = 0.5 [pink]
         [cyan]
 
 
@@ -146,6 +146,8 @@ ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
       set PRO_COM item 0 s
       set selectedhospitalemp [who] of x
       set timeatbirth 0
+      set mu_convergence 0
+      set eps_acceptance 0
   ]
 ]
 ]
@@ -156,9 +158,14 @@ end
 to options_hospital
 
 set rankinglist table:make
+set distancehosp table:make
 
 foreach sort hospital [y ->
     table:put rankinglist [who] of y precision ((random-float 2) - 1) 3
+]
+
+foreach sort hospital [y ->
+table:put distancehosp [who] of y dist self y distservicesnorm
 ]
 
 end
@@ -172,15 +179,16 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
    if selectedhospital = 0 [select_hospital]
       ]
 
-  ask women with [givenbirth = true][
+  if ticks > 0 and ticks mod 80 = 0 [ ask women with [givenbirth = true][
    communicate_experience
+  ]
   ]
 
 if avgrank [
  ask hospital [
  let h who
  let vals [ table:get rankinglist h ] of women
- set avg_ownraking mean vals
+ set rankbywomen mean vals
  ]
   ]
 
@@ -208,33 +216,28 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
 ]
 
-  let hospitallist remove-duplicates reduce sentence [ table:keys rankinglist ] of friends
-  let hospitaltoselect hospital with [member? who hospitallist]
-  ; if not hospital in the own list, add with value 0 (effect random)
-  foreach sort hospitaltoselect [t ->
-    if not table:has-key? rankinglist [who] of t [table:put rankinglist [who] of t 0]
-  ]
 
-  ask hospitaltoselect [
+  ask hospital [
+    let distancefrom table:get [distancehosp] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
-    foreach sort friends with [table:has-key? rankinglist [who] of myself] [ z ->
+    foreach sort friends [ z ->
       ; weight of friend: 1 - distance to woman
-    let weightfriend (1 - dist myself z distservicesnorm)
+      let weightfriend ifelse-value ([selectedhospital] of z = [who] of myself) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
       ; denominator in weighted average
     set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
 
     ]
-    set utility ( (weight_distance_hospital * ((dist myself self distservicesnorm) * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
-
+    set utility ( (weight_distance_hospital * (distancefrom * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
+;    print (word self " distancefrom: " distancefrom " myself: " myself)
   ]
 
-   set selectedhospital [who] of rnd:weighted-one-of hospitaltoselect [exp(utility - max [utility] of hospitaltoselect)]
+   set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" clamped to not go below -1 or above +1
 ;  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
-  table:put rankinglist selectedhospital normal [ownranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
+  table:put rankinglist selectedhospital normal [pneranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
 ;  print(word who " selected: " selectedhospital " postOD: " table:get rankinglist selectedhospital) ; TEST post updating
 
 if show_networks [
@@ -264,15 +267,26 @@ end
 
 to communicate_experience
 
-  if any? other women with [pro_com = [pro_com] of myself and givenbirth = false] [
-    let alter one-of other women with [pro_com = [pro_com] of myself and givenbirth = false]
-;      print(word "alter: " [who] of alter " opselected: " table:get [rankinglist] of alter selectedhospital) ; TEST
+;  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false] [
+;    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]) other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]
 
-    if abs(table:get [rankinglist] of alter selectedhospital - table:get rankinglist selectedhospital) <= 2 [
-      table:put [rankinglist] of alter selectedhospital ( table:get [rankinglist] of alter selectedhospital + (0.5 * (table:get rankinglist selectedhospital - table:get [rankinglist] of alter selectedhospital)))
-;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of alter " newhosp: " table:get [rankinglist] of alter selectedhospital  ) ; TEST
+  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself] [   ; and pregnant = false and givenbirth = false
+    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself]) other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself]
+
+    ask alter [
+      set eps_acceptance ifelse-value (givenbirth = true)[eps_birthtrue][eps_notbirth]
+      set mu_convergence ifelse-value (givenbirth = true)[mu_birthtrue][ mu_notbirth]
+    ]
+
+    foreach sort alter [ f ->
+;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
+
+    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= eps_acceptance [
+      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (mu_convergence * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
+;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
 
     ]
+  ]
   ]
 
 end
@@ -339,21 +353,12 @@ to-report womendiscuss [idd]
     report count women with [table:has-key? rankinglist [who] of idd]]
 end
 
-to plot-postranking [ m s maxlim minlim n num-bars]
-  let values n-values n [ normal  m s maxlim minlim ]    ;; lista di n campioni
-  set-current-plot "Distribution post ranking"
-  clear-plot
-  set-plot-x-range -1 1                   ;; fissiamo i bordi
-  set-histogram-num-bars num-bars         ;; es. 30
-  histogram values
-end
-
 to report_data [filename]
 
-  let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital"  "social_multiplier" "show_networks" "updaterank_sd"  "emp_net" ]
-  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital social_multiplier  show_networks  uptrnk_sd emp_net)
+  let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital"  "social_multiplier" "weight_experience" "uptrnk_sd" "eps_birthtrue" "eps_notbirth" "mu_birthtrue" "mu_notbirth" ]
+  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital social_multiplier weight_experience uptrnk_sd eps_birthtrue eps_notbirth mu_birthtrue mu_notbirth )
 
-  let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "rankinglist"]
+  let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "procom_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "procom_selectedhospital" "rankinglist"]
   let header sentence core-header param-names
   let rows (list header)
 
@@ -365,8 +370,10 @@ to report_data [filename]
       [pro_com] of w
       [selectedhospitalemp] of w
       [id] of one-of hospital with [who = [selectedhospitalemp] of w]
+      [pro_com] of one-of hospital with [who = [selectedhospitalemp] of w]
       [selectedhospital] of w
       [id] of one-of hospital with [who = [selectedhospital] of w]
+      [pro_com] of one-of hospital with [who = [selectedhospital] of w]
       [rankinglist] of w
     )
     ;; append metadata + parameters to each row
@@ -512,12 +519,12 @@ NIL
 1
 
 BUTTON
-1307
-432
-1388
-465
+1306
+433
+1387
+466
 show hospital
-ask hospital [\nset size 1\nset color (ifelse-value\n        ownranking = -1 [magenta]\n        ownranking = -0.5 [blue]\n        ownranking = 0 [green]\n        ownranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
+ask hospital [\nset size 1\nset color (ifelse-value\n        pneranking = -1 [magenta]\n        pneranking = -0.5 [blue]\n        pneranking = 0 [green]\n        pneranking = 0.5 [pink]\n        [cyan]\n\n\n      ) show-turtle]
 NIL
 1
 T
@@ -585,10 +592,10 @@ destination_to
 Number
 
 BUTTON
-82
-353
-147
-386
+81
+532
+146
+565
 go
 go
 T
@@ -604,7 +611,7 @@ NIL
 MONITOR
 252
 518
-319
+320
 563
 given birth
 count women with [givenbirth = true]
@@ -636,7 +643,7 @@ weight_distance_hospital
 weight_distance_hospital
 -200
 0
-0.0
+-10.0
 1
 1
 NIL
@@ -728,7 +735,7 @@ SWITCH
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -881,10 +888,10 @@ emp_net
 -1000
 
 BUTTON
-1401
-397
-1485
-430
+494
+594
+578
+627
 emp_mobilities
 ask women [let selectedoneemp one-of hospital with [who = [selectedhospitalemp] of myself]\ncreate-link-with selectedoneemp\nask my-out-links [\n\n      ifelse dist selectedoneemp myself distservices <= 0 [set color red]\n        [ifelse dist selectedoneemp myself distservices > 0 and dist selectedoneemp myself distservices <= 15  [set color yellow]\n          [ ifelse dist selectedoneemp myself distservices > 15 and dist selectedoneemp myself distservices <= 30 [set color orange]\n            [ifelse dist selectedoneemp myself distservices > 30 and dist selectedoneemp myself distservices <= 45 [set color brown]\n              [ifelse dist selectedoneemp myself distservices > 45 and dist selectedoneemp myself distservices <= 60 [set color violet]\n                [set color blue]\n              ]\n            ]\n          ]\n      ]\n    ]\n\n]
 NIL
@@ -904,7 +911,7 @@ SWITCH
 51
 rescale15
 rescale15
-0
+1
 1
 -1000
 
@@ -927,11 +934,11 @@ NIL
 
 BUTTON
 1026
-541
+540
 1096
-574
+573
 profiler
-profiler:start         ;; start profiling\nrepeat 20 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
+profiler:start         ;; start profiling\nrepeat 100 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
 1
 T
@@ -943,10 +950,10 @@ NIL
 1
 
 SLIDER
-67
-298
-163
-331
+63
+333
+159
+366
 uptrnk_sd
 uptrnk_sd
 0
@@ -958,10 +965,10 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-64
-281
-169
-299
+60
+316
+165
+334
 rank post-experience
 10
 0.0
@@ -983,8 +990,8 @@ true
 true
 "" ""
 PENS
-"PNE" 1.0 0 -2674135 true "" "plot ([ownranking] of one-of hospital with [who = hospital_id])"
-"avg_simul" 1.0 0 -13345367 true "" "plot ([avg_ownraking] of one-of hospital with [who = hospital_id])"
+"PNE" 1.0 0 -2674135 true "" "if avgrank [plot ([pneranking] of one-of hospital with [who = hospital_id])]"
+"avg_simul" 1.0 0 -13345367 true "" "if avgrank [plot ([rankbywomen] of one-of hospital with [who = hospital_id])]"
 
 SWITCH
 945
@@ -1011,54 +1018,176 @@ plot_mobil
 @#$#@#$#@
 ## WHAT IS IT?
 
-Hospital choice based on social multiplier of formed networks. Actors of the simulation are women, counselcenters and hospitals. Random utility models applied for the selection hospitals.
+BUTTON
+28
+584
+112
+617
+report_ranking
+ ask hospital [\n let h who\n let vals ifelse-value (rank_by_procom = 0) [[ table:get rankinglist h ] of women] [ [ table:get rankinglist h ] of women with [pro_com = rank_by_procom] ]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
-## NOTES ON HOSPITALS
+SLIDER
+12
+421
+108
+454
+eps_birthtrue
+eps_birthtrue
+0
+2
+0.0
+0.1
+1
+NIL
+HORIZONTAL
 
-* San Rossore: private
-* Serristore Figlini: not a maternity department
+SLIDER
+112
+485
+206
+518
+mu_notbirth
+mu_notbirth
+0
+1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+51
+380
+171
+398
+deffuant opinion dynamic
+10
+0.0
+1
+
+SLIDER
+47
+268
+169
+301
+weight_experience
+weight_experience
+0
+1
+1.0
+0.1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+118
+570
+210
+630
+rank_by_procom
+53011.0
+1
+0
+Number
+
+SLIDER
+10
+486
+106
+519
+mu_birthtrue
+mu_birthtrue
+0
+1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+116
+420
+211
+453
+eps_notbirth
+eps_notbirth
+0
+2
+2.0
+0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+61
+400
+154
+418
+latitude_acceptance
+10
+0.0
+1
+
+TEXTBOX
+71
+463
+149
+481
+convergence od
+10
+0.0
+1
+
+@#$#@#$#@
+## WHAT IS IT?
+
+The model simulates the effect of social influence and distance on the selection of childbirth hospitals and diffusion of ranking of hospitals, and how the two affect each other. From the dynamics modeling perspective, the work combines discrete choice model and opinion dynamics.
+
+The model is initialized with geo-data on Tuscany, main actors are women and hospital. Agent-types include also counsel-centers, not used. A normalized matrix distance reports time to travel between municipalities of agents.
 
 ## HOW IT WORKS
 
-In this version, in each cycle one woman is set to be pregnant and search for an hospital. The woman selects n_network other agents based on the distance in space modeled with discrete choice probability. At time 0, each agent holds 0 as ranking for each hospital. When the agent selects an hospital, the assessment is based on the distance (closer has higher probability) and ranking of the hospital from the agent in their network. By default, the ranking of the hospital where an agent has given birth is 1. The social multiplier includes the average of agents in the network that have experience of the hospital, weighted by a parameter modeling the effect of social influence. When an agent has selected the hospital, givenbirth is set to true. The simulation ends when no women with givenbirth false are available.
-
-The utility is computed as ((-weightdistance * distance) + (weightsocialinfluence * (rankingalter/sumalter))
-sumalter refers to the number of other people in the network of the caller agent.
-
-This strategy is aimed at explaining mechanisms and inequalities in hospital selection through the interaction of distance and social influence, leveraging the modeling of cascade effects and relative weights between distance and social influence in the decisional process.
-
-Initialized with data from Tuscany, results are bounded to spatial inequalities in the distribution of services and proximity of services.  
+At time 0, every woman is given a vector of the distance to each hospital and a random distribution of ranking for each hospital between -1 and +1.
+At each step, one woman becomes pregnant and has to select one hospital where to give birth. The selection follows a random utility model, where a utility is attributed to each hospital. The deterministic effect over the random selection of one hospital is due by two elements: a weighted effect of distance and a weighted effect of social influence, which implements the social multiplier. For the social multiplier, the agent selects 50 agents to ask suggestion. Networks vary by the distance from the caller. The social multiplies weights the average mean between alter who have had direct experience of giving birth to that hospital, or opinion based on indirect communication. The relative weights between direct experience or indirect communication are complementary.
+After selection, the selector updates their ranking of that selected hospital derived from PNE official quantitative indicators provided by region Tuscany.
+Once a woman has given birth, they influence the 1% of their municipality, communicating their experience of that hospital to other women who have not given birth in that hospital. Both women who have given birth elsewhere or women who still have to give birth can be influenced. The success of communication follows a Deffuant model, where the other agent holds a latitude of acceptance and a convergence rate. If the absolute distance between ranking of proposer and alter follows below the latitude of acceptance, the social influence mechanism occurs. This consists to add to the own ranking the difference between the ranking of the proposer and the own ranking, weighted by the confluence rate.
+Note that when next agents become pregnant, the effect of opinion dynamic can influence the rank communicated from communication of experience for those who did not give birth in that hospital and those who did, based on the composition of networks used for the social multiplier. 
 
 
 ## HOW TO USE IT
 
-SETUP
-Color of women show the minimum distance to reach one hospital
 
-* show_networks: to show mobilities through networks during the simulation
-* distweight: weight of distance for network selection in the word of mouth
-(-1 preference for closer people; 0 random; 1 preference for further people)
-* n_network: number of people in the network
-The network is an agentset from which the average rating is computed
-* weight_distance_hospital: the weight of distance to hospital selection (negative value since the less distance is better)
-* social_multiplier: weight of social influence in the hospital selection
-* resizepop: to scale down to *resizescale* input value (in decimal).
-* popconcentration: to show the concentration of women in that municipality compared to the whole region
+* distance_threshold: the distance within which 50 random alter are selected to ask suggestion for the social multiplier in the selection of hospitals by the caller
+* n_network: the size of network size for the social multiplier of caller
+* weight_distance_hospital: the weight of distance in the selection of hospitals by the caller (negative weight)
+* social_multiplier: weight of social influence in the selection of hospitals by the caller
+* weight_experience [0,1]: within the weighted average used in the social multiplier, the weight given to those who have had experience of that hospital. The weight given to those who have received communication of the experience by others is computed as complementary (1 - weight_experience)
+* uptrnk_sd: standard deviation for the distribution of ranking of selected hospital by the caller, centered in the PNE data on quantitative performance of hospital
+
+* Deffuant opinion dynamic, for those who have given birth (**_birthtrue) or still not pregnant (**_notbirth):
+** eps: latitude of acceptance
+** mu: parameter of convergence
 
 
 ## THINGS TO NOTICE
 
-The three plots show results for the individual hospital to select (hospital_id)
-* Selection hospital: the number of women who selected the hospital distributed by distance on x-axis. Red line the actual data, blue line the simulation results
-* Mobility hospital origin (raw numbers): the number of women in the simulation that select hospital id, signaling the distance from the hospital
-* Mobility hospital origin (proportion): the proportion of women that selected the hospital in the simulation by distance
-
-* networks button: to show all networks mobolities from empirical data (emp_net set to on) or from the simulation
-
-# NOTE 
-
-Effect of concentration of the population and distribution of services reflecting the concentration. In fact, slow mobility from further zones (Val di Chiana to Grosset).
-
+* report_ranking: for each hospital, it reports the PNE value, the average mean by agents out of the simulation and standard deviation. If rank_by_procom is set to 0, it reports data on the entire population; otherwise: specify the pro_com of municipality
+* Selection hospital: if plot_mobil activated, for hospital_id hospital, it reports the number of agents who have selected that hospital by distance and comparing with real selection from empirical data
+* Mobility hospital origin: if plot_mobil activated, for hospital_id hospital, it reports the number of agents who selected that hospital by the origin of agents
+ 
 ## CREDITS AND REFERENCES
 
 Rocco Paolillo
@@ -1384,233 +1513,69 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="GENOVA" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <metric>distchoicezero hospitals 50</metric>
-    <metric>distchoicezero hospitals 61</metric>
-    <metric>distchoicezero hospitals 58</metric>
-    <metric>distchoicezero hospitals 60</metric>
-    <metric>distchoicezero hospitals 48</metric>
-    <metric>distchoicezero hospitals 63</metric>
-    <metric>distchoicezero hospitals 53</metric>
-    <metric>distchoicezero hospitals 64</metric>
-    <metric>distchoicezero hospitals 69</metric>
-    <metric>distchoicezero hospitals 56</metric>
-    <metric>distchoicezero hospitals 66</metric>
-    <metric>distchoicezero hospitals 51</metric>
-    <metric>distchoicezero hospitals 59</metric>
-    <metric>distchoicezero hospitals 65</metric>
-    <metric>distchoicezero hospitals 57</metric>
-    <metric>distchoicezero hospitals 62</metric>
-    <metric>distchoicezero hospitals 55</metric>
-    <metric>distchoicezero hospitals 49</metric>
-    <metric>distchoicezero hospitals 52</metric>
-    <metric>distchoicezero hospitals 54</metric>
-    <metric>distchoicezero hospitals 71</metric>
-    <metric>distchoicezero hospitals 68</metric>
-    <metric>distchoicezero hospitals 67</metric>
-    <metric>distchoicezero hospitals 70</metric>
-    <metric>distchoice hospitals 50 0 15</metric>
-    <metric>distchoice hospitals 61 0 15</metric>
-    <metric>distchoice hospitals 58 0 15</metric>
-    <metric>distchoice hospitals 60 0 15</metric>
-    <metric>distchoice hospitals 48 0 15</metric>
-    <metric>distchoice hospitals 63 0 15</metric>
-    <metric>distchoice hospitals 53 0 15</metric>
-    <metric>distchoice hospitals 64 0 15</metric>
-    <metric>distchoice hospitals 69 0 15</metric>
-    <metric>distchoice hospitals 56 0 15</metric>
-    <metric>distchoice hospitals 66 0 15</metric>
-    <metric>distchoice hospitals 51 0 15</metric>
-    <metric>distchoice hospitals 59 0 15</metric>
-    <metric>distchoice hospitals 65 0 15</metric>
-    <metric>distchoice hospitals 57 0 15</metric>
-    <metric>distchoice hospitals 62 0 15</metric>
-    <metric>distchoice hospitals 55 0 15</metric>
-    <metric>distchoice hospitals 49 0 15</metric>
-    <metric>distchoice hospitals 52 0 15</metric>
-    <metric>distchoice hospitals 54 0 15</metric>
-    <metric>distchoice hospitals 71 0 15</metric>
-    <metric>distchoice hospitals 68 0 15</metric>
-    <metric>distchoice hospitals 67 0 15</metric>
-    <metric>distchoice hospitals 70 0 15</metric>
-    <metric>distchoice hospitals 50 15 30</metric>
-    <metric>distchoice hospitals 61 15 30</metric>
-    <metric>distchoice hospitals 58 15 30</metric>
-    <metric>distchoice hospitals 60 15 30</metric>
-    <metric>distchoice hospitals 48 15 30</metric>
-    <metric>distchoice hospitals 63 15 30</metric>
-    <metric>distchoice hospitals 53 15 30</metric>
-    <metric>distchoice hospitals 64 15 30</metric>
-    <metric>distchoice hospitals 69 15 30</metric>
-    <metric>distchoice hospitals 56 15 30</metric>
-    <metric>distchoice hospitals 66 15 30</metric>
-    <metric>distchoice hospitals 51 15 30</metric>
-    <metric>distchoice hospitals 59 15 30</metric>
-    <metric>distchoice hospitals 65 15 30</metric>
-    <metric>distchoice hospitals 57 15 30</metric>
-    <metric>distchoice hospitals 62 15 30</metric>
-    <metric>distchoice hospitals 55 15 30</metric>
-    <metric>distchoice hospitals 49 15 30</metric>
-    <metric>distchoice hospitals 52 15 30</metric>
-    <metric>distchoice hospitals 54 15 30</metric>
-    <metric>distchoice hospitals 71 15 30</metric>
-    <metric>distchoice hospitals 68 15 30</metric>
-    <metric>distchoice hospitals 67 15 30</metric>
-    <metric>distchoice hospitals 70 15 30</metric>
-    <metric>distchoice hospitals 50 30 45</metric>
-    <metric>distchoice hospitals 61 30 45</metric>
-    <metric>distchoice hospitals 58 30 45</metric>
-    <metric>distchoice hospitals 60 30 45</metric>
-    <metric>distchoice hospitals 48 30 45</metric>
-    <metric>distchoice hospitals 63 30 45</metric>
-    <metric>distchoice hospitals 53 30 45</metric>
-    <metric>distchoice hospitals 64 30 45</metric>
-    <metric>distchoice hospitals 69 30 45</metric>
-    <metric>distchoice hospitals 56 30 45</metric>
-    <metric>distchoice hospitals 66 30 45</metric>
-    <metric>distchoice hospitals 51 30 45</metric>
-    <metric>distchoice hospitals 59 30 45</metric>
-    <metric>distchoice hospitals 65 30 45</metric>
-    <metric>distchoice hospitals 57 30 45</metric>
-    <metric>distchoice hospitals 62 30 45</metric>
-    <metric>distchoice hospitals 55 30 45</metric>
-    <metric>distchoice hospitals 49 30 45</metric>
-    <metric>distchoice hospitals 52 30 45</metric>
-    <metric>distchoice hospitals 54 30 45</metric>
-    <metric>distchoice hospitals 71 30 45</metric>
-    <metric>distchoice hospitals 68 30 45</metric>
-    <metric>distchoice hospitals 67 30 45</metric>
-    <metric>distchoice hospitals 70 30 45</metric>
-    <metric>distchoice hospitals 50 45 60</metric>
-    <metric>distchoice hospitals 61 45 60</metric>
-    <metric>distchoice hospitals 58 45 60</metric>
-    <metric>distchoice hospitals 60 45 60</metric>
-    <metric>distchoice hospitals 48 45 60</metric>
-    <metric>distchoice hospitals 63 45 60</metric>
-    <metric>distchoice hospitals 53 45 60</metric>
-    <metric>distchoice hospitals 64 45 60</metric>
-    <metric>distchoice hospitals 69 45 60</metric>
-    <metric>distchoice hospitals 56 45 60</metric>
-    <metric>distchoice hospitals 66 45 60</metric>
-    <metric>distchoice hospitals 51 45 60</metric>
-    <metric>distchoice hospitals 59 45 60</metric>
-    <metric>distchoice hospitals 65 45 60</metric>
-    <metric>distchoice hospitals 57 45 60</metric>
-    <metric>distchoice hospitals 62 45 60</metric>
-    <metric>distchoice hospitals 55 45 60</metric>
-    <metric>distchoice hospitals 49 45 60</metric>
-    <metric>distchoice hospitals 52 45 60</metric>
-    <metric>distchoice hospitals 54 45 60</metric>
-    <metric>distchoice hospitals 71 45 60</metric>
-    <metric>distchoice hospitals 68 45 60</metric>
-    <metric>distchoice hospitals 67 45 60</metric>
-    <metric>distchoice hospitals 70 45 60</metric>
-    <metric>distchoicemax hospitals 50 60</metric>
-    <metric>distchoicemax hospitals 61 60</metric>
-    <metric>distchoicemax hospitals 58 60</metric>
-    <metric>distchoicemax hospitals 60 60</metric>
-    <metric>distchoicemax hospitals 48 60</metric>
-    <metric>distchoicemax hospitals 63 60</metric>
-    <metric>distchoicemax hospitals 53 60</metric>
-    <metric>distchoicemax hospitals 64 60</metric>
-    <metric>distchoicemax hospitals 69 60</metric>
-    <metric>distchoicemax hospitals 56 60</metric>
-    <metric>distchoicemax hospitals 66 60</metric>
-    <metric>distchoicemax hospitals 51 60</metric>
-    <metric>distchoicemax hospitals 59 60</metric>
-    <metric>distchoicemax hospitals 65 60</metric>
-    <metric>distchoicemax hospitals 57 60</metric>
-    <metric>distchoicemax hospitals 62 60</metric>
-    <metric>distchoicemax hospitals 55 60</metric>
-    <metric>distchoicemax hospitals 49 60</metric>
-    <metric>distchoicemax hospitals 52 60</metric>
-    <metric>distchoicemax hospitals 54 60</metric>
-    <metric>distchoicemax hospitals 71 60</metric>
-    <metric>distchoicemax hospitals 68 60</metric>
-    <metric>distchoicemax hospitals 67 60</metric>
-    <metric>distchoicemax hospitals 70 60</metric>
-    <metric>womenwhoselected hospitals 50</metric>
-    <metric>womenwhoselected hospitals 61</metric>
-    <metric>womenwhoselected hospitals 58</metric>
-    <metric>womenwhoselected hospitals 60</metric>
-    <metric>womenwhoselected hospitals 48</metric>
-    <metric>womenwhoselected hospitals 63</metric>
-    <metric>womenwhoselected hospitals 53</metric>
-    <metric>womenwhoselected hospitals 64</metric>
-    <metric>womenwhoselected hospitals 69</metric>
-    <metric>womenwhoselected hospitals 56</metric>
-    <metric>womenwhoselected hospitals 66</metric>
-    <metric>womenwhoselected hospitals 51</metric>
-    <metric>womenwhoselected hospitals 59</metric>
-    <metric>womenwhoselected hospitals 65</metric>
-    <metric>womenwhoselected hospitals 57</metric>
-    <metric>womenwhoselected hospitals 62</metric>
-    <metric>womenwhoselected hospitals 55</metric>
-    <metric>womenwhoselected hospitals 49</metric>
-    <metric>womenwhoselected hospitals 52</metric>
-    <metric>womenwhoselected hospitals 54</metric>
-    <metric>womenwhoselected hospitals 71</metric>
-    <metric>womenwhoselected hospitals 68</metric>
-    <metric>womenwhoselected hospitals 67</metric>
-    <metric>womenwhoselected hospitals 70</metric>
-    <metric>rankupdate hospitals 50</metric>
-    <metric>rankupdate hospitals 61</metric>
-    <metric>rankupdate hospitals 58</metric>
-    <metric>rankupdate hospitals 60</metric>
-    <metric>rankupdate hospitals 48</metric>
-    <metric>rankupdate hospitals 63</metric>
-    <metric>rankupdate hospitals 53</metric>
-    <metric>rankupdate hospitals 64</metric>
-    <metric>rankupdate hospitals 69</metric>
-    <metric>rankupdate hospitals 56</metric>
-    <metric>rankupdate hospitals 66</metric>
-    <metric>rankupdate hospitals 51</metric>
-    <metric>rankupdate hospitals 59</metric>
-    <metric>rankupdate hospitals 65</metric>
-    <metric>rankupdate hospitals 57</metric>
-    <metric>rankupdate hospitals 62</metric>
-    <metric>rankupdate hospitals 55</metric>
-    <metric>rankupdate hospitals 49</metric>
-    <metric>rankupdate hospitals 52</metric>
-    <metric>rankupdate hospitals 54</metric>
-    <metric>rankupdate hospitals 71</metric>
-    <metric>rankupdate hospitals 68</metric>
-    <metric>rankupdate hospitals 67</metric>
-    <metric>rankupdate hospitals 70</metric>
     <enumeratedValueSet variable="rescale15">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="options_rank">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="options_dist">
-      <value value="10"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="distance_threshold">
+      <value value="0"/>
       <value value="260"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="n_network">
       <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="weight_distance_hospital">
-      <value value="-10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="weight_ownranking">
-      <value value="0"/>
+      <value value="-1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social_multiplier">
+      <value value="0"/>
+      <value value="1"/>
       <value value="10"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="uptrnk_mean">
-      <value value="0"/>
+    <enumeratedValueSet variable="weight_experience">
+      <value value="0.5"/>
+      <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="uptrnk_sd">
-      <value value="0.25"/>
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="eps_birthtrue">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="eps_notbirth">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mu_birthtrue">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mu_notbirth">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avgrank">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="plot_mobil">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="show_networks">
       <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="emp_net">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rank_by_procom">
+      <value value="53011"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="destination_to">
+      <value value="5585"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="origin_from">
+      <value value="6194"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="hospital_id">
+      <value value="50"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
