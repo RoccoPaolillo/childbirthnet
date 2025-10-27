@@ -353,15 +353,6 @@ to-report womendiscuss [idd]
     report count women with [table:has-key? rankinglist [who] of idd]]
 end
 
-to plot-postranking [ m s maxlim minlim n num-bars]
-  let values n-values n [ normal  m s maxlim minlim ]    ;; lista di n campioni
-  set-current-plot "Distribution post ranking"
-  clear-plot
-  set-plot-x-range -1 1                   ;; fissiamo i bordi
-  set-histogram-num-bars num-bars         ;; es. 30
-  histogram values
-end
-
 to report_data [filename]
 
   let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital"  "social_multiplier" "show_networks" "updaterank_sd"  "emp_net" ]
