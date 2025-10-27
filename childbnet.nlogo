@@ -171,6 +171,7 @@ table:put distancehosp [who] of y dist self y distservicesnorm
 end
 
 to go
+random-seed 10
 if not any? women with [givenbirth = false] [report_data "export" stop ]
 
 
@@ -1005,18 +1006,15 @@ avgrank
 -1000
 
 SWITCH
-946
+944
 176
-1039
+1037
 209
 plot_mobil
 plot_mobil
 1
 1
 -1000
-
-@#$#@#$#@
-## WHAT IS IT?
 
 BUTTON
 28
