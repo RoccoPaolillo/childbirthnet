@@ -988,8 +988,8 @@ true
 true
 "" ""
 PENS
-"PNE" 1.0 0 -2674135 true "" "plot ([pneranking] of one-of hospital with [who = hospital_id])"
-"avg_simul" 1.0 0 -13345367 true "" "plot ([rankbywomen] of one-of hospital with [who = hospital_id])"
+"PNE" 1.0 0 -2674135 true "" "if avgrank [plot ([pneranking] of one-of hospital with [who = hospital_id])]"
+"avg_simul" 1.0 0 -13345367 true "" "if avgrank [plot ([rankbywomen] of one-of hospital with [who = hospital_id])]"
 
 SWITCH
 945
