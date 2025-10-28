@@ -224,7 +224,7 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     let totweightfriend []
     foreach sort friends [ z ->
       ; weight of friend: 1 - distance to woman
-      let weightfriend ifelse-value ([selectedhospital] of z = [who] of self) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
+      let weightfriend ifelse-value ([selectedhospital] of z = [who] of mself) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
       ; denominator in weighted average
       set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
@@ -1083,7 +1083,7 @@ weight_experience
 weight_experience
 0
 1
-0.5
+1.0
 0.1
 1
 NIL
