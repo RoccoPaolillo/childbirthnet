@@ -222,6 +222,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     let distancefrom table:get [distancehosp] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
+    let otherranking table:make
+    let selectbyfriend table:make
     foreach sort friends [ z ->
       ; weight of friend: 1 - distance to woman
       let weightfriend ifelse-value ([selectedhospital] of z = [who] of self) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
@@ -229,9 +231,10 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
       set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
-
+     table:put otherranking [who] of z table:get [rankinglist] of z [who] of self
+     table:put selectbyfriend [who] of z [selectedhospital] of z
     ]
-     print(word "weightfriends: " totweightfriend "rankingfriends: " ranking_othweight)
+    print(word "caller: " [who] of myself " hosp: " who  " friendshosp: " selectbyfriend " otherranking: " otherranking " rankingfriends: " ranking_othweight)
     set utility ( (weight_distance_hospital * (distancefrom * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
 ;    print (word self " distancefrom: " distancefrom " myself: " myself)
   ]
@@ -707,7 +710,7 @@ distance_threshold
 distance_threshold
 0
 260
-90.0
+0.0
 1
 1
 NIL
@@ -737,7 +740,7 @@ SWITCH
 591
 show_networks
 show_networks
-0
+1
 1
 -1000
 
@@ -1083,7 +1086,7 @@ weight_experience
 weight_experience
 0
 1
-0.5
+1.0
 0.1
 1
 NIL
@@ -1109,7 +1112,7 @@ mu_birthtrue
 mu_birthtrue
 0
 1
-0.5
+1.0
 0.1
 1
 NIL
