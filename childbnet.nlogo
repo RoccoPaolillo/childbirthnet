@@ -178,7 +178,9 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
 
   ask one-of women with [pregnant = false and givenbirth = false] [
    set pregnant true
-   if selectedhospital = 0 [select_hospital]
+   if selectedhospital = 0 [
+      register_prechoice
+      select_hospital]
       ]
 
   if ticks > 0 and ticks mod 80 = 0 [ ask women with [givenbirth = true][
@@ -201,6 +203,10 @@ if avgrank [
   tick
 end
 
+to register_prechoice
+set prechoicelist rankinglist
+; print (word who " pre: " prechoicelist)
+end
 
 to select_hospital
 
@@ -220,6 +226,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 ]
 
   set friendselected (count friends with [selectedhospital != 0] / count friends)
+
+; print (word who " prerun: " rankinglist)
 
   ask hospital [
     ; distance of hospital used in utility estimate
@@ -253,8 +261,9 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
    set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
   ; the "ranking experience" of influncers at next steps, derived from the objective pne, to which a random term can be added for robustness check
-  set prechoicelist rankinglist
+
   table:put rankinglist selectedhospital  normal [pneranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
+;   print (word who " sel: " selectedhospital " postrun: " rankinglist)
 
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
@@ -292,7 +301,6 @@ to communicate_experience
     ask alter [
       set eps_acceptance ifelse-value (givenbirth = true)[eps_birthtrue][eps_notbirth]
       set mu_convergence ifelse-value (givenbirth = true)[mu_birthtrue][ mu_notbirth]
-
 
       if abs(table:get rankinglist topic - table:get [rankinglist] of myself topic) <= eps_acceptance [
         table:put rankinglist topic ( table:get rankinglist topic + (mu_convergence * (table:get [rankinglist] of myself topic - table:get rankinglist topic)))
@@ -656,7 +664,7 @@ weight_distance_hospital
 weight_distance_hospital
 -50
 0
-0.0
+-11.0
 1
 1
 NIL
@@ -748,7 +756,7 @@ SWITCH
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -971,7 +979,7 @@ uptrnk_sd
 uptrnk_sd
 0
 1
-0.0
+0.25
 0.05
 1
 NIL
@@ -1013,7 +1021,7 @@ SWITCH
 515
 avgrank
 avgrank
-0
+1
 1
 -1000
 
@@ -1024,7 +1032,7 @@ SWITCH
 209
 plot_mobil
 plot_mobil
-0
+1
 1
 -1000
 
