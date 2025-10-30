@@ -1227,22 +1227,24 @@ The model is initialized with geo-data on Tuscany, main actors are women and hos
 ## HOW IT WORKS
 
 At time 0, every woman is given a vector of the distance to each hospital and a random distribution of ranking for each hospital between -1 and +1.
-At each step, one woman becomes pregnant and has to select one hospital where to give birth. The selection follows a random utility model, where a utility is attributed to each hospital. The deterministic effect over the random selection of one hospital is due by two elements: a weighted effect of distance and a weighted effect of social influence, which implements the social multiplier. For the social multiplier, the agent selects 50 agents to ask suggestion. Networks vary by the distance from the caller. The social multiplies weights the average mean between alter who have had direct experience of giving birth to that hospital, or opinion based on indirect communication. The relative weights between direct experience or indirect communication are complementary.
+At each step, one woman becomes pregnant and has to select one hospital where to give birth. The selection follows a random utility model, where a utility is attributed to each hospital. The deterministic effect over the random selection of one hospital is due by two elements: a weighted effect of distance and a weighted effect for the opinion of that hospital. In the weighted opinion, a social multiplier is implemented.The agent selects 50 agents to ask suggestion. Networks vary by the distance from the caller. If social multiplier is set to 0, only the own opinion is taken into consideration, otherwise, the opinion used to estimate the utility for each hospital is converged to the weighted mean of the network of influencers according to the size of social multiplier. The weighted mean gives a different weight to alter who have had direct experience of giving birth to that hospital, or opinion based on indirect communication. The relative weights between direct experience or indirect communication are complementary.
 After selection, the selector updates their ranking of that selected hospital derived from PNE official quantitative indicators provided by region Tuscany.
-Once a woman has given birth, they influence the 1% of their municipality, communicating their experience of that hospital to other women who have not given birth in that hospital. Both women who have given birth elsewhere or women who still have to give birth can be influenced. The success of communication follows a Deffuant model, where the other agent holds a latitude of acceptance and a convergence rate. If the absolute distance between ranking of proposer and alter follows below the latitude of acceptance, the social influence mechanism occurs. This consists to add to the own ranking the difference between the ranking of the proposer and the own ranking, weighted by the confluence rate.
+Once a woman has given birth, they influence the 1% of their municipality (every 80 ticks), communicating their experience of that hospital to other women who have not given birth in that hospital. Both women who have given birth elsewhere or women who still have to give birth can be influenced. The success of communication follows a Deffuant model, where the other agent holds a latitude of acceptance and a convergence rate. If the absolute distance between ranking of proposer and alter follows below the latitude of acceptance, the social influence mechanism occurs. This consists to add to the own ranking the difference between the ranking of the proposer and the own ranking, weighted by the confluence rate.
 Note that when next agents become pregnant, the effect of opinion dynamic can influence the rank communicated from communication of experience for those who did not give birth in that hospital and those who did, based on the composition of networks used for the social multiplier. 
 
 
 ## HOW TO USE IT
 
 
+* initrankrnd: total random distribution initial opinion of hospital -1 +1
+* initrank_sd: if initrankrnd is off, the standard deviation of initial opinion distribution
 * distance_threshold: the distance within which 50 random alter are selected to ask suggestion for the social multiplier in the selection of hospitals by the caller
 * n_network: the size of network size for the social multiplier of caller
 * weight_distance_hospital: the weight of distance in the selection of hospitals by the caller (negative weight)
-* social_multiplier: weight of social influence in the selection of hospitals by the caller
-* weight_experience [0,1]: within the weighted average used in the social multiplier, the weight given to those who have had experience of that hospital. The weight given to those who have received communication of the experience by others is computed as complementary (1 - weight_experience)
-* uptrnk_sd: standard deviation for the distribution of ranking of selected hospital by the caller, centered in the PNE data on quantitative performance of hospital
-
+* weight_opinion: the weight of opinion in the selection of hospital
+* social_multiplier: whether only based on the own opinion (1 - social_multiplier), or aligning to the opinion of friends (social_multiplier)
+* weight_experience: within the social multiplier, the weight in the weighted mean given to people who have given birth (weight_experience) or due to own (potentially updated) opinion (1 - weight_experience)
+* uptrnk_sd: standard deviation of the updated experience then communicated, centered to the actual PNE value
 * Deffuant opinion dynamic, for those who have given birth (**_birthtrue) or still not pregnant (**_notbirth):
 ** eps: latitude of acceptance
 ** mu: parameter of convergence
