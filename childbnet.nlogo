@@ -180,8 +180,10 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
    set pregnant true
    if selectedhospital = 0 [
       register_prechoice
-      select_hospital]
+      select_hospital
       ]
+  ]
+
 
   if ticks > 0 and ticks mod 80 = 0 [ ask women with [givenbirth = true][
    communicate_experience
@@ -204,8 +206,8 @@ if avgrank [
 end
 
 to register_prechoice
-set prechoicelist rankinglist
-; print (word who " pre: " prechoicelist)
+  set prechoicelist table:from-json table:to-json rankinglist
+;  print (word who " pre: " prechoicelist)
 end
 
 to select_hospital
@@ -263,8 +265,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
   ; the "ranking experience" of influncers at next steps, derived from the objective pne, to which a random term can be added for robustness check
 
   table:put rankinglist selectedhospital  normal [pneranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
-;   print (word who " sel: " selectedhospital " postrun: " rankinglist)
-
+;  print (word who " sel: " selectedhospital " postrun: " rankinglist)
+;  print (word who " againpre: " prechoicelist)
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
  create-link-with selectedone
