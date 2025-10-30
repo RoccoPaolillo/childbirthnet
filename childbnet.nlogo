@@ -228,8 +228,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
     let opinionquality table:get [rankinglist] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
-    let otherranking table:make
-    let selectbyfriend table:make
+;    let otherranking table:make
+;    let selectbyfriend table:make
     foreach sort friends   [ z ->
       ; following deffuant, only friends whose quality opinion of that hospital fall within the latitude of acceptance will be considered for the weighted average
       ; if abs(table:get [rankinglist] of z [who] of self - table:get [rankinglist] of myself [who] of self) <= latitude_acceptance [
@@ -239,8 +239,8 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
       set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
-     table:put otherranking [who] of z table:get [rankinglist] of z [who] of self
-     table:put selectbyfriend [who] of z [selectedhospital] of z
+;     table:put otherranking [who] of z table:get [rankinglist] of z [who] of self
+;     table:put selectbyfriend [who] of z [selectedhospital] of z
     ]
     ; if there are no friends to be considered, or their weight is 0, then only the own initial quality opinion is used
     ; if there are such friends, the simil-deffuant update of the opinion quality occurs
@@ -283,10 +283,7 @@ end
 
 to communicate_experience
 
-;  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false] [
-;    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]) other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]
-
-  let topic selectedhospital
+  let topic selectedhospital ; this is referred to called agent
 ;  print(word who " sel: " topic)
 
   if any? other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself] [   ; and pregnant = false and givenbirth = false
@@ -295,14 +292,10 @@ to communicate_experience
     ask alter [
       set eps_acceptance ifelse-value (givenbirth = true)[eps_birthtrue][eps_notbirth]
       set mu_convergence ifelse-value (givenbirth = true)[mu_birthtrue][ mu_notbirth]
-    ;]
 
-  ;  foreach sort alter [ f ->
-;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
 
       if abs(table:get rankinglist topic - table:get [rankinglist] of myself topic) <= eps_acceptance [
         table:put rankinglist topic ( table:get rankinglist topic + (mu_convergence * (table:get [rankinglist] of myself topic - table:get rankinglist topic)))
-;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
 
     ]
   ]
@@ -648,7 +641,7 @@ weight_opinion
 weight_opinion
 -100
 100
-10.0
+0.0
 1
 1
 max
@@ -931,7 +924,7 @@ SWITCH
 51
 rescale15
 rescale15
-1
+0
 1
 -1000
 
