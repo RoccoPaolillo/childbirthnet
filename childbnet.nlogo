@@ -6,7 +6,7 @@ breed [counselcenter counselcenters]
 globals [tuscany distservices distservicesnorm]
 counselcenter-own [ID capacity utility womencounsel]
 hospital-own [ID hospitalizations utility capacity womenhospital mobilitiesemp pneranking rankbywomen]
-women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth mu_convergence eps_acceptance ]
+women-own [pregnant givenbirth selcounsel counselstay rankinglist distancehosp selectedhospital selectedhospitalemp timeatbirth eps_acceptance mu_convergence prechoicelist friendselected]
 
 
 
@@ -146,8 +146,7 @@ ifelse any? hospital with [dist self myself distservices <= 0] [set color red]
       set PRO_COM item 0 s
       set selectedhospitalemp [who] of x
       set timeatbirth 0
-      set mu_convergence 0
-      set eps_acceptance 0
+
   ]
 ]
 ]
@@ -160,8 +159,10 @@ to options_hospital
 set rankinglist table:make
 set distancehosp table:make
 
+
+; the initial distribution of ranking (opinion quality): either totally random or with distribution centered on pne ranking and standard deviation
 foreach sort hospital [y ->
-    table:put rankinglist [who] of y precision ((random-float 2) - 1) 3
+    table:put rankinglist [who] of y ifelse-value (initrankrnd) [precision ((random-float 2) - 1) 3][ normal [pneranking] of y initrank_sd 1 -1]
 ]
 
 foreach sort hospital [y ->
@@ -177,8 +178,12 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
 
   ask one-of women with [pregnant = false and givenbirth = false] [
    set pregnant true
-   if selectedhospital = 0 [select_hospital]
+   if selectedhospital = 0 [
+      register_prechoice
+      select_hospital
       ]
+  ]
+
 
   if ticks > 0 and ticks mod 80 = 0 [ ask women with [givenbirth = true][
    communicate_experience
@@ -188,8 +193,9 @@ if not any? women with [givenbirth = false] [report_data "export" stop ]
 if avgrank [
  ask hospital [
  let h who
- let vals [ table:get rankinglist h ] of women
+ let vals ifelse-value (rank_by_procom = 0) [[ table:get rankinglist h ] of women] [ [ table:get rankinglist h ] of women with [pro_com = rank_by_procom] ]
  set rankbywomen mean vals
+
  ]
   ]
 
@@ -199,6 +205,10 @@ if avgrank [
   tick
 end
 
+to register_prechoice
+  set prechoicelist table:from-json table:to-json rankinglist
+;  print (word who " pre: " prechoicelist)
+end
 
 to select_hospital
 
@@ -217,34 +227,46 @@ let listrad map [ f -> gis:property-value f "PRO_COM" ] matchrad
 
 ]
 
+  set friendselected (count friends with [selectedhospital != 0] / count friends)
+
+; print (word who " prerun: " rankinglist)
 
   ask hospital [
+    ; distance of hospital used in utility estimate
     let distancefrom table:get [distancehosp] of myself [who] of self
+    ; opinion on quality of the hospital by caller
+    let opinionquality table:get [rankinglist] of myself [who] of self
     let ranking_othweight []
     let totweightfriend []
-    let otherranking table:make
-    let selectbyfriend table:make
-    foreach sort friends [ z ->
+;    let otherranking table:make
+;    let selectbyfriend table:make
+    foreach sort friends   [ z ->
+      ; following deffuant, only friends whose quality opinion of that hospital fall within the latitude of acceptance will be considered for the weighted average
+      ; if abs(table:get [rankinglist] of z [who] of self - table:get [rankinglist] of myself [who] of self) <= latitude_acceptance [
       ; weight of friend: 1 - distance to woman
       let weightfriend ifelse-value ([selectedhospital] of z = [who] of self) [weight_experience][(1 - weight_experience)] ; (1 - dist myself z distservicesnorm)
       ; denominator in weighted average
       set totweightfriend lput weightfriend totweightfriend
       ; numerator weighted average (rank of hospital by friend * weight of friend)
     set ranking_othweight lput (table:get [rankinglist] of z [who] of self * weightfriend) ranking_othweight
-     table:put otherranking [who] of z table:get [rankinglist] of z [who] of self
-     table:put selectbyfriend [who] of z [selectedhospital] of z
+;     table:put otherranking [who] of z table:get [rankinglist] of z [who] of self
+;     table:put selectbyfriend [who] of z [selectedhospital] of z
     ]
-    print(word "caller: " [who] of myself " hosp: " who  " friendshosp: " selectbyfriend " otherranking: " otherranking " rankingfriends: " ranking_othweight)
-    set utility ( (weight_distance_hospital * (distancefrom * 10  )) + ifelse-value (reduce + totweightfriend = 0) [0] [social_multiplier * (reduce + ranking_othweight / reduce + totweightfriend)] )
-;    print (word self " distancefrom: " distancefrom " myself: " myself)
+    ; if there are no friends to be considered, or their weight is 0, then only the own initial quality opinion is used
+    ; if there are such friends, the simil-deffuant update of the opinion quality occurs
+    set opinionquality ifelse-value (empty? totweightfriend or reduce + totweightfriend = 0) [opinionquality] [( opinionquality + social_multiplier * ((reduce + ranking_othweight / reduce + totweightfriend) - opinionquality ) )]
+
+    ; in the utility estimate, the weighted effect of distance and weighted effect of opinion quality (individual or amplified due to above line)
+    set utility ( (weight_distance_hospital * (distancefrom * 10  )) +  (weight_opinion * opinionquality)  )
+
   ]
 
    set selectedhospital [who] of rnd:weighted-one-of hospital [exp(utility - max [utility] of hospital)]
-  ; the "ranking experience" clamped to not go below -1 or above +1
-;  print(word who " selected: " selectedhospital " origOD: " table:get rankinglist selectedhospital) ; TEST before updating
-  table:put rankinglist selectedhospital normal [pneranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
-;  print(word who " selected: " selectedhospital " postOD: " table:get rankinglist selectedhospital) ; TEST post updating
+  ; the "ranking experience" of influncers at next steps, derived from the objective pne, to which a random term can be added for robustness check
 
+  table:put rankinglist selectedhospital  normal [pneranking] of one-of hospital with [who = [selectedhospital] of myself] uptrnk_sd 1 -1
+;  print (word who " sel: " selectedhospital " postrun: " rankinglist)
+;  print (word who " againpre: " prechoicelist)
 if show_networks [
     let selectedone one-of hospital with [who = [selectedhospital] of myself]
  create-link-with selectedone
@@ -272,30 +294,24 @@ end
 
 to communicate_experience
 
-;  if any? other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false] [
-;    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]) other women with [pro_com = [pro_com] of myself and pregnant = false and givenbirth = false]
+  let topic selectedhospital ; this is referred to called agent
+;  print(word who " sel: " topic)
 
   if any? other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself] [   ; and pregnant = false and givenbirth = false
-    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself]) other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != [selectedhospital] of myself]
+    let alter n-of round (0.01 * count other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != topic]) other women with [pro_com = [pro_com] of myself and pregnant = false and selectedhospital != topic]
 
     ask alter [
       set eps_acceptance ifelse-value (givenbirth = true)[eps_birthtrue][eps_notbirth]
       set mu_convergence ifelse-value (givenbirth = true)[mu_birthtrue][ mu_notbirth]
-    ]
 
-    foreach sort alter [ f ->
-;      print(word "alter: " [who] of f " opselected: " table:get [rankinglist] of f selectedhospital  " ticks: " ticks) ; TEST
-
-    if abs(table:get [rankinglist] of f selectedhospital - table:get rankinglist selectedhospital) <= eps_acceptance [
-      table:put [rankinglist] of f selectedhospital ( table:get [rankinglist] of f selectedhospital + (mu_convergence * (table:get rankinglist selectedhospital - table:get [rankinglist] of f selectedhospital)))
-;      print(word "caller: " who " selcaller: " selectedhospital  " op: "  table:get rankinglist selectedhospital  " alter: " [who] of f " newhosp: " table:get [rankinglist] of f selectedhospital " ticks: " ticks ) ; TEST
+      if abs(table:get rankinglist topic - table:get [rankinglist] of myself topic) <= eps_acceptance [
+        table:put rankinglist topic ( table:get rankinglist topic + (mu_convergence * (table:get [rankinglist] of myself topic - table:get rankinglist topic)))
 
     ]
   ]
   ]
 
 end
-
 
 to plot-hospitals
 if plot_mobil [
@@ -360,10 +376,10 @@ end
 
 to report_data [filename]
 
-  let param-names  ["rescale15" "distance_threshold"  "n_network"  "weight_distance_hospital"  "social_multiplier" "weight_experience" "uptrnk_sd" "eps_birthtrue" "eps_notbirth" "mu_birthtrue" "mu_notbirth" ]
-  let param-values (list rescale15  distance_threshold n_network weight_distance_hospital social_multiplier weight_experience uptrnk_sd eps_birthtrue eps_notbirth mu_birthtrue mu_notbirth )
+  let param-names  ["rescale15" "initrankrnd" "initrank_sd" "distance_threshold"  "n_network"  "weight_distance_hospital"  "weight_opinion" "social_multiplier" "weight_experience" "uptrnk_sd" "eps_birthtrue" "eps_notbirth" "mu_birthtrue" "mu_notbirth"  ]
+  let param-values (list rescale15 initrankrnd initrank_sd distance_threshold n_network weight_distance_hospital weight_opinion social_multiplier weight_experience uptrnk_sd eps_birthtrue eps_notbirth mu_birthtrue mu_notbirth )
 
-  let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "procom_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "procom_selectedhospital" "rankinglist"]
+  let core-header ["who" "timeatbirth" "pro_com" "selectedhospitalemp" "name_selectedhospitalemp" "procom_selectedhospitalemp" "selectedhospital" "name_selectedhospital" "procom_selectedhospital" "friendselected" "prechoicelist" "rankinglist"  ]
   let header sentence core-header param-names
   let rows (list header)
 
@@ -379,6 +395,8 @@ to report_data [filename]
       [selectedhospital] of w
       [id] of one-of hospital with [who = [selectedhospital] of w]
       [pro_com] of one-of hospital with [who = [selectedhospital] of w]
+      [friendselected] of w
+      [prechoicelist] of w
       [rankinglist] of w
     )
     ;; append metadata + parameters to each row
@@ -558,10 +576,10 @@ OUTPUT
 10
 
 BUTTON
-937
-522
-1009
-555
+895
+589
+967
+622
 testdistances
 print dist turtle origin_from turtle destination_to distservicesnorm 
 NIL
@@ -575,10 +593,10 @@ NIL
 1
 
 INPUTBOX
-766
-526
-842
-586
+728
+587
+804
+647
 origin_from
 6194.0
 1
@@ -586,10 +604,10 @@ origin_from
 Number
 
 INPUTBOX
-844
-526
-929
-586
+806
+587
+891
+647
 destination_to
 5585.0
 1
@@ -597,10 +615,10 @@ destination_to
 Number
 
 BUTTON
-81
-533
-146
-566
+255
+571
+320
+604
 go
 go
 T
@@ -611,7 +629,7 @@ NIL
 NIL
 NIL
 NIL
-1
+0
 
 MONITOR
 252
@@ -625,40 +643,40 @@ count women with [givenbirth = true]
 11
 
 SLIDER
-36
-230
-189
-263
-social_multiplier
-social_multiplier
--10
-10
-10.0
+32
+264
+185
+297
+weight_opinion
+weight_opinion
+-100
+100
+0.0
 1
 1
 max
 HORIZONTAL
 
 SLIDER
-36
-194
-189
-227
+32
+228
+186
+261
 weight_distance_hospital
 weight_distance_hospital
--200
+-50
 0
--10.0
+-11.0
 1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-77
-174
-163
-192
+74
+212
+160
+230
 selection hospital
 10
 0.0
@@ -675,10 +693,10 @@ women color - min distance hospital\n0 = red: 8512, 42%\n1 - 15 = yellow: 6343, 
 1
 
 BUTTON
-939
-558
-1009
-591
+432
+522
+502
+555
 hide links
 ask links [die]
 NIL
@@ -702,10 +720,10 @@ women, distance counselcenter\n[ not visualize]\n(<= 0) 10088, 49.99%\n(0-15) 74
 1
 
 SLIDER
-48
-93
-178
-126
+45
+131
+175
+164
 distance_threshold
 distance_threshold
 0
@@ -734,13 +752,13 @@ NIL
 1
 
 SWITCH
-478
+484
 558
 600
 591
 show_networks
 show_networks
-1
+0
 1
 -1000
 
@@ -796,9 +814,9 @@ PENS
 
 TEXTBOX
 68
-71
+112
 154
-89
+130
 network formation
 10
 0.0
@@ -867,10 +885,10 @@ count women
 11
 
 SLIDER
-48
-129
-178
-162
+45
+167
+175
+200
 n_network
 n_network
 0
@@ -938,10 +956,10 @@ NIL
 1
 
 BUTTON
-1026
-540
-1096
-573
+324
+571
+394
+604
 profiler
 profiler:start         ;; start profiling\nrepeat 100 [ go ]       ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
 NIL
@@ -955,10 +973,10 @@ NIL
 1
 
 SLIDER
-63
-333
-159
-366
+54
+393
+165
+426
 uptrnk_sd
 uptrnk_sd
 0
@@ -970,10 +988,10 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-60
-316
-165
-334
+58
+376
+163
+394
 rank post-experience
 10
 0.0
@@ -1021,10 +1039,10 @@ plot_mobil
 -1000
 
 BUTTON
-28
-584
-112
-617
+973
+528
+1050
+561
 report_ranking
  ask hospital [\n let h who\n let vals ifelse-value (rank_by_procom = 0) [[ table:get rankinglist h ] of women] [ [ table:get rankinglist h ] of women with [pro_com = rank_by_procom] ]\n set rankbywomen mean vals\n let sdd standard-deviation vals\n print (word who \" name: \" id \" pne: \" pneranking \" avg: \" rankbywomen  \" sd: \" sdd \" PNE-avg: \" (pneranking - rankbywomen))\n ]
 NIL
@@ -1037,51 +1055,21 @@ NIL
 NIL
 1
 
-SLIDER
-12
-421
-108
-454
-eps_birthtrue
-eps_birthtrue
-0
-2
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-112
-485
-206
-518
-mu_notbirth
-mu_notbirth
-0
-1
-0.5
-0.1
-1
-NIL
-HORIZONTAL
-
 TEXTBOX
-51
-380
-171
-398
+43
+454
+163
+472
 deffuant opinion dynamic
 10
 0.0
 1
 
 SLIDER
-47
-268
-169
-301
+31
+334
+185
+367
 weight_experience
 weight_experience
 0
@@ -1093,10 +1081,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-118
-570
-210
-630
+878
+521
+970
+581
 rank_by_procom
 53011.0
 1
@@ -1104,12 +1092,38 @@ rank_by_procom
 Number
 
 SLIDER
-10
-486
-106
-519
-mu_birthtrue
-mu_birthtrue
+112
+69
+211
+102
+initrank_sd
+initrank_sd
+0
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+8
+70
+103
+103
+initrankrnd
+initrankrnd
+0
+1
+-1000
+
+SLIDER
+32
+298
+185
+331
+social_multiplier
+social_multiplier
 0
 1
 1.0
@@ -1119,10 +1133,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-116
-420
-211
-453
+3
+472
+104
+505
+eps_birthtrue
+eps_birthtrue
+0
+2
+2.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+108
+472
+205
+505
 eps_notbirth
 eps_notbirth
 0
@@ -1133,24 +1162,62 @@ eps_notbirth
 NIL
 HORIZONTAL
 
-TEXTBOX
-61
-400
-154
-418
-latitude_acceptance
-10
-0.0
+SLIDER
+4
+509
+105
+542
+mu_birthtrue
+mu_birthtrue
+0
 1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
 
-TEXTBOX
-71
-463
-149
-481
-convergence od
-10
-0.0
+SLIDER
+108
+508
+207
+541
+mu_notbirth
+mu_notbirth
+0
+1
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+728
+521
+819
+581
+COMUNE
+Firenze
+1
+0
+String
+
+BUTTON
+820
+530
+875
+563
+pro_com
+show gis:property-value (gis:find-one-feature tuscany \"COMUNE\" COMUNE) \"PRO_COM\"
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
 1
 
 @#$#@#$#@
@@ -1163,22 +1230,24 @@ The model is initialized with geo-data on Tuscany, main actors are women and hos
 ## HOW IT WORKS
 
 At time 0, every woman is given a vector of the distance to each hospital and a random distribution of ranking for each hospital between -1 and +1.
-At each step, one woman becomes pregnant and has to select one hospital where to give birth. The selection follows a random utility model, where a utility is attributed to each hospital. The deterministic effect over the random selection of one hospital is due by two elements: a weighted effect of distance and a weighted effect of social influence, which implements the social multiplier. For the social multiplier, the agent selects 50 agents to ask suggestion. Networks vary by the distance from the caller. The social multiplies weights the average mean between alter who have had direct experience of giving birth to that hospital, or opinion based on indirect communication. The relative weights between direct experience or indirect communication are complementary.
+At each step, one woman becomes pregnant and has to select one hospital where to give birth. The selection follows a random utility model, where a utility is attributed to each hospital. The deterministic effect over the random selection of one hospital is due by two elements: a weighted effect of distance and a weighted effect for the opinion of that hospital. In the weighted opinion, a social multiplier is implemented.The agent selects 50 agents to ask suggestion. Networks vary by the distance from the caller. If social multiplier is set to 0, only the own opinion is taken into consideration, otherwise, the opinion used to estimate the utility for each hospital is converged to the weighted mean of the network of influencers according to the size of social multiplier. The weighted mean gives a different weight to alter who have had direct experience of giving birth to that hospital, or opinion based on indirect communication. The relative weights between direct experience or indirect communication are complementary.
 After selection, the selector updates their ranking of that selected hospital derived from PNE official quantitative indicators provided by region Tuscany.
-Once a woman has given birth, they influence the 1% of their municipality, communicating their experience of that hospital to other women who have not given birth in that hospital. Both women who have given birth elsewhere or women who still have to give birth can be influenced. The success of communication follows a Deffuant model, where the other agent holds a latitude of acceptance and a convergence rate. If the absolute distance between ranking of proposer and alter follows below the latitude of acceptance, the social influence mechanism occurs. This consists to add to the own ranking the difference between the ranking of the proposer and the own ranking, weighted by the confluence rate.
+Once a woman has given birth, they influence the 1% of their municipality (every 80 ticks), communicating their experience of that hospital to other women who have not given birth in that hospital. Both women who have given birth elsewhere or women who still have to give birth can be influenced. The success of communication follows a Deffuant model, where the other agent holds a latitude of acceptance and a convergence rate. If the absolute distance between ranking of proposer and alter follows below the latitude of acceptance, the social influence mechanism occurs. This consists to add to the own ranking the difference between the ranking of the proposer and the own ranking, weighted by the confluence rate.
 Note that when next agents become pregnant, the effect of opinion dynamic can influence the rank communicated from communication of experience for those who did not give birth in that hospital and those who did, based on the composition of networks used for the social multiplier. 
 
 
 ## HOW TO USE IT
 
 
+* initrankrnd: total random distribution initial opinion of hospital -1 +1
+* initrank_sd: if initrankrnd is off, the standard deviation of initial opinion distribution
 * distance_threshold: the distance within which 50 random alter are selected to ask suggestion for the social multiplier in the selection of hospitals by the caller
 * n_network: the size of network size for the social multiplier of caller
 * weight_distance_hospital: the weight of distance in the selection of hospitals by the caller (negative weight)
-* social_multiplier: weight of social influence in the selection of hospitals by the caller
-* weight_experience [0,1]: within the weighted average used in the social multiplier, the weight given to those who have had experience of that hospital. The weight given to those who have received communication of the experience by others is computed as complementary (1 - weight_experience)
-* uptrnk_sd: standard deviation for the distribution of ranking of selected hospital by the caller, centered in the PNE data on quantitative performance of hospital
-
+* weight_opinion: the weight of opinion in the selection of hospital
+* social_multiplier: whether only based on the own opinion (1 - social_multiplier), or aligning to the opinion of friends (social_multiplier)
+* weight_experience: within the social multiplier, the weight in the weighted mean given to people who have given birth (weight_experience) or due to own (potentially updated) opinion (1 - weight_experience)
+* uptrnk_sd: standard deviation of the updated experience then communicated, centered to the actual PNE value
 * Deffuant opinion dynamic, for those who have given birth (**_birthtrue) or still not pregnant (**_notbirth):
 ** eps: latitude of acceptance
 ** mu: parameter of convergence
