@@ -352,55 +352,57 @@ save(combined_dfwide,file="combined_dfwide.Rdata")
 
 load("combined_dfwide.Rdata")
 
-combined_dfwide$match <- ifelse(combined_dfwide$selectedhospital == combined_dfwide$selectedhospitalemp,1,0)
+# To have a list of match cases simulation - empiric
+# combined_dfwide$match <- ifelse(combined_dfwide$selectedhospital == combined_dfwide$selectedhospitalemp,1,0)
+# 
+# ratio_df <- combined_dfwide %>%
+#   group_by(condition) %>%
+#   summarise(
+#     match_sum = sum(match, na.rm = TRUE),
+#     match_ratio = match_sum / 20177,
+#     weight_distance_hospital = unique(weight_distance_hospital),
+#     weight_opinion = unique(weight_opinion),
+#     social_multiplier = unique(social_multiplier),
+#     weight_experience = unique(weight_experience),
+#     uptrnk_sd = unique(uptrnk_sd),
+#     distance_threshold = unique(distance_threshold)
+#   )
+# 
+# by_rank <- combined_dfwide %>%
+#   group_by(condition) %>%
+#   mutate(n_in_condition = n()) %>%                 # total rows in this condition
+#   group_by(condition, rankinit) %>%
+#   summarise(
+#     n_in_rank      = n(),                          # rows in this condition×rank
+#     matches_in_rank = sum(match, na.rm = TRUE),    # matched rows in this condition×rank
+#     n_in_condition = first(n_in_condition),
+#     .groups = "drop_last"
+#   ) %>%
+#   mutate(
+#     # your requested ratio: divide matches by all occurrences within the condition
+#     ratio_match_over_condition = matches_in_rank / n_in_condition,
+#     # (optional) matches divided by occurrences within the rank (often useful too)
+#     ratio_match_within_rank    = matches_in_rank / n_in_rank
+#   ) %>%
+#   ungroup()
+# 
+# ratio_rk <- combined_dfwide %>%
+#   group_by(rankinit) %>%
+#   summarise(
+#     match_sum = sum(match, na.rm = TRUE),
+#     match_ratio = match_sum / 20177,
+#     weight_distance_hospital = weight_distance_hospital,
+#     weight_opinion =  weight_opinion,
+#     social_multiplier = social_multiplier,
+#     weight_experience = weight_experience,
+#     uptrnk_sd = uptrnk_sd,
+#     distance_threshold = distance_threshold
+#   )
+# 
+# # Join back into the original dataset
+# combined_dfwide <- combined_dfwide %>%
+#   left_join(ratio_df, by = c("condition","weight_distance_hospital","weight_opinion","social_multiplier","weight_experience","uptrnk_sd","distance_threshold" ))
 
-ratio_df <- combined_dfwide %>%
-  group_by(condition) %>%
-  summarise(
-    match_sum = sum(match, na.rm = TRUE),
-    match_ratio = match_sum / 20177,
-    weight_distance_hospital = unique(weight_distance_hospital),
-    weight_opinion = unique(weight_opinion),
-    social_multiplier = unique(social_multiplier),
-    weight_experience = unique(weight_experience),
-    uptrnk_sd = unique(uptrnk_sd),
-    distance_threshold = unique(distance_threshold)
-  )
-
-by_rank <- combined_dfwide %>%
-  group_by(condition) %>%
-  mutate(n_in_condition = n()) %>%                 # total rows in this condition
-  group_by(condition, rankinit) %>%
-  summarise(
-    n_in_rank      = n(),                          # rows in this condition×rank
-    matches_in_rank = sum(match, na.rm = TRUE),    # matched rows in this condition×rank
-    n_in_condition = first(n_in_condition),
-    .groups = "drop_last"
-  ) %>%
-  mutate(
-    # your requested ratio: divide matches by all occurrences within the condition
-    ratio_match_over_condition = matches_in_rank / n_in_condition,
-    # (optional) matches divided by occurrences within the rank (often useful too)
-    ratio_match_within_rank    = matches_in_rank / n_in_rank
-  ) %>%
-  ungroup()
-
-ratio_rk <- combined_dfwide %>%
-  group_by(rankinit) %>%
-  summarise(
-    match_sum = sum(match, na.rm = TRUE),
-    match_ratio = match_sum / 20177,
-    weight_distance_hospital = weight_distance_hospital,
-    weight_opinion =  weight_opinion,
-    social_multiplier = social_multiplier,
-    weight_experience = weight_experience,
-    uptrnk_sd = uptrnk_sd,
-    distance_threshold = distance_threshold
-  )
-
-# Join back into the original dataset
-combined_dfwide <- combined_dfwide %>%
-  left_join(ratio_df, by = c("condition","weight_distance_hospital","weight_opinion","social_multiplier","weight_experience","uptrnk_sd","distance_threshold" ))
 
 # condition 25
 baselineemp <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 0 & 
@@ -698,127 +700,6 @@ sim_merge <- rbind(
   bas_sim_dist1op5soc1exp05thr0updr0
 )
 
-
-
-  
-# sim_merge2 %>% ggplot(aes(x = avgdist, y = cases, fill = type, shape = as.factor(rankinit))) +
-#   geom_line(aes(group = hospital), color = "grey60", alpha = 0.6, linewidth = 0.5, show.legend = FALSE) +
-#   geom_label(aes(label = hospital),
-#              color = "black",
-#              size = 3.2,
-#              label.size = 0.3) +        # border thickness
-#   scale_fill_manual(
-#     name = NULL,
-#     values = c("Empirical" = "lightblue", "Simulated" = "bisque"),
-#   ) +
-#   scale_shape_manual(
-#     name = "Rankinit",
-#     values = c(
-#       "-1"  = 6,   # triangle down
-#       "0"   = 0,   # open circle
-#       "0.5" = 1,   # closed circle
-#       "1"   = 2    # triangle up
-#     )
-#   ) +
-#   xlab("avg time distance") +
-#   ylab("hospitalizations") +
-#     facet_wrap(~comparison) +
-#   theme_bw() +
-#   theme(legend.title = element_blank())
-
-
-sim_merge %>% 
-  ggplot(aes(x = avgdist, y = cases, fill = type, shape = as.factor(rankinit))) +
-  geom_line(aes(group = hospital), color = "grey60", alpha = 0.6, linewidth = 0.5, show.legend = FALSE) +
-  geom_point(size = 3, color = "black", stroke = 0.6) +
-  geom_label_repel(
-    aes(label = hospital),
-    size = 2,
-    color = "black",
-    fill = "white",        # optional: gives contrast
-    label.size = 0.2,      # thin border
-    box.padding = 0.2,     # distance from point
-    point.padding = 0.3,   # how far label starts from the point
-    segment.color = "grey60",
-    segment.size = 0.3 #,
-#    max.overlaps = Inf     # allow all labels
-  ) +
-  scale_fill_manual(
-    name = NULL,
-    values = c("Empirical" = "lightblue", "Simulated" = "bisque")
-  ) +
-  scale_shape_manual(
-    name = "Rankinit",
-    values = c(
-      "-1"  = 25, # triangle down
-      "0"   = 21, # circle
-      "0.5" = 21, # circle
-      "1"   = 24  # triangle up
-    )
-  ) +
-  xlab("avg time distance") +
-  ylab("hospitalizations") +
-  facet_wrap(~comparison) +
-  theme_bw() +
-  theme(legend.title = element_blank())
-
-# 1) Aggregate to rankinit (not single hospitals)
-sim_merge  %>%
-  group_by(comparison, type, rankinit) %>%
-  summarise(
-    avgdist = mean(avgdist, na.rm = TRUE),
-    cases   = mean(cases,   na.rm = TRUE),
-    n_hospitals = n_distinct(hospital),   # how many hospitals contribute
-    .groups = "drop"
-  ) %>% 
-  ggplot(aes(x = avgdist, y = cases, fill = type, shape = factor(rankinit))) +
-  # aggregated points (size reflects how many hospitals in that rank)
-  geom_point(size = 3, color = "black", stroke = 0.6) +
-  scale_fill_manual(
-    name = NULL,
-    values = c("Empirical" = "lightblue", "Simulated" = "bisque")
-  ) +
-  # if you still want distinct shapes per rankinit:
-  scale_shape_manual(
-    name = "Rankinit",
-    values = c("-1"=25, "0"=22, "0.5"=21, "1"=24)  # 21–25 support fill
-  ) +
-  # size legend for how many hospitals (optional)
-  scale_size_continuous(name = "Hospitals (n)") +
-  xlab("avg time distance") + ylab("hospitalizations") +
-  facet_wrap(~ comparison) +
-  theme_bw() +
-  theme(legend.title = element_blank())
-
-##
-
-sim_merge %>%
-  group_by(comparison, type, rankinit) %>%
-  summarise(
-    avgdist = mean(avgdist, na.rm = TRUE),
-    cases   = mean(cases,   na.rm = TRUE),
-    n_hospitals = n_distinct(hospital),
-    .groups = "drop"
-  ) %>% 
-  ggplot(aes(x = avgdist, y = cases, fill = type, shape = factor(rankinit))) +
-  geom_point(aes(fill = type),  # <-- map fill aesthetic here
-             size = 3, color = "black", stroke = 0.6) +
-  scale_fill_manual(
-    name = "Type",  # give the legend a title
-    values = c("Empirical" = "lightblue", "Simulated" = "bisque")
-  ) +
-  scale_shape_manual(
-    name = "Rankinit",
-    values = c("-1"=25, "0"=22, "0.5"=21, "1"=24)
-  ) +
-  xlab("avg time distance") +
-  ylab("hospitalizations") +
-  facet_wrap(~ comparison) +
-  theme_bw() +
-  theme(legend.title = element_text(size = 10),
-        legend.position = "right")
-
-
 sim_merge %>%
   group_by(comparison, type, rankinit) %>%
   summarise(
@@ -847,7 +728,6 @@ sim_merge %>%
   facet_wrap(~comparison) +
   labs(x = "avg time distance", y = "hospitalizations") +
   theme_bw()
-
 
 
 # OD
@@ -912,6 +792,7 @@ careggi %>% filter(condition == 23 & pro_com == 48025) %>%
   geom_point(size = 1.5) +
   theme_bw() +
   labs(x = "Time at birth", y = "Average opinion rank", color = "Original rank")
+
 
 
 
