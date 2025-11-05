@@ -352,6 +352,277 @@ save(combined_dfwide,file="combined_dfwide.Rdata")
 
 load("combined_dfwide.Rdata")
 
+conds <- combined_dfwide %>% select(condition,distance_threshold,	weight_distance_hospital,	weight_opinion, social_multiplier, weight_experience, uptrnk_sd)
+conds <- unique(conds)
+
+
+# condition 74
+baselineemp <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -1 & weight_opinion == 0 & 
+                                            social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0.25) %>%
+  group_by(selectedhospitalemp) %>%
+  summarise(
+    emp_cases = n(),
+    emp_avgdist = mean(distemp, na.rm = TRUE),
+    condition = unique(condition),
+    rankinit = unique(rankinit),
+    name = unique(name_selectedhospitalemp)
+  ) %>%
+  rename(hospital = selectedhospitalemp)
+
+
+mergelong <- function(distance_threshold_v, weight_distance_hospital_v, weight_opinion_v, social_multiplier_v, weight_experience_v, uptrnk_sd_v) 
+{ t <- combined_dfwide %>% filter(distance_threshold == distance_threshold_v & weight_distance_hospital == weight_distance_hospital_v & 
+                               weight_opinion == weight_opinion_v &  social_multiplier == social_multiplier_v & 
+                               weight_experience == weight_experience_v & uptrnk_sd == uptrnk_sd_v) %>%
+    group_by(selectedhospital) %>%
+    summarise(
+      sim_cases = n(),
+      sim_avgdist = mean(distsim, na.rm = TRUE),
+      condition = unique(condition),
+      name = unique(name_selectedhospital)
+    ) %>%
+    rename(hospital = selectedhospital)
+  
+ p <- baselineemp %>%
+    full_join(t, by = c("hospital","name"))%>%
+    pivot_longer(
+      cols = c(emp_cases, sim_cases, emp_avgdist, sim_avgdist),
+      names_to = c("type", ".value"),
+      names_pattern = "^(emp_|sim_)(.*)$"
+    ) %>%
+    mutate(
+      type = recode(type,
+                    "emp_" = "Empirical",
+                    "sim_" = "Simulated"),
+      condition = paste0("sim_","thr",distance_threshold_v,"ds", weight_distance_hospital_v,"op",weight_opinion_v,"soc", social_multiplier_v,"xp", weight_experience_v,"sd", uptrnk_sd_v)
+    )
+ p
+}
+
+df1 <- mergelong( distance_threshold_v = 0, weight_distance_hospital_v = -1, weight_opinion_v = 0, 
+                  social_multiplier_v = 0, weight_experience_v = 1, uptrnk_sd_v = 0.25)
+
+df2 <- mergelong( distance_threshold_v = 0, weight_distance_hospital_v = -5, weight_opinion_v = 0, 
+                  social_multiplier_v = 0, weight_experience_v = 1, uptrnk_sd_v = 0.25)
+
+df3 <- mergelong( distance_threshold_v = 0, weight_distance_hospital_v = -1, weight_opinion_v =1, 
+                  social_multiplier_v = 0, weight_experience_v = 1, uptrnk_sd_v = 0.25)
+
+df4 <- mergelong( distance_threshold_v = 0, weight_distance_hospital_v = -5, weight_opinion_v = 5, 
+                  social_multiplier_v = 0, weight_experience_v = 1, uptrnk_sd_v = 0.25)
+
+df5 <- mergelong( distance_threshold_v = 0, weight_distance_hospital_v = -5, weight_opinion_v = 5, 
+                  social_multiplier_v = 1, weight_experience_v = 1, uptrnk_sd_v = 0.25)
+
+df6 <- mergelong( distance_threshold_v = 0, weight_distance_hospital_v = -5, weight_opinion_v = 5, 
+                  social_multiplier_v = 1, weight_experience_v = 0.5, uptrnk_sd_v = 0.25)
+
+df1_2 <- rbind(df1,df2[df2$type == "Simulated",])
+df1_2$compscen <- "distance"
+df1_2[df1_2$type == "Empirical",]$condition <- "Empirical"
+df3_4 <- rbind(df3,df4[df4$type == "Simulated",])
+df3_4$compscen <- "opinionxdistance"
+df3_4[df3_4$type == "Empirical",]$condition <- "Empirical"
+df5_6 <- rbind(df5,df6[df6$type == "Simulated",])
+df5_6$compscen <- "socmult"
+df5_6[df5_6$type == "Empirical",]$condition <- "Empirical"
+
+sim_merge <- rbind(
+  df1_2,
+  df3_4,
+  df5_6
+)
+
+
+pl_dist <- sim_merge %>% mutate(compscen = factor(compscen,
+                           levels = c("distance", "opinionxdistance", "socmult"),
+                           labels = c("A: Effect distance",
+                                      "B: Distance X OwnOpinion",
+                                      "C: Social Multiplier")))%>%
+  filter(compscen == "A: Effect distance") %>%
+  group_by(compscen,condition, type, rankinit) %>%
+  summarise(
+    avgdist = mean(avgdist, na.rm = TRUE),
+    cases   = mean(cases,   na.rm = TRUE),
+    n_hospitals = n_distinct(hospital),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = avgdist, y = cases,
+             fill = condition,                  # map fill to type
+             shape = factor(rankinit))) +  # shapes 21–25 support fill
+  geom_point(size = 3, color = "black", stroke = 0.6) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("Empirical" = "lightblue", 
+               "sim_thr0ds-1op0soc0xp1sd0.25" = "bisque",
+               "sim_thr0ds-5op0soc0xp1sd0.25" = "lightgreen" ),
+    labels = c(
+      "Empirical",
+      "sim_thr0ds-1op0soc0xp1sd0.25" = "ß distance = -1",
+      "sim_thr0ds-5op0soc0xp1sd0.25" = "ß distance = -5"
+    ),
+    guide = guide_legend(                 # ensure legend keys show the fill
+      override.aes = list(shape = 21,     # a fillable shape in the legend
+                          color = "black",
+                          size = 3)
+    )
+  ) +
+  scale_shape_manual(
+    name = "Rankinit",
+    values = c("-1"=25, "0"=22, "0.5"=21, "1"=24)
+  ) +
+  facet_wrap(~compscen) +
+  labs(x = "avg time distance", y = "hospitalizations") +
+  theme_bw() +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13),
+        strip.text = element_text(size = 14) ,
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14)) + 
+  guides(shape = "none")
+
+pl_distxop <- sim_merge %>% mutate(compscen = factor(compscen,
+                                                  levels = c("distance", "opinionxdistance", "socmult"),
+                                                  labels = c("A: Effect distance",
+                                                             "B: Distance X OwnOpinion",
+                                                             "C: Social Multiplier")))%>%
+  filter(compscen == "B: Distance X OwnOpinion") %>%
+  group_by(compscen,condition, type, rankinit) %>%
+  summarise(
+    avgdist = mean(avgdist, na.rm = TRUE),
+    cases   = mean(cases,   na.rm = TRUE),
+    n_hospitals = n_distinct(hospital),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = avgdist, y = cases,
+             fill = condition,                  # map fill to type
+             shape = factor(rankinit))) +  # shapes 21–25 support fill
+  geom_point(size = 3, color = "black", stroke = 0.6) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("Empirical" = "lightblue", 
+               "sim_thr0ds-1op1soc0xp1sd0.25" = "bisque",
+               "sim_thr0ds-5op5soc0xp1sd0.25" = "lightgreen" ),
+    labels = c(
+      "Empirical",
+      "sim_thr0ds-1op1soc0xp1sd0.25" = "ß distance = -1\n ß opinion = 5",
+      "sim_thr0ds-5op5soc0xp1sd0.25" = "ß distance = -5\n ß opinion = 5"
+    ),
+    guide = guide_legend(                 # ensure legend keys show the fill
+      override.aes = list(shape = 21,     # a fillable shape in the legend
+                          color = "black",
+                          size = 3)
+    )
+  ) +
+  scale_shape_manual(
+    name = "Rankinit",
+    values = c("-1"=25, "0"=22, "0.5"=21, "1"=24)
+  ) +
+  facet_wrap(~compscen) +
+  labs(x = "avg time distance", y = "hospitalizations") +
+  theme_bw() +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13),
+        strip.text = element_text(size = 14) ,
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14)) + guides(shape = "none")
+
+
+pl_socmul <- sim_merge %>% mutate(compscen = factor(compscen,
+                                                     levels = c("distance", "opinionxdistance", "socmult"),
+                                                     labels = c("A: Effect distance",
+                                                                "B: Distance X OwnOpinion",
+                                                                "C: Social Multiplier")))%>%
+  filter(compscen == "C: Social Multiplier") %>%
+  group_by(compscen,condition, type, rankinit) %>%
+  summarise(
+    avgdist = mean(avgdist, na.rm = TRUE),
+    cases   = mean(cases,   na.rm = TRUE),
+    n_hospitals = n_distinct(hospital),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = avgdist, y = cases,
+             fill = condition,                  # map fill to type
+             shape = factor(rankinit))) +  # shapes 21–25 support fill
+  geom_point(size = 3, color = "black", stroke = 0.6) +
+scale_x_continuous(
+     limits = c(10, 35),       
+     breaks = seq(10, 30, by = 10)
+   ) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("Empirical" = "lightblue", 
+               "sim_thr0ds-5op5soc1xp1sd0.25" = "bisque",
+               "sim_thr0ds-5op5soc1xp0.5sd0.25" = "lightgreen" ),
+    labels = c(
+      "Empirical",
+      "sim_thr0ds-5op5soc1xp1sd0.25" = "ß distance = -5\n ß opinion = 5\n w experience = 1",
+      "sim_thr0ds-5op5soc1xp0.5sd0.25" = "ß distance = -5\n ß opinion = 5\n w experience = 0.5"
+    ),
+    breaks = c(
+      "Empirical",
+      "sim_thr0ds-5op5soc1xp1sd0.25" ,
+      "sim_thr0ds-5op5soc1xp0.5sd0.25"
+    ),
+    guide = guide_legend(       
+      position = "bottom",
+      override.aes = list(shape = 21,    
+                          color = "black",
+                          size = 3)
+    )
+  ) +
+  scale_shape_manual(
+    name = "PNE rank",
+    values = c("1"=24, "0.5"=21, "0"=22, "-1"=25),
+    guide = guide_legend(position = "right"),
+    breaks = c("1", "0.5", "0", "-1")
+  ) +
+  facet_wrap(~compscen) +
+  labs(x = "avg time distance", y = "hospitalizations") +
+  theme_bw() +
+  theme(legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13),
+        strip.text = element_text(size = 14) ,
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14))
+
+comppic <- ggpubr::ggarrange(pl_dist,pl_distxop,pl_socmul,nrow = 1)
+ggsave(comppic,file="comppic.jpg", width = 18, height = 6)
+
+
+baselineemp %>%
+  ggplot(aes(x = emp_avgdist, y = emp_cases,fill = as.factor(rankinit),label = name)) +
+  geom_label_repel(
+    size = 4, 
+    max.overlaps = Inf) +
+  xlab("average distance") +
+  ylab("hospitalizations") + 
+  scale_fill_manual(
+    name = "PNE rank",
+    values = c("1" = "lightgreen",
+               "0.5" = "lightblue" ,
+               "0" = "bisque",
+               "-1" = "salmon"),
+    breaks = c("1", "0.5", "0", "-1")
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 13),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14)
+  )
+  ggsave(file="empdist.jpg", width = 12, height = 6)
+  
+  
+  
+  
+  
+########################################
+##############
+
 # To have a list of match cases simulation - empiric
 # combined_dfwide$match <- ifelse(combined_dfwide$selectedhospital == combined_dfwide$selectedhospitalemp,1,0)
 # 
@@ -403,302 +674,422 @@ load("combined_dfwide.Rdata")
 # combined_dfwide <- combined_dfwide %>%
 #   left_join(ratio_df, by = c("condition","weight_distance_hospital","weight_opinion","social_multiplier","weight_experience","uptrnk_sd","distance_threshold" ))
 
-
 # condition 25
-baselineemp <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 0 & 
-                                            social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospitalemp) %>%
-  summarise(
-    emp_cases = n(),
-    emp_avgdist = mean(distemp, na.rm = TRUE),
-    condition = unique(condition),
-    rankinit = unique(rankinit),
-    name = unique(name_selectedhospitalemp)
-  ) %>%
-  rename(hospital = selectedhospitalemp)
-
-# condition 25
-sim_dist1 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 0 & 
-                                            social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
+# baselineemp <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 0 & 
+#                                             social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospitalemp) %>%
+#   summarise(
+#     emp_cases = n(),
+#     emp_avgdist = mean(distemp, na.rm = TRUE),
+#     condition = unique(condition),
+#     rankinit = unique(rankinit),
+#     name = unique(name_selectedhospitalemp)
+#   ) %>%
+#   rename(hospital = selectedhospitalemp)
+# 
+# # condition 25
+# sim_dist1 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 0 & 
+#                                             social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
 
 # condition 1
-sim_dist5 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 0 & 
-                                          social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
+# sim_dist5 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 0 & 
+#                                           social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# # condition 9
+# sim_dist5op1 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 1 & 
+#                                           social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# # condition 17
+# sim_dist5op5 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                              social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# # condition 21
+# sim_dist5op5soc1exp05 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                              social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# # condition 23
+# sim_dist5op5soc1exp1 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                                       social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# # condition 69
+# sim_dist5op5soc1exp05thr260 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                                       social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# # condition 71
+# sim_dist5op5soc1exp1thr260 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                                      social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist5op5soc1exp1thr260updr25 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                                            social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist5op5soc1exp1thr0updr25 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                                                  social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist1op5soc1exp1thr0updr25 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 5 & 
+#                                                                social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist1op5soc1exp05thr0updr25 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 5 & 
+#                                                                social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0.25) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+#   
+# sim_dist1op5soc1exp05thr260updr25 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -1 & weight_opinion == 5 & 
+#                                                                 social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0.25) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist1op5soc1exp1thr260updr25 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -1 & weight_opinion == 5 & 
+#                                                                   social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist5op5soc0exp1thr260updr0 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
+#                                                                  social_multiplier == 0 & weight_experience == 1 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist5op1soc1exp1thr0updr0 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 1 & 
+#                                                                  social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# sim_dist5op1soc1exp1thr260updr0 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 1 & 
+#                                                               social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
+# 
+# 
+# sim_dist1op5soc1exp05thr0updr0 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 5 & 
+#                                                                 social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
+#   group_by(selectedhospital) %>%
+#   summarise(
+#     sim_cases = n(),
+#     sim_avgdist = mean(distsim, na.rm = TRUE),
+#     condition = unique(condition),
+#     name = unique(name_selectedhospital)
+#   ) %>%
+#   rename(hospital = selectedhospital)
 
-# condition 9
-sim_dist5op1 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 1 & 
-                                          social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
 
-# condition 17
-sim_dist5op5 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                             social_multiplier == 0 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
 
-# condition 21
-sim_dist5op5soc1exp05 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                             social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
 
-# condition 23
-sim_dist5op5soc1exp1 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                                      social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
 
-# condition 69
-sim_dist5op5soc1exp05thr260 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                                      social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
+# mergelong <- function(t) 
+#   {baselineemp %>%
+#   full_join(t, by = c("hospital","name"))%>%
+#   pivot_longer(
+#     cols = c(emp_cases, sim_cases, emp_avgdist, sim_avgdist),
+#     names_to = c("type", ".value"),
+#     names_pattern = "^(emp_|sim_)(.*)$"
+#   ) %>%
+#   mutate(
+#     type = recode(type,
+#                   "emp_" = "Empirical",
+#                   "sim_" = "Simulated")
+#   )
+# }
 
-# condition 71
-sim_dist5op5soc1exp1thr260 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                                     social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
+# bas_simdist1 <- mergelong(sim_dist1)
+# bas_simdist5 <- mergelong(sim_dist5)
+# bas_simdist5op1 <- mergelong(sim_dist5op1)
+# bas_simdist5op5 <- mergelong(sim_dist5op5)
+# bas_simdist5op5soc1exp05 <- mergelong(sim_dist5op5soc1exp05)
+# bas_simdist5op5soc1exp05thr260 <- mergelong(sim_dist5op5soc1exp05thr260)
+# bas_simdist5op5soc1exp1 <- mergelong(sim_dist5op5soc1exp1)
+# bas_simdist5op5soc1exp1thr260 <- mergelong(sim_dist5op5soc1exp1thr260)
+# bas_sim_dist5op5soc1exp1thr260updr25 <- mergelong(sim_dist5op5soc1exp1thr260updr25)
+# bas_sim_dist5op5soc1exp1thr0updr25 <- mergelong(sim_dist5op5soc1exp1thr0updr25)
+# bas_sim_dist1op5soc1exp1thr0updr25 <- mergelong(sim_dist1op5soc1exp1thr0updr25)
+# bas_sim_dist1op5soc1exp05thr0updr25 <- mergelong(sim_dist1op5soc1exp05thr0updr25)
+# bas_sim_dist1op5soc1exp05thr260updr25 <- mergelong(sim_dist1op5soc1exp05thr260updr25)
+# bas_sim_dist1op5soc1exp1thr260updr25 <- mergelong(sim_dist1op5soc1exp1thr260updr25)
+# bas_sim_dist5op5soc0exp1thr260updr25 <- mergelong(sim_dist5op5soc0exp1thr260updr25)
+# bas_sim_dist5op1soc1exp1thr0updr0 <- mergelong(sim_dist5op1soc1exp1thr0updr0)
+# bas_sim_dist1op5soc1exp05thr0updr0 <- mergelong(sim_dist1op5soc1exp05thr0updr0)
+# 
+# bas_simdist1$comparison = 1
+# bas_simdist5$comparison = 2
+# bas_simdist5op1$comparison = 3
+# bas_simdist5op5$comparison = 4
+# bas_simdist5op5soc1exp05$comparison = 5
+# bas_simdist5op5soc1exp05thr260$comparison = 6
+# bas_simdist5op5soc1exp1$comparison = 7
+# bas_simdist5op5soc1exp1thr260$comparison = 8
+# bas_sim_dist5op5soc1exp1thr260updr25$comparison = 9
+# bas_sim_dist5op5soc1exp1thr0updr25$comparison = 10
+# bas_sim_dist1op5soc1exp1thr0updr25$comparison = 11
+# bas_sim_dist1op5soc1exp05thr0updr25$comparison = 12
+# bas_sim_dist1op5soc1exp05thr260updr25$comparison = 13
+# bas_sim_dist1op5soc1exp1thr260updr25$comparison = 14
+# bas_sim_dist5op5soc0exp1thr260updr25$comparison = 15
+# bas_sim_dist5op1soc1exp1thr0updr0$comparison = 16
+# bas_sim_dist1op5soc1exp05thr0updr0$comparison = 17
+# 
+# sim_merge <- rbind(
+#   
+#   bas_simdist1,
+#   bas_simdist5,
+#   bas_simdist5op1,
+#   bas_simdist5op5,
+#   bas_simdist5op5soc1exp05,
+#   bas_simdist5op5soc1exp05thr260,
+#   bas_simdist5op5soc1exp1,
+#   bas_simdist5op5soc1exp1thr260,
+#   bas_sim_dist5op5soc1exp1thr260updr25,
+#   bas_sim_dist5op5soc1exp1thr0updr25,
+#   bas_sim_dist1op5soc1exp1thr0updr25,
+#   bas_sim_dist1op5soc1exp05thr0updr25,
+#   bas_sim_dist1op5soc1exp05thr260updr25,
+#   bas_sim_dist1op5soc1exp1thr260updr25,
+#   bas_sim_dist5op5soc0exp1thr260updr25,
+#   bas_sim_dist5op1soc1exp1thr0updr0,
+#   bas_sim_dist1op5soc1exp05thr0updr0
+# )
 
-sim_dist5op5soc1exp1thr260updr25 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                                           social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
 
-sim_dist5op5soc1exp1thr0updr25 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                                                 social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
 
-sim_dist1op5soc1exp1thr0updr25 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 5 & 
-                                                               social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
-
-sim_dist1op5soc1exp05thr0updr25 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 5 & 
-                                                               social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0.25) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
   
-sim_dist1op5soc1exp05thr260updr25 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -1 & weight_opinion == 5 & 
-                                                                social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0.25) %>%
-  group_by(selectedhospital) %>%
+# sim_merge2 %>% ggplot(aes(x = avgdist, y = cases, fill = type, shape = as.factor(rankinit))) +
+#   geom_line(aes(group = hospital), color = "grey60", alpha = 0.6, linewidth = 0.5, show.legend = FALSE) +
+#   geom_label(aes(label = hospital),
+#              color = "black",
+#              size = 3.2,
+#              label.size = 0.3) +        # border thickness
+#   scale_fill_manual(
+#     name = NULL,
+#     values = c("Empirical" = "lightblue", "Simulated" = "bisque"),
+#   ) +
+#   scale_shape_manual(
+#     name = "Rankinit",
+#     values = c(
+#       "-1"  = 6,   # triangle down
+#       "0"   = 0,   # open circle
+#       "0.5" = 1,   # closed circle
+#       "1"   = 2    # triangle up
+#     )
+#   ) +
+#   xlab("avg time distance") +
+#   ylab("hospitalizations") +
+#     facet_wrap(~comparison) +
+#   theme_bw() +
+#   theme(legend.title = element_blank())
+
+
+sim_merge %>% 
+  ggplot(aes(x = avgdist, y = cases, fill = type, shape = as.factor(rankinit))) +
+  geom_line(aes(group = hospital), color = "grey60", alpha = 0.6, linewidth = 0.5, show.legend = FALSE) +
+  geom_point(size = 3, color = "black", stroke = 0.6) +
+  geom_label_repel(
+    aes(label = hospital),
+    size = 2,
+    color = "black",
+    fill = "white",        # optional: gives contrast
+    label.size = 0.2,      # thin border
+    box.padding = 0.2,     # distance from point
+    point.padding = 0.3,   # how far label starts from the point
+    segment.color = "grey60",
+    segment.size = 0.3 #,
+#    max.overlaps = Inf     # allow all labels
+  ) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("Empirical" = "lightblue", "Simulated" = "bisque")
+  ) +
+  scale_shape_manual(
+    name = "Rankinit",
+    values = c(
+      "-1"  = 25, # triangle down
+      "0"   = 21, # circle
+      "0.5" = 21, # circle
+      "1"   = 24  # triangle up
+    )
+  ) +
+  xlab("avg time distance") +
+  ylab("hospitalizations") +
+  facet_wrap(~comparison) +
+  theme_bw() +
+  theme(legend.title = element_blank())
+
+# 1) Aggregate to rankinit (not single hospitals)
+sim_merge  %>%
+  group_by(comparison, type, rankinit) %>%
   summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
+    avgdist = mean(avgdist, na.rm = TRUE),
+    cases   = mean(cases,   na.rm = TRUE),
+    n_hospitals = n_distinct(hospital),   # how many hospitals contribute
+    .groups = "drop"
+  ) %>% 
+  ggplot(aes(x = avgdist, y = cases, fill = type, shape = factor(rankinit))) +
+  # aggregated points (size reflects how many hospitals in that rank)
+  geom_point(size = 3, color = "black", stroke = 0.6) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("Empirical" = "lightblue", "Simulated" = "bisque")
+  ) +
+  # if you still want distinct shapes per rankinit:
+  scale_shape_manual(
+    name = "Rankinit",
+    values = c("-1"=25, "0"=22, "0.5"=21, "1"=24)  # 21–25 support fill
+  ) +
+  # size legend for how many hospitals (optional)
+  scale_size_continuous(name = "Hospitals (n)") +
+  xlab("avg time distance") + ylab("hospitalizations") +
+  facet_wrap(~ comparison) +
+  theme_bw() +
+  theme(legend.title = element_blank())
 
-sim_dist1op5soc1exp1thr260updr25 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -1 & weight_opinion == 5 & 
-                                                                  social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0.25) %>%
-  group_by(selectedhospital) %>%
+##
+
+sim_merge %>%
+  group_by(comparison, type, rankinit) %>%
   summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
+    avgdist = mean(avgdist, na.rm = TRUE),
+    cases   = mean(cases,   na.rm = TRUE),
+    n_hospitals = n_distinct(hospital),
+    .groups = "drop"
+  ) %>% 
+  ggplot(aes(x = avgdist, y = cases, fill = type, shape = factor(rankinit))) +
+  geom_point(aes(fill = type),  # <-- map fill aesthetic here
+             size = 3, color = "black", stroke = 0.6) +
+  scale_fill_manual(
+    name = "Type",  # give the legend a title
+    values = c("Empirical" = "lightblue", "Simulated" = "bisque")
+  ) +
+  scale_shape_manual(
+    name = "Rankinit",
+    values = c("-1"=25, "0"=22, "0.5"=21, "1"=24)
+  ) +
+  xlab("avg time distance") +
+  ylab("hospitalizations") +
+  facet_wrap(~ comparison) +
+  theme_bw() +
+  theme(legend.title = element_text(size = 10),
+        legend.position = "right")
 
-sim_dist5op5soc0exp1thr260updr0 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 5 & 
-                                                                 social_multiplier == 0 & weight_experience == 1 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
-
-sim_dist5op1soc1exp1thr0updr0 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -5 & weight_opinion == 1 & 
-                                                                 social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
-
-sim_dist5op1soc1exp1thr260updr0 <- combined_dfwide %>% filter(distance_threshold == 260 & weight_distance_hospital == -5 & weight_opinion == 1 & 
-                                                              social_multiplier == 1 & weight_experience == 1 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
-
-
-sim_dist1op5soc1exp05thr0updr0 <- combined_dfwide %>% filter(distance_threshold == 0 & weight_distance_hospital == -1 & weight_opinion == 5 & 
-                                                                social_multiplier == 1 & weight_experience == 0.5 & uptrnk_sd == 0) %>%
-  group_by(selectedhospital) %>%
-  summarise(
-    sim_cases = n(),
-    sim_avgdist = mean(distsim, na.rm = TRUE),
-    condition = unique(condition),
-    name = unique(name_selectedhospital)
-  ) %>%
-  rename(hospital = selectedhospital)
-
-
-
-
-
-mergelong <- function(t) 
-  {baselineemp %>%
-  full_join(t, by = c("hospital","name"))%>%
-  pivot_longer(
-    cols = c(emp_cases, sim_cases, emp_avgdist, sim_avgdist),
-    names_to = c("type", ".value"),
-    names_pattern = "^(emp_|sim_)(.*)$"
-  ) %>%
-  mutate(
-    type = recode(type,
-                  "emp_" = "Empirical",
-                  "sim_" = "Simulated")
-  )
-}
-
-bas_simdist1 <- mergelong(sim_dist1)
-bas_simdist5 <- mergelong(sim_dist5)
-bas_simdist5op1 <- mergelong(sim_dist5op1)
-bas_simdist5op5 <- mergelong(sim_dist5op5)
-bas_simdist5op5soc1exp05 <- mergelong(sim_dist5op5soc1exp05)
-bas_simdist5op5soc1exp05thr260 <- mergelong(sim_dist5op5soc1exp05thr260)
-bas_simdist5op5soc1exp1 <- mergelong(sim_dist5op5soc1exp1)
-bas_simdist5op5soc1exp1thr260 <- mergelong(sim_dist5op5soc1exp1thr260)
-bas_sim_dist5op5soc1exp1thr260updr25 <- mergelong(sim_dist5op5soc1exp1thr260updr25)
-bas_sim_dist5op5soc1exp1thr0updr25 <- mergelong(sim_dist5op5soc1exp1thr0updr25)
-bas_sim_dist1op5soc1exp1thr0updr25 <- mergelong(sim_dist1op5soc1exp1thr0updr25)
-bas_sim_dist1op5soc1exp05thr0updr25 <- mergelong(sim_dist1op5soc1exp05thr0updr25)
-bas_sim_dist1op5soc1exp05thr260updr25 <- mergelong(sim_dist1op5soc1exp05thr260updr25)
-bas_sim_dist1op5soc1exp1thr260updr25 <- mergelong(sim_dist1op5soc1exp1thr260updr25)
-bas_sim_dist5op5soc0exp1thr260updr25 <- mergelong(sim_dist5op5soc0exp1thr260updr25)
-bas_sim_dist5op1soc1exp1thr0updr0 <- mergelong(sim_dist5op1soc1exp1thr0updr0)
-bas_sim_dist1op5soc1exp05thr0updr0 <- mergelong(sim_dist1op5soc1exp05thr0updr0)
-
-bas_simdist1$comparison = 1
-bas_simdist5$comparison = 2
-bas_simdist5op1$comparison = 3
-bas_simdist5op5$comparison = 4
-bas_simdist5op5soc1exp05$comparison = 5
-bas_simdist5op5soc1exp05thr260$comparison = 6
-bas_simdist5op5soc1exp1$comparison = 7
-bas_simdist5op5soc1exp1thr260$comparison = 8
-bas_sim_dist5op5soc1exp1thr260updr25$comparison = 9
-bas_sim_dist5op5soc1exp1thr0updr25$comparison = 10
-bas_sim_dist1op5soc1exp1thr0updr25$comparison = 11
-bas_sim_dist1op5soc1exp05thr0updr25$comparison = 12
-bas_sim_dist1op5soc1exp05thr260updr25$comparison = 13
-bas_sim_dist1op5soc1exp1thr260updr25$comparison = 14
-bas_sim_dist5op5soc0exp1thr260updr25$comparison = 15
-bas_sim_dist5op1soc1exp1thr0updr0$comparison = 16
-bas_sim_dist1op5soc1exp05thr0updr0$comparison = 17
-
-sim_merge <- rbind(
-  
-  bas_simdist1,
-  bas_simdist5,
-  bas_simdist5op1,
-  bas_simdist5op5,
-  bas_simdist5op5soc1exp05,
-  bas_simdist5op5soc1exp05thr260,
-  bas_simdist5op5soc1exp1,
-  bas_simdist5op5soc1exp1thr260,
-  bas_sim_dist5op5soc1exp1thr260updr25,
-  bas_sim_dist5op5soc1exp1thr0updr25,
-  bas_sim_dist1op5soc1exp1thr0updr25,
-  bas_sim_dist1op5soc1exp05thr0updr25,
-  bas_sim_dist1op5soc1exp05thr260updr25,
-  bas_sim_dist1op5soc1exp1thr260updr25,
-  bas_sim_dist5op5soc0exp1thr260updr25,
-  bas_sim_dist5op1soc1exp1thr0updr0,
-  bas_sim_dist1op5soc1exp05thr0updr0
-)
 
 sim_merge %>%
   group_by(comparison, type, rankinit) %>%
@@ -728,6 +1119,7 @@ sim_merge %>%
   facet_wrap(~comparison) +
   labs(x = "avg time distance", y = "hospitalizations") +
   theme_bw()
+
 
 
 # OD
@@ -792,7 +1184,6 @@ careggi %>% filter(condition == 23 & pro_com == 48025) %>%
   geom_point(size = 1.5) +
   theme_bw() +
   labs(x = "Time at birth", y = "Average opinion rank", color = "Original rank")
-
 
 
 
